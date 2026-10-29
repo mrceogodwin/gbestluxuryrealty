@@ -271,3 +271,8 @@ footer .brand{color:var(--ink)}footer .logo{background:var(--ink);color:var(--go
 .super-row-actions button:disabled,.super-login button:disabled,.super-save:disabled{opacity:.5;cursor:wait}
 @media(max-width:760px){.super-login{align-items:stretch;flex-direction:column}.super-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.super-fields .wide{grid-column:span 2}.super-row{grid-template-columns:72px minmax(0,1fr);gap:12px}.super-thumb{width:72px;height:72px}.super-row-actions{grid-column:1/-1}.super-row-actions button{flex:1}.super-head h1{font-size:clamp(52px,13vw,84px)}}
 @media(max-width:420px){.super-shell{padding:18px 14px}.super-fields{grid-template-columns:1fr}.super-fields .wide{grid-column:span 1}.super-metrics>div{padding:10px 7px}.super-metrics span{font-size:7px}.super-editor-head p,.super-list-head h2{font-size:17px}.super-row-main h3{font-size:17px}}
+
+
+/* Saved listing action */
+.photo-wrap{position:relative}.save-property{position:absolute;left:12px;bottom:12px;z-index:2;background:#fffef0;color:#102d20;border:2px solid #102d20;padding:9px 11px;font:700 9px 'DM Mono',monospace;letter-spacing:.04em;cursor:pointer;box-shadow:3px 3px 0 #102d20}.save-property[aria-pressed='true']{background:#d7ff35}.save-property:focus-visible,.quick-filters button:focus-visible{outline:3px solid #d7ff35;outline-offset:3px}
+@media(max-width:420px){.save-property{left:8px;bottom:8px;padding:7px 8px;font-size:8px}}
