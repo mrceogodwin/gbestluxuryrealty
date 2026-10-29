@@ -18,7 +18,7 @@ export async function POST(req){
   const when=new Date(date+'T'+time+':00+01:00');if(Number.isNaN(when.getTime())||when.toISOString().slice(0,10)!==date||when.getTime()<Date.now())return NextResponse.json({error:'Choose a future date and time.'},{status:400});
   let propertyLabel=pid;
   if(!/^gb-00[1-8]$/.test(pid)){
-   const listing=await pool.query("SELECT id,title FROM public.properties WHERE status='published' AND (id::text=$1 OR slug=$1) LIMIT 1",[pid]);
+   const listing=await pool.query("SELECT id,title FROM public.properties WHERE status IN ('published','available') AND (id::text=$1 OR slug=$1) LIMIT 1",[pid]);
    if(!listing.rowCount)return NextResponse.json({error:'That property is no longer available. Refresh the listings and try again.'},{status:400});
    propertyLabel=listing.rows[0].title;
   }
