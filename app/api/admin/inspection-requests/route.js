@@ -44,8 +44,12 @@ export async function PATCH(req) {
   try {
     const id=String(d.id||''), status=String(d.status||'');
     if(!/^[0-9a-f-]{36}$/i.test(id)||!['confirmed','declined','contacted','completed','cancelled'].includes(status)) return NextResponse.json({error:'Invalid action'},{status:400});
-    const q=await pool.query('UPDATE public.inspection_requests SET status=$2,updated_at=now() WHERE id=$1 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id',[id,status]);
-    if(!q.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
+    const q=await pool.query('UPDATE public.inspection_requests SET status=$2,updated_at=now() WHERE id=$1 AND status IS DISTINCT FROM $2 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id',[id,status]);
+    if(!q.rowCount) {
+      const existing=await pool.query('SELECT id,status FROM public.inspection_requests WHERE id=$1',[id]);
+      if(!existing.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
+      return NextResponse.json({ok:true,unchanged:true,request:existing.rows[0],calendar:{created:false,reason:'No status change; external actions were not repeated.'},email:{client:false,admin:false},warnings:[]},{headers:{'Cache-Control':'no-store'}});
+    }
     const row=q.rows[0];
     let calendar={created:false,reason:'Calendar event only applies to confirmed requests.'};
     if(status==='confirmed'&&!row.calendar_event_id) calendar=await createCalendarEvent(row);
