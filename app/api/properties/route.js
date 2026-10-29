@@ -38,7 +38,7 @@ export async function GET(){
    slug=COALESCE(NULLIF(slug,''),trim(both '-' from regexp_replace(lower(COALESCE(NULLIF(title,''),'property-'||id::text)),'[^a-z0-9]+','-','g'))||'-'||id::text)
    WHERE slug IS NULL OR slug='' OR title IS NULL OR title='' OR location IS NULL OR property_type IS NULL OR property_type=''`);
   // Existing production schema uses text IDs and legacy status values.
-  await pool.query("ALTER TABLE public.properties ALTER COLUMN id SET DEFAULT ('gb-' || gen_random_uuid()::text)");
+  const idType=await pool.query("SELECT data_type FROM information_schema.columns WHERE table_schema='public' AND table_name='properties' AND column_name='id'");if(idType.rows[0]?.data_type==='text')await pool.query("ALTER TABLE public.properties ALTER COLUMN id SET DEFAULT ('gb-' || gen_random_uuid()::text)");
   await pool.query("ALTER TABLE public.properties DROP CONSTRAINT IF EXISTS properties_status_check");
   await pool.query("ALTER TABLE public.properties ADD CONSTRAINT properties_status_check CHECK (status IN ('draft','published','archived','available','reserved','sold','rented'))");
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS properties_slug_unique_idx ON public.properties(slug)');
