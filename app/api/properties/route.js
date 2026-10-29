@@ -42,7 +42,7 @@ export async function GET(){
   await pool.query("ALTER TABLE public.properties DROP CONSTRAINT IF EXISTS properties_status_check");
   await pool.query("ALTER TABLE public.properties ADD CONSTRAINT properties_status_check CHECK (status IN ('draft','published','archived','available','reserved','sold','rented'))");
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS properties_slug_unique_idx ON public.properties(slug)');
-  const q=await pool.query(`SELECT id,slug,title,location,state,property_type,price,beds,baths,size,image_url,description,video_url FROM public.properties WHERE status IN ('published','available') ORDER BY updated_at DESC,id DESC`);
+  const q=await pool.query(`SELECT id,slug,title,location,state,property_type,COALESCE(NULLIF(price,''),price_label,'Price on request') AS price,CASE WHEN COALESCE(beds,0)=0 THEN COALESCE(bedrooms,0) ELSE beds END AS beds,CASE WHEN COALESCE(baths,0)=0 THEN COALESCE(bathrooms,0) ELSE baths END AS baths,COALESCE(NULLIF(size,''),size_label,'') AS size,COALESCE(NULLIF(image_url,''),images[1],'') AS image_url,description,video_url FROM public.properties WHERE status IN ('published','available') ORDER BY updated_at DESC,id DESC`);
   const properties=q.rows.map(x=>({...x,id:String(x.id),name:x.title,loc:x.location+(x.state?', '+x.state:''),type:x.property_type,img:x.image_url,desc:x.description||'',beds:Number(x.beds||0),baths:Number(x.baths||0),size:x.size||'',price:x.price||'Price on request'}));
   return NextResponse.json({properties,source:'database'},{headers:{'Cache-Control':'no-store'}});
  }catch(e){console.error('Public properties GET failed',e.code||e.message);return NextResponse.json({error:'Could not load published properties.'},{status:500,headers:{'Cache-Control':'no-store'}})}
