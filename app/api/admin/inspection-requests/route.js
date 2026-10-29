@@ -11,6 +11,11 @@ async function sendEmail(to, subject, html) {
   if (!res.ok) { console.error('Resend returned', res.status); return { sent:false, reason:'Email provider rejected the message.' }; }
   return { sent:true };
 }
+function calendarEventId(requestId) {
+  const hex=String(requestId).replace(/-/g,'').toLowerCase();
+  if(!/^[0-9a-f]{32}$/.test(hex)) throw new Error('Invalid inspection request ID');
+  return 'gbest'+BigInt('0x'+hex).toString(32);
+}
 async function createCalendarEvent(reqRow) {
   const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN, GOOGLE_CALENDAR_ID } = process.env;
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN || !GOOGLE_CALENDAR_ID) return { created:false, reason:'Google Calendar credentials are not configured.' };
@@ -19,13 +24,18 @@ async function createCalendarEvent(reqRow) {
   const token = await tokenRes.json();
   const start = new Date(String(reqRow.preferred_date).slice(0,10)+'T'+String(reqRow.preferred_time).slice(0,8)+'+01:00');
   const end = new Date(start.getTime()+30*60*1000);
-  const event = { summary:'G-BEST property inspection — '+reqRow.full_name, description:'Approved physical property inspection. Property reference: '+(reqRow.property_id||'Not specified')+'. Client contact: '+reqRow.contact+'. Request ID: '+reqRow.id, start:{dateTime:start.toISOString(),timeZone:'Africa/Lagos'}, end:{dateTime:end.toISOString(),timeZone:'Africa/Lagos'}, attendees:reqRow.client_email?[{email:reqRow.client_email}]:[], guestsCanModify:false };
-  const url='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(GOOGLE_CALENDAR_ID)+'/events?sendUpdates=all';
-  const evRes=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+token.access_token,'Content-Type':'application/json'},body:JSON.stringify(event)});
-  const ev=await evRes.json().catch(()=>({}));
-  if(!evRes.ok){console.error('Google Calendar event creation failed',evRes.status);return {created:false,reason:'Google Calendar rejected event creation.'};}
-  await pool.query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1',[reqRow.id,ev.id]);
-  return {created:true,eventId:ev.id,htmlLink:ev.htmlLink};
+  const eventId=calendarEventId(reqRow.id);
+  const event = { id:eventId, summary:'G-BEST property inspection — '+reqRow.full_name, description:'Approved physical property inspection. Property reference: '+(reqRow.property_id||'Not specified')+'. Client contact: '+reqRow.contact+'. Request ID: '+reqRow.id, start:{dateTime:start.toISOString(),timeZone:'Africa/Lagos'}, end:{dateTime:end.toISOString(),timeZone:'Africa/Lagos'}, attendees:reqRow.client_email?[{email:reqRow.client_email}]:[], guestsCanModify:false };
+  const base='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(GOOGLE_CALENDAR_ID)+'/events';
+  let evRes=await fetch(base+'?sendUpdates=all',{method:'POST',headers:{Authorization:'Bearer '+token.access_token,'Content-Type':'application/json'},body:JSON.stringify(event)});
+  let ev=await evRes.json().catch(()=>({}));
+  if(evRes.status===409) {
+    evRes=await fetch(base+'/'+encodeURIComponent(eventId),{headers:{Authorization:'Bearer '+token.access_token}});
+    ev=await evRes.json().catch(()=>({}));
+  }
+  if(!evRes.ok){console.error('Google Calendar event create/recovery failed',evRes.status);return {created:false,reason:'Google Calendar rejected event creation.'};}
+  await pool.query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1',[reqRow.id,eventId]);
+  return {created:true,eventId,htmlLink:ev.htmlLink};
 }
 export async function GET(req) {
   if (!auth(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
@@ -46,9 +56,12 @@ export async function PATCH(req) {
     if(!/^[0-9a-f-]{36}$/i.test(id)||!['confirmed','declined','contacted','completed','cancelled'].includes(status)) return NextResponse.json({error:'Invalid action'},{status:400});
     const q=await pool.query('UPDATE public.inspection_requests SET status=$2,updated_at=now() WHERE id=$1 AND status IS DISTINCT FROM $2 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id',[id,status]);
     if(!q.rowCount) {
-      const existing=await pool.query('SELECT id,status FROM public.inspection_requests WHERE id=$1',[id]);
+      const existing=await pool.query('SELECT id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1',[id]);
       if(!existing.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
-      return NextResponse.json({ok:true,unchanged:true,request:existing.rows[0],calendar:{created:false,reason:'No status change; external actions were not repeated.'},email:{client:false,admin:false},warnings:[]},{headers:{'Cache-Control':'no-store'}});
+      const prior=existing.rows[0];
+      let retryCalendar={created:false,reason:'No status change; external notifications were not repeated.'};
+      if(status==='confirmed'&&!prior.calendar_event_id) retryCalendar=await createCalendarEvent(prior);
+      return NextResponse.json({ok:true,unchanged:true,request:prior,calendar:retryCalendar,email:{client:false,admin:false},warnings:[...(!retryCalendar.created&&status==='confirmed'?[retryCalendar.reason]:[])]},{headers:{'Cache-Control':'no-store'}});
     }
     const row=q.rows[0];
     let calendar={created:false,reason:'Calendar event only applies to confirmed requests.'};
