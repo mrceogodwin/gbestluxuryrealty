@@ -5,6 +5,20 @@ import { useEffect } from 'react';
 export default function Error({ error, reset }) {
   useEffect(() => {
     console.error('G-BEST page runtime error:', error);
+    try {
+      fetch('/api/client-errors', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          digest: error?.digest || '',
+          message: error?.message || 'Unknown client exception',
+          name: error?.name || 'Error',
+          path: window.location.pathname,
+          userAgent: navigator.userAgent,
+        }),
+      }).catch(() => {});
+    } catch {}
   }, [error]);
 
   return (
