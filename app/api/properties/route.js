@@ -42,8 +42,14 @@ export async function GET(){
   await pool.query("ALTER TABLE public.properties DROP CONSTRAINT IF EXISTS properties_status_check");
   await pool.query("ALTER TABLE public.properties ADD CONSTRAINT properties_status_check CHECK (status IN ('draft','published','archived','available','reserved','sold','rented'))");
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS properties_slug_unique_idx ON public.properties(slug)');
-  const q=await pool.query(`SELECT id,slug,title,location,state,property_type,COALESCE(NULLIF(price,''),price_label,'Price on request') AS price,CASE WHEN COALESCE(beds,0)=0 THEN COALESCE(bedrooms,0) ELSE beds END AS beds,CASE WHEN COALESCE(baths,0)=0 THEN COALESCE(bathrooms,0) ELSE baths END AS baths,COALESCE(NULLIF(size,''),size_label,'') AS size,COALESCE(NULLIF(image_url,''),images[1],'') AS image_url,description,video_url FROM public.properties WHERE status IN ('published','available') ORDER BY updated_at DESC,id DESC`);
-  const properties=q.rows.map(x=>({...x,id:String(x.id),name:x.title,loc:x.location+(x.state?', '+x.state:''),type:x.property_type,img:x.image_url,desc:x.description||'',beds:Number(x.beds||0),baths:Number(x.baths||0),size:x.size||'',price:x.price||'Price on request'}));
+  // Build the read query from columns that actually exist in the connected Neon schema.
+  const schema=await pool.query("SELECT column_name,data_type,udt_name FROM information_schema.columns WHERE table_schema='public' AND table_name='properties'");
+  const cols=new Map(schema.rows.map(row=>[row.column_name,row]));
+  const col=(name,fallback)=>cols.has(name)?`"${name}"`:fallback;
+  const first=(names,fallback)=>names.filter(name=>cols.has(name)).map(name=>`NULLIF("${name}"::text,'')`).concat([fallback]).join(',');
+  const imageExpr=cols.has('image_url')?`NULLIF(image_url::text,'')`:cols.has('images')?(cols.get('images').data_type==='ARRAY'?`images[1]::text`:cols.get('images').udt_name==='_jsonb'?`images->>0`:`images::text`):`''`;
+  const q=await pool.query(`SELECT id::text AS id, ${col('slug', "''")} AS slug, ${col('title', "'Property listing'")} AS title, ${col('location', "''")} AS location, ${col('state', "''")} AS state, ${col('property_type', "'Other'")} AS property_type, ${first(['price','price_label'],"'Price on request'")} AS price, ${first(['beds','bedrooms'],'0')} AS beds, ${first(['baths','bathrooms'],'0')} AS baths, ${first(['size','size_label'],"''")} AS size, ${imageExpr} AS image_url, ${col('description',"''")} AS description, ${col('video_url',"''")} AS video_url FROM public.properties WHERE status IN ('published','available') ORDER BY updated_at DESC,id DESC`);
+  const properties=q.rows.map(x=>({...x,id:String(x.id),name:x.title||'Property listing',loc:(x.location||'')+(x.state?', '+x.state:''),type:x.property_type||'Other',img:x.image_url||'',desc:x.description||'',beds:Number(x.beds||0),baths:Number(x.baths||0),size:x.size||'',price:x.price||'Price on request'}));
   return NextResponse.json({properties,source:'database'},{headers:{'Cache-Control':'no-store'}});
  }catch(e){console.error('Public properties GET failed',e.code||e.message);return NextResponse.json({error:'Could not load published properties.'},{status:500,headers:{'Cache-Control':'no-store'}})}
 }
