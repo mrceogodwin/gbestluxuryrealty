@@ -97,3 +97,20 @@ footer .logo{box-shadow:4px 4px 0 #c72f35}
 .slide-pause{font-size:9px!important;font-weight:900;letter-spacing:1px;padding:8px 10px!important;border:1px solid #ffffff60!important;color:#fff!important;background:#073c2670!important}
 .slide-pause:hover,.slide-pause:focus-visible{background:#f0cd61!important;color:#073c26!important;border-color:#f0cd61!important}
 .slide-pause:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
+
+/* Premium property detail modal */
+.property-modal-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:24px;background:#07180fd9;backdrop-filter:blur(7px);overflow-y:auto}
+.property-modal{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);width:min(980px,100%);max-height:calc(100vh - 48px);overflow:auto;background:#fbfaf5;border:1px solid #d8dfd4;box-shadow:0 28px 90px #0007}
+.property-modal-image{width:100%;height:100%;min-height:460px;object-fit:cover;background:#dfe6dc}
+.property-modal-body{padding:clamp(24px,4vw,48px);align-self:center}
+.property-modal-body h2{font-size:clamp(32px,4vw,48px);line-height:.98;letter-spacing:-1.5px;margin:12px 0}
+.property-modal-location{font-weight:800;color:#075b35}
+.property-modal-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:24px 0}
+.property-modal-facts span{display:flex;flex-direction:column;gap:7px;padding:12px 10px;background:#eef2eb;border-top:2px solid #075b35}
+.property-modal-facts b{font-size:13px;color:#123e2a}
+.property-modal-facts small{font-size:8px;letter-spacing:.6px;color:#59685d;line-height:1.4}
+.property-modal-disclaimer{font-size:11px;line-height:1.6;color:#58665b;padding:12px 0;border-top:1px solid #d6ddd3}
+.property-modal-close{position:absolute;z-index:2;top:12px;right:12px;width:42px;height:42px;border:1px solid #fff9;background:#073c26;color:white;font-size:28px;line-height:1;cursor:pointer}
+.property-modal-close:hover{background:#f0cd61;color:#073c26}
+@media(max-width:680px){.property-modal-backdrop{padding:12px;align-items:start}.property-modal{grid-template-columns:1fr;max-height:calc(100dvh - 24px)}.property-modal-image{height:240px;min-height:0;max-height:32vh}.property-modal-body{padding:24px 20px}.property-modal-facts{gap:6px}.property-modal-facts span{padding:10px 7px}.property-modal-facts b{font-size:11px}.property-modal-facts small{font-size:7px}}
