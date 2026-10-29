@@ -15,6 +15,7 @@ const TYPES=['All properties','Luxury home','Penthouse','Family home','Investmen
 export default function Home(){
 const[s,S]=useState(0),[p,SP]=useState(P[0]),[status,SS]=useState(''),[busy,SB]=useState(false),[type,ST]=useState('All properties'),[query,SQ]=useState(''),[paused,Pause]=useState(false),[detail,SD]=useState(null);
 useEffect(()=>{if(paused||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;const timer=setInterval(()=>S(current=>(current+1)%P.length),6000);return()=>clearInterval(timer)},[paused]);
+useEffect(()=>{if(!detail)return;const onKeyDown=e=>{if(e.key==='Escape')SD(null)};window.addEventListener('keydown',onKeyDown);return()=>window.removeEventListener('keydown',onKeyDown)},[detail]);
 const filtered=P.filter(x=>(type==='All properties'||x.type===type)&&(!query||(x.loc+' '+x.name+' '+x.state).toLowerCase().includes(query.toLowerCase())));
 async function send(e){e.preventDefault();SB(true);SS('');let f=e.currentTarget,d=Object.fromEntries(new FormData(f));d.propertyId=p.id;try{let r=await fetch('/api/inspection-requests',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(d)}),j=await r.json();if(!r.ok)throw Error(j.error||'Could not submit request');SS('Request received, pending admin approval. This is not a confirmed appointment.');f.reset()}catch(e){SS(e.message)}finally{SB(false)}}
 function choose(x){SP(x);document.getElementById('inspection').scrollIntoView({behavior:'smooth'})}
