@@ -1,0 +1,1 @@
+import './globals.css'; export const metadata={title:'G-BEST Luxury Realty',description:'Discover exceptional properties and request a private inspection with G-BEST Luxury Realty.'}; export default function RootLayout({children}){return <html lang="en"><body>{children}</body></html>}
