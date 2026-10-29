@@ -38,8 +38,11 @@ export async function GET(req) {
 export async function PATCH(req) {
   if (!auth(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
+  let d;
+  try { d=await req.json(); } catch { return NextResponse.json({error:'Invalid JSON body'},{status:400}); }
+  if(!d||typeof d!=='object'||Array.isArray(d)) return NextResponse.json({error:'Request body must be an object'},{status:400});
   try {
-    const d=await req.json(), id=String(d.id||''), status=String(d.status||'');
+    const id=String(d.id||''), status=String(d.status||'');
     if(!/^[0-9a-f-]{36}$/i.test(id)||!['confirmed','declined','contacted','completed','cancelled'].includes(status)) return NextResponse.json({error:'Invalid action'},{status:400});
     const q=await pool.query('UPDATE public.inspection_requests SET status=$2,updated_at=now() WHERE id=$1 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id',[id,status]);
     if(!q.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
