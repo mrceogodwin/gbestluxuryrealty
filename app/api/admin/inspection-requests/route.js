@@ -1,1 +1,60 @@
-import{NextResponse}from'next/server';import{Pool}from'pg';export const runtime='nodejs';const pool=globalThis.__gbestPool||(globalThis.__gbestPool=new Pool({connectionString:process.env.DATABASE_URL,max:3,ssl:{rejectUnauthorized:true}}));function auth(r){return !!process.env.ADMIN_SECRET&&r.headers.get('authorization')==='Bearer '+process.env.ADMIN_SECRET}export async function GET(r){if(!auth(r))return NextResponse.json({error:'Unauthorized'},{status:401});try{const q=await pool.query('SELECT id,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,status,created_at FROM public.inspection_requests ORDER BY created_at DESC LIMIT 100');return NextResponse.json({requests:q.rows},{headers:{'Cache-Control':'no-store'}})}catch(e){return NextResponse.json({error:'Could not load requests'},{status:500})}}export async function PATCH(r){if(!auth(r))return NextResponse.json({error:'Unauthorized'},{status:401});try{const d=await r.json(),id=String(d.id||''),status=String(d.status||'');if(!/^[0-9a-f-]{36}$/i.test(id)||!['confirmed','declined','contacted','completed','cancelled'].includes(status))return NextResponse.json({error:'Invalid action'},{status:400});const q=await pool.query('UPDATE public.inspection_requests SET status=$2,updated_at=now() WHERE id=$1 RETURNING id,status,full_name,client_email,preferred_date,preferred_time,property_id',[id,status]);if(!q.rowCount)return NextResponse.json({error:'Request not found'},{status:404});return NextResponse.json({ok:true,request:q.rows[0],calendar:'Not connected yet; no Google Calendar event created.'})}catch(e){if(e.code==='23505')return NextResponse.json({error:'That slot is already reserved'},{status:409});return NextResponse.json({error:'Could not update request'},{status:500})}}
+import { NextResponse } from 'next/server';
+import { Pool } from 'pg';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+const pool = globalThis.__gbestPool || (globalThis.__gbestPool = new Pool({ connectionString: process.env.DATABASE_URL, max: 3, ssl: { rejectUnauthorized: true } }));
+const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function auth(req) { const expected = process.env.ADMIN_SECRET; const got = req.headers.get('authorization') || ''; return !!expected && got === 'Bearer ' + expected; }
+async function sendEmail(to, subject, html) {
+  if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL || !to) return { sent: false, reason: 'Resend is not configured.' };
+  const res = await fetch('https://api.resend.com/emails', { method:'POST', headers:{ Authorization:'Bearer '+process.env.RESEND_API_KEY, 'Content-Type':'application/json' }, body:JSON.stringify({ from:process.env.RESEND_FROM_EMAIL, to:[to], subject, html }) });
+  if (!res.ok) { console.error('Resend returned', res.status); return { sent:false, reason:'Email provider rejected the message.' }; }
+  return { sent:true };
+}
+async function createCalendarEvent(reqRow) {
+  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN, GOOGLE_CALENDAR_ID } = process.env;
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN || !GOOGLE_CALENDAR_ID) return { created:false, reason:'Google Calendar credentials are not configured.' };
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams({client_id:GOOGLE_CLIENT_ID,client_secret:GOOGLE_CLIENT_SECRET,refresh_token:GOOGLE_REFRESH_TOKEN,grant_type:'refresh_token'}) });
+  if (!tokenRes.ok) { console.error('Google OAuth token refresh failed',tokenRes.status); return {created:false,reason:'Google authorization failed.'}; }
+  const token = await tokenRes.json();
+  const start = new Date(String(reqRow.preferred_date).slice(0,10)+'T'+String(reqRow.preferred_time).slice(0,8)+'+01:00');
+  const end = new Date(start.getTime()+30*60*1000);
+  const event = { summary:'G-BEST property inspection — '+reqRow.full_name, description:'Approved physical property inspection. Property reference: '+(reqRow.property_id||'Not specified')+'. Client contact: '+reqRow.contact+'. Request ID: '+reqRow.id, start:{dateTime:start.toISOString(),timeZone:'Africa/Lagos'}, end:{dateTime:end.toISOString(),timeZone:'Africa/Lagos'}, attendees:reqRow.client_email?[{email:reqRow.client_email}]:[], guestsCanModify:false };
+  const url='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(GOOGLE_CALENDAR_ID)+'/events?sendUpdates=all';
+  const evRes=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+token.access_token,'Content-Type':'application/json'},body:JSON.stringify(event)});
+  const ev=await evRes.json().catch(()=>({}));
+  if(!evRes.ok){console.error('Google Calendar event creation failed',evRes.status);return {created:false,reason:'Google Calendar rejected event creation.'};}
+  await pool.query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1',[reqRow.id,ev.id]);
+  return {created:true,eventId:ev.id,htmlLink:ev.htmlLink};
+}
+export async function GET(req) {
+  if (!auth(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
+  if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
+  try {
+    const q=await pool.query('SELECT id,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,status,calendar_event_id,created_at FROM public.inspection_requests ORDER BY created_at DESC LIMIT 100');
+    return NextResponse.json({requests:q.rows},{headers:{'Cache-Control':'no-store'}});
+  } catch(e) { console.error('Admin request list failed',e.code||e.message); return NextResponse.json({error:'Could not load requests'},{status:500}); }
+}
+export async function PATCH(req) {
+  if (!auth(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
+  if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
+  try {
+    const d=await req.json(), id=String(d.id||''), status=String(d.status||'');
+    if(!/^[0-9a-f-]{36}$/i.test(id)||!['confirmed','declined','contacted','completed','cancelled'].includes(status)) return NextResponse.json({error:'Invalid action'},{status:400});
+    const q=await pool.query('UPDATE public.inspection_requests SET status=$2,updated_at=now() WHERE id=$1 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id',[id,status]);
+    if(!q.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
+    const row=q.rows[0];
+    let calendar={created:false,reason:'Calendar event only applies to confirmed requests.'};
+    if(status==='confirmed'&&!row.calendar_event_id) calendar=await createCalendarEvent(row);
+    const date=String(row.preferred_date).slice(0,10), time=String(row.preferred_time||'').slice(0,5);
+    const subject=status==='confirmed'?'Your G-BEST inspection is confirmed':status==='declined'?'Update on your G-BEST inspection request':'Update to your G-BEST inspection request';
+    const message=status==='confirmed'?'Your physical inspection has been approved for '+date+' at '+time+' WAT. The appointment is 30 minutes.':status==='declined'?'We are sorry, but we cannot approve your requested inspection slot. Please contact our team to arrange another time.':'Your inspection request status has been updated to '+status+'.';
+    const clientEmail=await sendEmail(row.client_email,subject,'<p>Hello '+safe(row.full_name)+',</p><p>'+safe(message)+'</p><p>G-BEST Luxury Realty</p>');
+    const adminEmail=await sendEmail(process.env.ADMIN_EMAIL,'Inspection request '+status+' — '+row.full_name,'<p>Request status: '+safe(status)+'</p><p>Client: '+safe(row.full_name)+' ('+safe(row.client_email)+')</p><p>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p><p>Calendar event: '+(calendar.created?'created':safe(calendar.reason))+'</p>');
+    return NextResponse.json({ok:true,request:row,calendar,email:{client:clientEmail.sent,admin:adminEmail.sent},warnings:[...(!calendar.created&&status==='confirmed'?[calendar.reason]:[]),...(!clientEmail.sent?['Client email was not sent.']:[]),...(!adminEmail.sent?['Admin email was not sent.']:[])]},{headers:{'Cache-Control':'no-store'}});
+  } catch(e) {
+    if(e.code==='23505') return NextResponse.json({error:'That slot is already held by another pending or confirmed request. Choose another slot.'},{status:409});
+    console.error('Admin request update failed',e.code||e.message);
+    return NextResponse.json({error:'Could not update request'},{status:500});
+  }
+}
