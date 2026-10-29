@@ -91,3 +91,9 @@ footer .logo{box-shadow:4px 4px 0 #c72f35}
 .demo-notice small{font-size:11px;line-height:1.5;color:#425449}
 .demo-pill{margin-left:auto;white-space:nowrap;padding:7px 9px;background:#f0cd61;color:#14271b;font-size:9px;font-weight:900;letter-spacing:1px}
 @media(max-width:520px){.demo-notice{align-items:flex-start;gap:9px;padding:12px}.demo-mark{flex-basis:30px;width:30px;height:30px;font-size:21px}.demo-notice b{font-size:9px}.demo-notice small{font-size:10px}.demo-pill{font-size:8px;padding:6px}}
+
+
+/* Carousel playback control */
+.slide-pause{font-size:9px!important;font-weight:900;letter-spacing:1px;padding:8px 10px!important;border:1px solid #ffffff60!important;color:#fff!important;background:#073c2670!important}
+.slide-pause:hover,.slide-pause:focus-visible{background:#f0cd61!important;color:#073c26!important;border-color:#f0cd61!important}
+.slide-pause:focus-visible{outline:2px solid #fff;outline-offset:3px}
