@@ -86,14 +86,22 @@ export async function PATCH(req) {
     const date=String(row.preferred_date).slice(0,10), time=String(row.preferred_time||'').slice(0,5);
     const subject=status==='confirmed'?'Your G-BEST inspection is confirmed':status==='declined'?'Update on your G-BEST inspection request':'Update to your G-BEST inspection request';
     const message=status==='confirmed'?'Your physical inspection has been approved for '+date+' at '+time+' WAT. The appointment is 30 minutes.':status==='declined'?'We are sorry, but we cannot approve your requested inspection slot. Please contact our team to arrange another time.':'Your inspection request status has been updated to '+status+'.';
-    await queueInspectionEmails([
-      {requestId:row.id,type:'client',to:row.client_email,subject,html:'<p>Hello '+safe(row.full_name)+',</p><p>'+safe(message)+'</p><p>G-BEST Luxury Realty</p>'},
-      {requestId:row.id,type:'admin',to:process.env.ADMIN_EMAIL,subject:'Inspection request '+status+' — '+row.full_name,html:'<p>Request status: '+safe(status)+'</p><p>Client: '+safe(row.full_name)+' ('+safe(row.client_email)+')</p><p>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p><p>Calendar event: '+(calendar.created?'created':safe(calendar.reason))+'</p>'}
-    ]);
-    const email=await deliverInspectionEmails(row.id);
+    let email={sent:0,failed:0,skipped:0};
+    const warnings=[];
+    try {
+      await queueInspectionEmails([
+        {requestId:row.id,type:'client',to:row.client_email,subject,html:'<p>Hello '+safe(row.full_name)+',</p><p>'+safe(message)+'</p><p>G-BEST Luxury Realty</p>'},
+        {requestId:row.id,type:'admin',to:process.env.ADMIN_EMAIL,subject:'Inspection request '+status+' — '+row.full_name,html:'<p>Request status: '+safe(status)+'</p><p>Client: '+safe(row.full_name)+' ('+safe(row.client_email)+')</p><p>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p><p>Calendar event: '+(calendar.created?'created':safe(calendar.reason))+'</p>'}
+      ]);
+      email=await deliverInspectionEmails(row.id);
+      if(email.failed||email.skipped)warnings.push('Some emails remain queued for retry.');
+    } catch(notificationError) {
+      console.error('Inspection status saved but email queueing failed',notificationError.code||notificationError.message);
+      warnings.push('The status was saved, but notification emails could not be queued. Retry notifications from the admin panel.');
+    }
     const counts=await pool.query(`SELECT count(*) FILTER (WHERE status='sent')::int AS emails_sent,count(*) FILTER (WHERE status='failed')::int AS emails_failed,count(*) FILTER (WHERE status='pending')::int AS emails_pending FROM public.inspection_email_outbox WHERE inspection_request_id=$1`,[row.id]);
     Object.assign(row,counts.rows[0]||{});
-    return NextResponse.json({ok:true,request:row,calendar,email,warnings:[...(!calendar.created&&status==='confirmed'?[calendar.reason]:[]),...(email.failed||email.skipped?['Some emails remain queued for retry.']:[])]},{headers:{'Cache-Control':'no-store'}});
+    return NextResponse.json({ok:true,request:row,calendar,email,warnings:[...(!calendar.created&&status==='confirmed'?[calendar.reason]:[]),...warnings]},{headers:{'Cache-Control':'no-store'}});
   } catch(e) {
     if(e.code==='23505') return NextResponse.json({error:'That slot is already held by another pending or confirmed request. Choose another slot.'},{status:409});
     console.error('Admin request update failed',e.code||e.message);
