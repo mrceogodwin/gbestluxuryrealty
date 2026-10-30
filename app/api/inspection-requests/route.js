@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
+import { queueInspectionEmails, deliverInspectionEmails } from '@/lib/inspection-email-outbox';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 const pool=globalThis.__gbestPool||(globalThis.__gbestPool=new Pool({connectionString:process.env.DATABASE_URL,max:3,connectionTimeoutMillis:5000,ssl:{rejectUnauthorized:true}}));
@@ -25,9 +26,12 @@ export async function POST(req){
    propertyLabel=listing.rows[0].title;
   }
   const q=await pool.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',30,$6,$7,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,pid,message]);
-  const adminSent=await sendEmail(process.env.ADMIN_EMAIL,'New inspection request — '+name,'<p>New physical inspection request from '+safe(name)+' ('+safe(contact)+').</p><p>Property: '+safe(propertyLabel)+'<br/>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p><p>Status: pending admin approval.</p>');
-  const clientSent=await sendEmail(email,'We received your G-BEST inspection request','<p>Hello '+safe(name)+',</p><p>We received your physical inspection request for '+safe(propertyLabel)+' on '+safe(date)+' at '+safe(time)+' WAT.</p><p>This is a request only and is not yet confirmed. Our team will contact you after review.</p>');
-  const warnings=[];if(!adminSent)warnings.push('Admin email was not sent; Resend credentials and a verified sender are required.');if(!clientSent)warnings.push('Client email was not sent; Resend credentials and a verified sender are required.');
-  return NextResponse.json({ok:true,requestId:q.rows[0].id,status:'pending',email:{admin:adminSent,client:clientSent},warnings},{status:201,headers:{'Cache-Control':'no-store'}});
+  await queueInspectionEmails([
+   {requestId:q.rows[0].id,type:'admin',to:process.env.ADMIN_EMAIL,subject:'New inspection request — '+name,html:'<p>New physical inspection request from '+safe(name)+' ('+safe(contact)+').</p><p>Property: '+safe(propertyLabel)+'<br/>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p><p>Status: pending admin approval.</p>'},
+   {requestId:q.rows[0].id,type:'client',to:email,subject:'We received your G-BEST inspection request',html:'<p>Hello '+safe(name)+',</p><p>We received your physical inspection request for '+safe(propertyLabel)+' on '+safe(date)+' at '+safe(time)+' WAT.</p><p>This is a request only and is not yet confirmed. Our team will contact you after review.</p>'}
+  ]);
+  const emailResult=await deliverInspectionEmails(q.rows[0].id);
+  const warnings=[];if(emailResult.failed||emailResult.skipped)warnings.push('One or more emails are queued for retry.');
+  return NextResponse.json({ok:true,requestId:q.rows[0].id,status:'pending',email:emailResult,warnings},{status:201,headers:{'Cache-Control':'no-store'}});
  }catch(e){console.error('inspection API failure',e.code||e.message);if(e.code==='23505')return NextResponse.json({error:'That slot is already held by another request. Please choose another.'},{status:409});return NextResponse.json({error:'Unable to submit right now. Please try again.'},{status:500});}
 }
