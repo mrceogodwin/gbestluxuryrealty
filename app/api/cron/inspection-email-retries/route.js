@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { deliverDueInspectionEmails } from '@/lib/inspection-email-outbox';
+import { deliverDueInspectionEmails } from '../../../../lib/inspection-email-outbox';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
