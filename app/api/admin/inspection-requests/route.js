@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
+import { queueInspectionEmails, deliverInspectionEmails } from '@/lib/inspection-email-outbox';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const pool = globalThis.__gbestPool || (globalThis.__gbestPool = new Pool({ connectionString: process.env.DATABASE_URL, max: 3, ssl: { rejectUnauthorized: true } }));
@@ -69,12 +70,13 @@ export async function PATCH(req) {
       if(!existing.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
       const prior=existing.rows[0];
       if(prior.status!==status) return NextResponse.json({error:'This status change is not allowed from '+prior.status+'. Refresh the request and choose a valid next action.',currentStatus:prior.status},{status:409});
-      let retryCalendar={created:false,reason:'No status change; external notifications were not repeated.'};
+      let retryCalendar={created:false,reason:'No status change; calendar was not changed.'};
       if(status==='confirmed'&&!prior.calendar_event_id) {
         try { retryCalendar=await createCalendarEvent(prior); }
         catch(e) { console.error('Calendar retry failed',e.message); retryCalendar={created:false,reason:'Google Calendar could not be reached.'}; }
       }
-      return NextResponse.json({ok:true,unchanged:true,request:prior,calendar:retryCalendar,email:{client:false,admin:false},warnings:[...(!retryCalendar.created&&status==='confirmed'?[retryCalendar.reason]:[])]},{headers:{'Cache-Control':'no-store'}});
+      const retried=await deliverInspectionEmails(id);
+      return NextResponse.json({ok:true,unchanged:true,request:prior,calendar:retryCalendar,email:{retried},warnings:[...(!retryCalendar.created&&status==='confirmed'&&!prior.calendar_event_id?[retryCalendar.reason]:[]),...(retried.failed?['Some emails remain queued for retry.']:[])]},{headers:{'Cache-Control':'no-store'}});
     }
     const row=q.rows[0];
     let calendar={created:false,reason:'Calendar event only applies to confirmed requests.'};
@@ -86,9 +88,12 @@ export async function PATCH(req) {
     const date=String(row.preferred_date).slice(0,10), time=String(row.preferred_time||'').slice(0,5);
     const subject=status==='confirmed'?'Your G-BEST inspection is confirmed':status==='declined'?'Update on your G-BEST inspection request':'Update to your G-BEST inspection request';
     const message=status==='confirmed'?'Your physical inspection has been approved for '+date+' at '+time+' WAT. The appointment is 30 minutes.':status==='declined'?'We are sorry, but we cannot approve your requested inspection slot. Please contact our team to arrange another time.':'Your inspection request status has been updated to '+status+'.';
-    const clientEmail=await sendEmail(row.client_email,subject,'<p>Hello '+safe(row.full_name)+',</p><p>'+safe(message)+'</p><p>G-BEST Luxury Realty</p>');
-    const adminEmail=await sendEmail(process.env.ADMIN_EMAIL,'Inspection request '+status+' — '+row.full_name,'<p>Request status: '+safe(status)+'</p><p>Client: '+safe(row.full_name)+' ('+safe(row.client_email)+')</p><p>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p><p>Calendar event: '+(calendar.created?'created':safe(calendar.reason))+'</p>');
-    return NextResponse.json({ok:true,request:row,calendar,email:{client:clientEmail.sent,admin:adminEmail.sent},warnings:[...(!calendar.created&&status==='confirmed'?[calendar.reason]:[]),...(!clientEmail.sent?['Client email was not sent.']:[]),...(!adminEmail.sent?['Admin email was not sent.']:[])]},{headers:{'Cache-Control':'no-store'}});
+    await queueInspectionEmails([
+      {requestId:row.id,type:'client',to:row.client_email,subject,html:'<p>Hello '+safe(row.full_name)+',</p><p>'+safe(message)+'</p><p>G-BEST Luxury Realty</p>'},
+      {requestId:row.id,type:'admin',to:process.env.ADMIN_EMAIL,subject:'Inspection request '+status+' — '+row.full_name,html:'<p>Request status: '+safe(status)+'</p><p>Client: '+safe(row.full_name)+' ('+safe(row.client_email)+')</p><p>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p><p>Calendar event: '+(calendar.created?'created':safe(calendar.reason))+'</p>'}
+    ]);
+    const email=await deliverInspectionEmails(row.id);
+    return NextResponse.json({ok:true,request:row,calendar,email,warnings:[...(!calendar.created&&status==='confirmed'?[calendar.reason]:[]),...(email.failed||email.skipped?['Some emails remain queued for retry.']:[])]},{headers:{'Cache-Control':'no-store'}});
   } catch(e) {
     if(e.code==='23505') return NextResponse.json({error:'That slot is already held by another pending or confirmed request. Choose another slot.'},{status:409});
     console.error('Admin request update failed',e.code||e.message);
