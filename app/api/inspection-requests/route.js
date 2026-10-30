@@ -6,10 +6,6 @@ export const dynamic='force-dynamic';
 const pool=globalThis.__gbestPool||(globalThis.__gbestPool=new Pool({connectionString:process.env.DATABASE_URL,max:3,connectionTimeoutMillis:5000,ssl:{rejectUnauthorized:true}}));
 const times=['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00'];
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function sendEmail(to,subject,html){
- if(!process.env.RESEND_API_KEY||!process.env.RESEND_FROM_EMAIL||!to)return false;
- try{const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({from:process.env.RESEND_FROM_EMAIL,to:[to],subject,html})});if(!r.ok){console.error('Resend rejected email',r.status);return false;}return true}catch(e){console.error('Resend delivery failed',e.message);return false;}
-}
 export async function POST(req){
  try{
   if(!process.env.DATABASE_URL)return NextResponse.json({error:'Booking is temporarily unavailable.'},{status:503});
@@ -26,12 +22,19 @@ export async function POST(req){
    propertyLabel=listing.rows[0].title;
   }
   const q=await pool.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',30,$6,$7,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,pid,message]);
-  await queueInspectionEmails([
-   {requestId:q.rows[0].id,type:'admin',to:process.env.ADMIN_EMAIL,subject:'New inspection request — '+name,html:'<p>New physical inspection request from '+safe(name)+' ('+safe(contact)+').</p><p>Property: '+safe(propertyLabel)+'<br/>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p><p>Status: pending admin approval.</p>'},
-   {requestId:q.rows[0].id,type:'client',to:email,subject:'We received your G-BEST inspection request',html:'<p>Hello '+safe(name)+',</p><p>We received your physical inspection request for '+safe(propertyLabel)+' on '+safe(date)+' at '+safe(time)+' WAT.</p><p>This is a request only and is not yet confirmed. Our team will contact you after review.</p>'}
-  ]);
-  const emailResult=await deliverInspectionEmails(q.rows[0].id);
-  const warnings=[];if(emailResult.failed||emailResult.skipped)warnings.push('One or more emails are queued for retry.');
+  const warnings=[];
+  let emailResult={sent:0,failed:0,skipped:0};
+  try {
+   await queueInspectionEmails([
+    {requestId:q.rows[0].id,type:'admin',to:process.env.ADMIN_EMAIL,subject:'New inspection request — '+name,html:'<p>New physical inspection request from '+safe(name)+' ('+safe(contact)+').</p><p>Property: '+safe(propertyLabel)+'<br/>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p><p>Status: pending admin approval.</p>'},
+    {requestId:q.rows[0].id,type:'client',to:email,subject:'We received your G-BEST inspection request',html:'<p>Hello '+safe(name)+',</p><p>We received your physical inspection request for '+safe(propertyLabel)+' on '+safe(date)+' at '+safe(time)+' WAT.</p><p>This is a request only and is not yet confirmed. Our team will contact you after review.</p>'}
+   ]);
+   emailResult=await deliverInspectionEmails(q.rows[0].id);
+   if(emailResult.failed||emailResult.skipped)warnings.push('One or more emails are queued for retry.');
+  } catch(notificationError) {
+   console.error('Inspection request saved but email queueing failed',notificationError.code||notificationError.message);
+   warnings.push('Your inspection request was saved, but email notifications could not be queued. Please contact our team if you do not hear back.');
+  }
   return NextResponse.json({ok:true,requestId:q.rows[0].id,status:'pending',email:emailResult,warnings},{status:201,headers:{'Cache-Control':'no-store'}});
  }catch(e){console.error('inspection API failure',e.code||e.message);if(e.code==='23505')return NextResponse.json({error:'That slot is already held by another request. Please choose another.'},{status:409});return NextResponse.json({error:'Unable to submit right now. Please try again.'},{status:500});}
 }
