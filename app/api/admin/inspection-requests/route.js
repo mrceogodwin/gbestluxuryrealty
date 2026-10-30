@@ -55,12 +55,20 @@ export async function PATCH(req) {
   if(!d||typeof d!=='object'||Array.isArray(d)) return NextResponse.json({error:'Request body must be an object'},{status:400});
   try {
     const id=String(d.id||''), status=String(d.status||'');
-    if(!/^[0-9a-f-]{36}$/i.test(id)||!['confirmed','declined','contacted','completed','cancelled'].includes(status)) return NextResponse.json({error:'Invalid action'},{status:400});
-    const q=await pool.query('UPDATE public.inspection_requests SET status=$2,updated_at=now() WHERE id=$1 AND status IS DISTINCT FROM $2 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id',[id,status]);
+    const allowedPrevious={
+      confirmed:['pending','contacted'],
+      declined:['pending','contacted'],
+      contacted:['pending','confirmed'],
+      completed:['confirmed'],
+      cancelled:['pending','confirmed','contacted']
+    };
+    if(!/^[0-9a-f-]{36}$/i.test(id)||!Object.hasOwn(allowedPrevious,status)) return NextResponse.json({error:'Invalid action'},{status:400});
+    const q=await pool.query('UPDATE public.inspection_requests SET status=$2,updated_at=now() WHERE id=$1 AND status=ANY($3::text[]) AND status IS DISTINCT FROM $2 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id',[id,status,allowedPrevious[status]]);
     if(!q.rowCount) {
       const existing=await pool.query('SELECT id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1',[id]);
       if(!existing.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
       const prior=existing.rows[0];
+      if(prior.status!==status) return NextResponse.json({error:'This status change is not allowed from '+prior.status+'. Refresh the request and choose a valid next action.',currentStatus:prior.status},{status:409});
       let retryCalendar={created:false,reason:'No status change; external notifications were not repeated.'};
       if(status==='confirmed'&&!prior.calendar_event_id) {
         try { retryCalendar=await createCalendarEvent(prior); }
@@ -73,6 +81,7 @@ export async function PATCH(req) {
     if(status==='confirmed'&&!row.calendar_event_id) {
       try { calendar=await createCalendarEvent(row); }
       catch(e) { console.error('Calendar integration failed',e.message); calendar={created:false,reason:'Google Calendar could not be reached.'}; }
+      if(calendar.created) row.calendar_event_id=calendar.eventId;
     }
     const date=String(row.preferred_date).slice(0,10), time=String(row.preferred_time||'').slice(0,5);
     const subject=status==='confirmed'?'Your G-BEST inspection is confirmed':status==='declined'?'Update on your G-BEST inspection request':'Update to your G-BEST inspection request';
