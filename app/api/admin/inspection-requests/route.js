@@ -7,9 +7,11 @@ const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'
 function auth(req) { const expected = process.env.ADMIN_SECRET; const got = req.headers.get('authorization') || ''; return !!expected && got === 'Bearer ' + expected; }
 async function sendEmail(to, subject, html) {
   if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL || !to) return { sent: false, reason: 'Resend is not configured.' };
-  const res = await fetch('https://api.resend.com/emails', { method:'POST', headers:{ Authorization:'Bearer '+process.env.RESEND_API_KEY, 'Content-Type':'application/json' }, body:JSON.stringify({ from:process.env.RESEND_FROM_EMAIL, to:[to], subject, html }) });
-  if (!res.ok) { console.error('Resend returned', res.status); return { sent:false, reason:'Email provider rejected the message.' }; }
-  return { sent:true };
+  try {
+    const res = await fetch('https://api.resend.com/emails', { method:'POST', headers:{ Authorization:'Bearer '+process.env.RESEND_API_KEY, 'Content-Type':'application/json' }, body:JSON.stringify({ from:process.env.RESEND_FROM_EMAIL, to:[to], subject, html }) });
+    if (!res.ok) { console.error('Resend returned', res.status); return { sent:false, reason:'Email provider rejected the message.' }; }
+    return { sent:true };
+  } catch(e) { console.error('Resend request failed',e.message); return {sent:false,reason:'Email provider could not be reached.'}; }
 }
 function calendarEventId(requestId) {
   const hex=String(requestId).replace(/-/g,'').toLowerCase();
@@ -60,12 +62,18 @@ export async function PATCH(req) {
       if(!existing.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
       const prior=existing.rows[0];
       let retryCalendar={created:false,reason:'No status change; external notifications were not repeated.'};
-      if(status==='confirmed'&&!prior.calendar_event_id) retryCalendar=await createCalendarEvent(prior);
+      if(status==='confirmed'&&!prior.calendar_event_id) {
+        try { retryCalendar=await createCalendarEvent(prior); }
+        catch(e) { console.error('Calendar retry failed',e.message); retryCalendar={created:false,reason:'Google Calendar could not be reached.'}; }
+      }
       return NextResponse.json({ok:true,unchanged:true,request:prior,calendar:retryCalendar,email:{client:false,admin:false},warnings:[...(!retryCalendar.created&&status==='confirmed'?[retryCalendar.reason]:[])]},{headers:{'Cache-Control':'no-store'}});
     }
     const row=q.rows[0];
     let calendar={created:false,reason:'Calendar event only applies to confirmed requests.'};
-    if(status==='confirmed'&&!row.calendar_event_id) calendar=await createCalendarEvent(row);
+    if(status==='confirmed'&&!row.calendar_event_id) {
+      try { calendar=await createCalendarEvent(row); }
+      catch(e) { console.error('Calendar integration failed',e.message); calendar={created:false,reason:'Google Calendar could not be reached.'}; }
+    }
     const date=String(row.preferred_date).slice(0,10), time=String(row.preferred_time||'').slice(0,5);
     const subject=status==='confirmed'?'Your G-BEST inspection is confirmed':status==='declined'?'Update on your G-BEST inspection request':'Update to your G-BEST inspection request';
     const message=status==='confirmed'?'Your physical inspection has been approved for '+date+' at '+time+' WAT. The appointment is 30 minutes.':status==='declined'?'We are sorry, but we cannot approve your requested inspection slot. Please contact our team to arrange another time.':'Your inspection request status has been updated to '+status+'.';
