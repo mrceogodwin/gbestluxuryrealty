@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
-import { queueInspectionEmails, deliverInspectionEmails } from '../../../lib/inspection-email-outbox';
+import { queueInspectionEmails, deliverInspectionEmails } from '../../../../lib/inspection-email-outbox';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const pool = globalThis.__gbestPool || (globalThis.__gbestPool = new Pool({ connectionString: process.env.DATABASE_URL, max: 3, ssl: { rejectUnauthorized: true } }));
