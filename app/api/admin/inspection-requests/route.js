@@ -6,14 +6,6 @@ export const dynamic = 'force-dynamic';
 const pool = globalThis.__gbestPool || (globalThis.__gbestPool = new Pool({ connectionString: process.env.DATABASE_URL, max: 3, ssl: { rejectUnauthorized: true } }));
 const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function auth(req) { const expected = process.env.ADMIN_SECRET; const got = req.headers.get('authorization') || ''; return !!expected && got === 'Bearer ' + expected; }
-async function sendEmail(to, subject, html) {
-  if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL || !to) return { sent: false, reason: 'Resend is not configured.' };
-  try {
-    const res = await fetch('https://api.resend.com/emails', { method:'POST', headers:{ Authorization:'Bearer '+process.env.RESEND_API_KEY, 'Content-Type':'application/json' }, body:JSON.stringify({ from:process.env.RESEND_FROM_EMAIL, to:[to], subject, html }) });
-    if (!res.ok) { console.error('Resend returned', res.status); return { sent:false, reason:'Email provider rejected the message.' }; }
-    return { sent:true };
-  } catch(e) { console.error('Resend request failed',e.message); return {sent:false,reason:'Email provider could not be reached.'}; }
-}
 function calendarEventId(requestId) {
   const hex=String(requestId).replace(/-/g,'').toLowerCase();
   if(!/^[0-9a-f]{32}$/.test(hex)) throw new Error('Invalid inspection request ID');
@@ -44,7 +36,11 @@ export async function GET(req) {
   if (!auth(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
   try {
-    const q=await pool.query('SELECT id,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,status,calendar_event_id,created_at FROM public.inspection_requests ORDER BY created_at DESC LIMIT 100');
+    const q=await pool.query(\`SELECT r.id,r.full_name,r.contact,r.client_email,r.preferred_date,r.preferred_time,r.property_id,r.message,r.status,r.calendar_event_id,r.created_at,
+      COALESCE(o.sent_count,0)::int AS emails_sent,COALESCE(o.failed_count,0)::int AS emails_failed,COALESCE(o.pending_count,0)::int AS emails_pending
+      FROM public.inspection_requests r
+      LEFT JOIN LATERAL (SELECT count(*) FILTER (WHERE status='sent') AS sent_count,count(*) FILTER (WHERE status='failed') AS failed_count,count(*) FILTER (WHERE status='pending') AS pending_count FROM public.inspection_email_outbox WHERE inspection_request_id=r.id) o ON true
+      ORDER BY r.created_at DESC LIMIT 100\`);
     return NextResponse.json({requests:q.rows},{headers:{'Cache-Control':'no-store'}});
   } catch(e) { console.error('Admin request list failed',e.code||e.message); return NextResponse.json({error:'Could not load requests'},{status:500}); }
 }
