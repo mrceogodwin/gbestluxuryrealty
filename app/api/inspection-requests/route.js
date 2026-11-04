@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { getDatabasePool } from '../../../lib/db';
 import { queueInspectionEmails, deliverInspectionEmails } from '../../../lib/inspection-email-outbox';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
-const pool=globalThis.__gbestPool||(globalThis.__gbestPool=new Pool({connectionString:process.env.DATABASE_URL,max:3,connectionTimeoutMillis:5000,ssl:{rejectUnauthorized:true}}));
 const times=['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00'];
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export async function POST(req){
@@ -18,10 +17,10 @@ export async function POST(req){
   // Demo cards are for presentation only and must never create real inspection records.
   if(/^gb-00[1-8]$/.test(pid))return NextResponse.json({error:'This is a sample property, not a live listing. Please choose a published property before requesting an inspection.'},{status:400});
   let propertyLabel=pid;
-  const listing=await pool.query("SELECT id,title FROM public.properties WHERE status IN ('published','available') AND (id::text=$1 OR slug=$1) LIMIT 1",[pid]);
+  const listing=await getDatabasePool().query("SELECT id,title FROM public.properties WHERE status IN ('published','available') AND (id::text=$1 OR slug=$1) LIMIT 1",[pid]);
   if(!listing.rowCount)return NextResponse.json({error:'That property is no longer available. Refresh the listings and try again.'},{status:400});
   propertyLabel=listing.rows[0].title;
-  const q=await pool.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',30,$6,$7,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,pid,message]);
+  const q=await getDatabasePool().query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',30,$6,$7,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,pid,message]);
   const warnings=[];
   let emailResult={sent:0,failed:0,skipped:0};
   try {
