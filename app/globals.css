@@ -326,3 +326,14 @@ footer .brand{color:var(--ink)}footer .logo{background:var(--ink);color:var(--go
 .homepage-cms-preview>span{display:inline-block;padding:10px 14px;background:#145536;color:white;border-radius:6px;font-size:11px}
 .homepage-cms-note{margin:0 22px 24px;color:#7a857c;font-size:11px;line-height:1.6}
 @media(max-width:800px){.homepage-cms-layout{grid-template-columns:1fr}.homepage-cms-nav{position:static;max-height:260px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.homepage-cms-nav button{font-size:10px;padding:9px 7px}.homepage-cms-fields{grid-template-columns:1fr}.homepage-cms-fields label.wide{grid-column:auto}.homepage-cms-summary>div{padding:13px}.homepage-cms-summary b{font-size:24px}.homepage-cms-summary span{font-size:8px}.homepage-cms-editor-top{padding:18px}.homepage-cms-actions{padding:0 18px 18px}.homepage-cms-preview{margin:0 18px 18px}}
+
+.homepage-cms-history{margin:22px 0;padding:20px;border:1px solid #d9d3ca;border-radius:16px;background:#f7f5f1;color:#26231f}
+.homepage-cms-history>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.homepage-cms-history h3{margin:0;font-size:12px;letter-spacing:1.4px}
+.homepage-cms-history>div:first-child button,.homepage-cms-history article>button{border:1px solid #b7aa99;background:#fff;color:#302a23;border-radius:8px;padding:9px 12px;font-size:10px;font-weight:700;cursor:pointer}
+.homepage-cms-history article{display:grid;grid-template-columns:1fr auto;gap:7px 12px;padding:14px 0;border-top:1px solid #ded8ce}
+.homepage-cms-history article span{font-size:10px;letter-spacing:.5px;color:#6c5c4a}
+.homepage-cms-history article time{font-size:10px;color:#776f66}
+.homepage-cms-history article p{grid-column:1/-1;margin:0;font-size:13px;color:#28231f}
+.homepage-cms-history article>button{grid-column:1/-1;justify-self:start;background:#25231f;color:#fff;border-color:#25231f}
+@media(max-width:640px){.homepage-cms-history{padding:14px}.homepage-cms-history article{grid-template-columns:1fr}.homepage-cms-history article time{grid-row:2}.homepage-cms-history article p{grid-column:1}.homepage-cms-actions{flex-wrap:wrap}.homepage-cms-actions button,.homepage-cms-actions a{flex:1 1 100%;text-align:center}}
