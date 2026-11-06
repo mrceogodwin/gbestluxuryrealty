@@ -231,6 +231,7 @@ export async function DELETE(request, { params }) {
     if (!body?.media_id) return NextResponse.json({ error: 'Media item not found.' }, { status: 404 });
     const pool = getDatabasePool();
     const connection = await pool.connect();
+    let objectKey = null;
     try {
       await connection.query('BEGIN');
       await connection.query('SELECT pg_advisory_xact_lock(hashtext($1))', [String(id)]);
@@ -242,7 +243,7 @@ export async function DELETE(request, { params }) {
         await connection.query('ROLLBACK');
         return NextResponse.json({ error: 'Media item not found.' }, { status: 404 });
       }
-      const objectKey = found.rows[0].object_key;
+      objectKey = found.rows[0].object_key;
       await connection.query('DELETE FROM public.property_media WHERE id=$1 AND property_id=$2', [body.media_id, id]);
       const cover = await connection.query(
         "SELECT id FROM public.property_media WHERE property_id=$1 AND media_type='image' ORDER BY sort_order LIMIT 1",
