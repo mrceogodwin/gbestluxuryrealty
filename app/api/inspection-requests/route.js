@@ -36,7 +36,9 @@ export async function POST(req){
    requestId=q.rows[0].id;
    for(const doc of requiredDocs.rows.filter(x=>byId.has(x.id))){
     const snapshot=JSON.stringify({id:doc.id,version:doc.version,title:doc.title,body:doc.body,file_url:doc.file_url});
-    await client.query('INSERT INTO public.legal_document_acceptances(inspection_request_id,document_id,document_version,document_title,content_sha256,accepted,client_email) VALUES($1,$2,$3,$4,$5,true,$6)',[requestId,doc.id,doc.version,doc.title,createHash('sha256').update(snapshot).digest('hex'),email]);
+    const digest=createHash('sha256').update(snapshot).digest('hex');
+    await client.query('INSERT INTO public.legal_document_acceptances(inspection_request_id,document_id,document_version,document_title,content_sha256,accepted,client_email) VALUES($1,$2,$3,$4,$5,true,$6)',[requestId,doc.id,doc.version,doc.title,digest,email]);
+    await client.query('INSERT INTO public.legal_document_version_acceptances(inspection_request_id,document_id,document_version,document_title,content_sha256,client_email,acceptance_source) VALUES($1,$2,$3,$4,$5,$6,\'booking\') ON CONFLICT(inspection_request_id,document_id,document_version) DO NOTHING',[requestId,doc.id,doc.version,doc.title,digest,email]);
    }
    await client.query('COMMIT');
   }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
