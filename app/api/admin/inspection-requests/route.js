@@ -86,6 +86,17 @@ export async function PATCH(req) {
     if(!/^[0-9a-f-]{36}$/i.test(id)||!Object.hasOwn(allowedPrevious,status)) return NextResponse.json({error:'Invalid action'},{status:400});
     const pool=getDatabasePool();
     let calendar={created:false,reason:'Calendar event only applies to confirmed requests.'};
+    let cancellationCalendar={deleted:true,skipped:true};
+    if(status==='cancelled'){
+      const current=await pool.query('SELECT id,status,calendar_event_id FROM public.inspection_requests WHERE id=$1',[id]);
+      if(!current.rowCount)return NextResponse.json({error:'Request not found'},{status:404});
+      if(!['pending','confirmed','contacted'].includes(current.rows[0].status))return NextResponse.json({error:'This request cannot be cancelled from its current status.',currentStatus:current.rows[0].status},{status:409});
+      if(current.rows[0].calendar_event_id){
+        try{cancellationCalendar=await deleteCalendarEvent(current.rows[0]);}
+        catch(e){console.error('Calendar cancellation preflight failed',e.message);cancellationCalendar={deleted:false,reason:'Google Calendar could not be reached.'};}
+        if(!cancellationCalendar.deleted)return NextResponse.json({error:'The request was not cancelled because its calendar appointment could not be removed.',calendar:cancellationCalendar},{status:503,headers:{'Cache-Control':'no-store'}});
+      }
+    }
     if(status==='confirmed'){
       const current=await pool.query('SELECT id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1',[id]);
       if(!current.rowCount)return NextResponse.json({error:'Request not found'},{status:404});
@@ -119,11 +130,8 @@ export async function PATCH(req) {
     }
     const row=q.rows[0];
     if(status==='confirmed'&&calendar.created) row.calendar_event_id=calendar.eventId;
-    let calendarRemoval={deleted:false,reason:'Calendar removal only applies to cancelled requests.'};
-    if(status==='cancelled'&&row.calendar_event_id){
-      try{calendarRemoval=await deleteCalendarEvent(row);if(calendarRemoval.deleted)row.calendar_event_id=null;}
-      catch(e){console.error('Calendar cancellation failed',e.message);calendarRemoval={deleted:false,reason:'Google Calendar could not be reached.'};}
-    }
+    let calendarRemoval=cancellationCalendar;
+    if(status==='cancelled') row.calendar_event_id=null;
     const date=String(row.preferred_date).slice(0,10), time=String(row.preferred_time||'').slice(0,5);
     const subject=status==='confirmed'?'Your G-BEST inspection is confirmed':status==='declined'?'Update on your G-BEST inspection request':'Update to your G-BEST inspection request';
     const message=status==='confirmed'?'Your physical inspection has been approved for '+date+' at '+time+' WAT. The appointment is 30 minutes.':status==='declined'?'We are sorry, but we cannot approve your requested inspection slot. Please contact our team to arrange another time.':'Your inspection request status has been updated to '+status+'.';
