@@ -362,3 +362,18 @@ footer .brand{color:var(--ink)}footer .logo{background:var(--ink);color:var(--go
 .footer-bottom{border-top:1px solid #ffffff2a;padding:19px 0;display:flex;justify-content:space-between;gap:18px;color:#aebdb1;font:500 9px 'DM Mono',monospace;letter-spacing:.05em}.footer-bottom>a{color:#e4c77e;text-decoration:none}
 @media(max-width:800px){.company-film,.newsletter-section{grid-template-columns:1fr}.company-film{padding:52px 5%}.newsletter-section{padding:52px 5%}.footer-main{grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 22px}.site-footer{padding:0 5%}}
 @media(max-width:440px){.newsletter-input-row{flex-direction:column}.newsletter-input-row button{min-height:48px}.footer-main{grid-template-columns:1fr 1fr;gap:28px 15px}.footer-brand{grid-column:1/-1}.footer-bottom{font-size:8px;flex-direction:column}.company-film-frame,.company-film-frame video{min-height:210px}}
+
+/* Property detail media controls */
+.property-modal-gallery{position:relative;background:#081b12}
+.property-modal-gallery .property-modal-image{display:block;width:100%;height:260px;object-fit:cover}
+.gallery-arrow{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border:1px solid #ffffff80;border-radius:50%;background:#061e15d9;color:#fff;font-size:30px;line-height:1;display:grid;place-items:center;cursor:pointer}
+.gallery-prev{left:14px}.gallery-next{right:14px}
+.gallery-count{position:absolute;right:14px;bottom:14px;padding:7px 10px;border-radius:30px;background:#061e15d9;color:#fff;font:700 10px 'DM Mono',monospace}
+.property-video-wrap{position:relative;background:#061e15;margin:0 0 20px;aspect-ratio:16/9;overflow:hidden}
+.property-video-wrap video{display:block;width:100%;height:100%;object-fit:contain}
+.property-video-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:9px;border:0;background:#061e1555;color:#fff;cursor:pointer}
+.property-video-play span{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;padding-left:4px;background:#d6b768;color:#073c26;font-size:22px;box-shadow:0 6px 30px #0006}
+.property-video-play b{font:800 9px 'DM Mono',monospace;letter-spacing:.16em}
+.logo-wordmark{display:inline-flex!important;align-items:center;justify-content:center;min-width:68px;padding:0 8px;font-size:12px!important;letter-spacing:-.06em;font-weight:900}
+.demo-mark{font-size:9px!important;letter-spacing:.12em;padding:9px 0!important;background:transparent!important;color:#073c26!important;min-width:0}
+@media(max-width:600px){.property-modal-gallery .property-modal-image{height:210px}.gallery-arrow{width:36px;height:36px}}
