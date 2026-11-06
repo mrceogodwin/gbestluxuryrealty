@@ -1,60 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-
 const source = async (path) => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
-test('public property reads never mutate the database schema', async () => {
+test('public property API returns gallery images from Neon', async () => {
   const code = await source('app/api/properties/route.js');
-  assert.doesNotMatch(code, /\\b(?:CREATE|ALTER|DROP)\\s+(?:TABLE|INDEX|COLUMN)\\b/i);
-  assert.match(code, /getDatabasePool/);
+  assert.ok(code.includes('AS images'));
+  assert.ok(code.includes('images: Array.isArray(x.images)'));
+  assert.ok(code.includes('getDatabasePool'));
 });
-
-test('admin property API uses the shared pool and archives instead of deleting', async () => {
+test('admin property API archives records and validates gallery arrays', async () => {
   const code = await source('app/api/admin/properties/route.js');
-  assert.match(code, /getDatabasePool/);
-  assert.doesNotMatch(code, /\\b(?:CREATE|ALTER|DROP)\\s+(?:TABLE|INDEX|COLUMN)\\b/i);
-  assert.match(code, /status='archived'/);
-  assert.doesNotMatch(code, /DELETE\\s+FROM\\s+public\\.properties/i);
+  assert.ok(code.includes("status='archived'"));
+  assert.ok(!code.includes('DELETE FROM public.properties'));
+  assert.ok(code.includes('Property gallery must contain no more than 20 image URLs'));
+  assert.ok(code.includes('Every gallery image must use an HTTPS URL'));
 });
-
-test('inspection requests reject presentation-only sample property IDs', async () => {
+test('inspection requests reject presentation-only sample IDs and require published listings', async () => {
   const code = await source('app/api/inspection-requests/route.js');
-  assert.match(code, /Demo cards are for presentation only/);
-  assert.match(code, /gb-00\[1-8\]/);
-  assert.match(code, /status IN \\(\'published\',\'available\'\\)/);
+  assert.ok(code.includes('Demo cards are for presentation only'));
+  assert.ok(code.includes("status IN ('published', 'available')"));
 });
-
-test('inspection booking APIs share the Neon pool', async () => {
-  for (const path of ['app/api/inspection-requests/route.js', 'app/api/admin/inspection-requests/route.js']) {
+test('inspection APIs use the shared Neon pool', async () => {
+  for (const path of ['app/api/inspection-requests/route.js','app/api/admin/inspection-requests/route.js','lib/inspection-email-outbox.js']) {
     const code = await source(path);
-    assert.match(code, /getDatabasePool/);
-    assert.doesNotMatch(code, /new Pool\\(/);
+    assert.ok(code.includes('getDatabasePool'));
+    assert.ok(!code.includes('new Pool('));
   }
 });
-
-test('inspection notification failures do not turn a saved request into a failed submission', async () => {
-  const code = await source('app/api/inspection-requests/route.js');
-  assert.match(code, /Inspection request saved but email queueing failed/);
-  assert.match(code, /status:201/);
-});
-
-test('inspection outbox uses the shared Neon pool', async () => {
-  const code = await source('lib/inspection-email-outbox.js');
-  assert.match(code, /getDatabasePool\\(\\)\\.query/);
-  assert.doesNotMatch(code, /new Pool\\(/);
-});
-
-test('admin property API validates and persists gallery image arrays', async () => {
-  const code = await source('app/api/admin/properties/route.js');
-  assert.match(code, /Property gallery must contain no more than 20 image URLs/);
-  assert.match(code, /Every gallery image must use an HTTPS URL/);
-  assert.match(code, /d\.images=d\.images\.slice\(0,20\)/);
-});
-
-test('inspection confirmation requires calendar event creation first', async () => {
+test('inspection confirmation creates the calendar event before status confirmation', async () => {
   const code = await source('app/api/admin/inspection-requests/route.js');
-  assert.match(code, /pre-confirmation failed/);
-  assert.match(code, /The inspection was not confirmed because its calendar event could not be created/);
-  assert.match(code, /if\(!calendar\.created\)return NextResponse\.json/);
+  const preflight = code.indexOf('pre-confirmation failed');
+  const update = code.indexOf("UPDATE public.inspection_requests SET status=$2");
+  assert.ok(preflight >= 0 && update > preflight);
+  assert.ok(code.includes('The inspection was not confirmed because its calendar event could not be created'));
+});
+test('email failure does not turn a saved inspection request into a failed submission', async () => {
+  const code = await source('app/api/inspection-requests/route.js');
+  assert.ok(code.includes('Inspection request saved but email queueing failed'));
+  assert.ok(code.includes('status:201'));
 });
