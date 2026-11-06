@@ -20,7 +20,7 @@ function validFile(type,b){
  return false;
 }
 const clean=(v,n)=>String(v??'').trim().slice(0,n);
-const safe=s=>String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));
+const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function sendEmail(to,subject,html){
  if(!to||!process.env.RESEND_API_KEY||!process.env.RESEND_FROM_EMAIL)return false;
  const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({from:process.env.RESEND_FROM_EMAIL,to:[to],subject,html})});
@@ -66,7 +66,7 @@ export async function POST(req){
   }catch(e){await db.query('ROLLBACK');throw e;}finally{db.release();}
   const html='<p>New G-BEST client registration and manual payment receipt submitted.</p><p><b>Client:</b> '+safe(name)+'<br/><b>Email:</b> '+safe(email)+'<br/><b>Phone:</b> '+safe(phone)+'<br/><b>Amount:</b> ₦15,000<br/><b>Transfer reference:</b> '+safe(reference)+'<br/><b>Transfer date:</b> '+safe(transferDate)+'</p><p>Open the Super Admin dashboard to review the receipt. Payment remains pending until verified.</p>';
   let adminNotified=false,clientNotified=false;
-  try{adminNotified=await sendEmail(process.env.ADMIN_EMAIL,'G-BEST: payment receipt awaiting verification',html);}catch(e){console.error('Registration admin email failed',e.message);}
+  try{adminNotified=await sendEmail(process.env.ADMIN_EMAIL||'gbestinnovations@gmail.com','G-BEST: payment receipt awaiting verification',html);}catch(e){console.error('Registration admin email failed',e.message);}
   try{clientNotified=await sendEmail(email,'G-BEST received your registration submission','<p>Hello '+safe(name)+',</p><p>We received your registration and payment receipt. Your status is pending manual verification. Uploading a receipt is not payment approval.</p>');}catch(e){console.error('Registration client email failed',e.message);}
   return NextResponse.json({ok:true,status:'pending',message:'Registration submitted. Your payment is awaiting manual verification.',adminNotified,clientNotified},{status:201,headers:{'Cache-Control':'no-store'}});
  }catch(e){
