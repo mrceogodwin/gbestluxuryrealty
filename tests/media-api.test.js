@@ -51,3 +51,23 @@ test('committed media operations report legacy synchronization warnings instead 
   assert.match(route, /async function syncLegacyWithWarning/);
   assert.match(route, /Gallery saved, but the older property image fields could not be synchronized/);
 });
+
+
+const inspectionPublic = readFileSync(new URL('../app/api/inspection-requests/route.js', import.meta.url), 'utf8');
+
+test('public inspection requests validate the slot, require a live property and remain pending', () => {
+  assert.match(inspectionPublic, /const times=\['09:00','09:30'/);
+  assert.match(inspectionPublic, /duration_minutes,property_id,message,status,client_timezone/);
+  assert.match(inspectionPublic, /'physical_inspection',30/);
+  assert.match(inspectionPublic, /'pending','Africa\/Lagos'/);
+  assert.match(inspectionPublic, /Demo cards are for presentation only/);
+  assert.match(inspectionPublic, /status IN \('published','available'\)/);
+  assert.match(inspectionPublic, /Choose a future date and time/);
+});
+
+test('inspection confirmation requires a calendar event before changing status', () => {
+  const confirmBlock = inspectionAdmin.slice(inspectionAdmin.indexOf("if(status==='confirmed')"), inspectionAdmin.indexOf("const q=await pool.query('UPDATE public.inspection_requests"));
+  assert.match(confirmBlock, /createCalendarEvent/);
+  assert.match(confirmBlock, /if\(!calendar\.created\)return NextResponse\.json/);
+  assert.match(inspectionAdmin, /duration_minutes|30\*60\*1000/);
+});
