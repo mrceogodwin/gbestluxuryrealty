@@ -24,7 +24,7 @@ export async function POST(req){
   const registration=await pool.query("SELECT id FROM public.client_registrations WHERE lower(email)=lower($1) AND payment_status='approved' ORDER BY updated_at DESC LIMIT 1",[email]);
   if(!registration.rowCount)return NextResponse.json({error:'Your client registration or payment is not yet approved. Please complete registration and wait for G-BEST to verify your bank transfer before booking an inspection.'},{status:403});
   let propertyLabel=pid;
-  const listing=await pool.query("SELECT id,title FROM public.properties WHERE status IN ('published','available') AND (id::text=$1 OR upper(slug)=upper($1) OR (CASE WHEN id::text ~ '^[0-9]+
+  const listing=await pool.query("SELECT id,title FROM public.properties WHERE status IN ('published','available') AND (id::text=$1 OR upper(slug)=upper($1) OR (CASE WHEN id::text ~ '^[0-9]+$' THEN 'GB-' || lpad(id::text, 6, '0') ELSE 'GB-' || upper(replace(id::text, '-', '')) END)=$1) LIMIT 1",[pid]);
   if(!listing.rowCount)return NextResponse.json({error:'That property is no longer available. Refresh the listings and try again.'},{status:400});
   propertyLabel=listing.rows[0].title;
   const q=await pool.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',30,$6,$7,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,String(listing.rows[0].id),message]);
