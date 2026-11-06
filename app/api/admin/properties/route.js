@@ -1,9 +1,10 @@
+import { authorizeStaffOrLegacySuperAdmin } from '../../../../lib/staff-auth';
 import { NextResponse } from 'next/server';
 import { getDatabasePool } from '../../../../lib/db';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 
-function authorized(req){const secret=process.env.ADMIN_SECRET;return Boolean(secret)&&req.headers.get('authorization')==='Bearer '+secret;}
+async function auth(req, permission='properties.manage') { return authorizeStaffOrLegacySuperAdmin(req, permission); }
 
 class ValidationError extends Error {}
 async function readBody(req){try{const body=await req.json();if(!body||typeof body!=='object'||Array.isArray(body))throw new ValidationError('Request body must be an object.');return body;}catch(e){if(e instanceof ValidationError)throw e;throw new ValidationError('Invalid JSON body.');}}
