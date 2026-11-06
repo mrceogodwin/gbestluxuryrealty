@@ -1,11 +1,12 @@
+import {authorizeStaffOrLegacySuperAdmin} from '../../../../../lib/staff-auth';
 import {NextResponse} from 'next/server';
 import {randomBytes,createHash} from 'node:crypto';
 import {getDatabasePool} from '../../../../../lib/db';
 import {ensureLegalDocumentTables} from '../../../../../lib/legal-documents';
 export const runtime='nodejs';export const dynamic='force-dynamic';
-const auth=req=>Boolean(process.env.ADMIN_SECRET)&&req.headers.get('authorization')==='Bearer '+process.env.ADMIN_SECRET;
+async function auth(req, permission='legal.publish') { return authorizeStaffOrLegacySuperAdmin(req, permission); }
 export async function POST(req){
- if(!auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});
+ if(!await auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
   const b=await req.json(),requestId=String(b.inspection_request_id||''),documentId=String(b.document_id||'');
   if(!/^[0-9a-f-]{36}$/i.test(requestId)||!/^[0-9a-f-]{36}$/i.test(documentId))return NextResponse.json({error:'Choose a valid inspection request and document.'},{status:400});
