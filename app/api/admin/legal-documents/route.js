@@ -1,9 +1,9 @@
-import {authorizeStaffOrLegacySuperAdmin} from '../../../../lib/staff-auth';
+import {authorizeStaff} from '../../../../lib/staff-auth';
 import {NextResponse} from 'next/server';
 import {createHash} from 'node:crypto';
 import {ensureLegalDocumentTables} from '../../../../lib/legal-documents';
 export const runtime='nodejs';export const dynamic='force-dynamic';
-async function auth(req, permission='legal.publish') { return authorizeStaffOrLegacySuperAdmin(req, permission); }
+async function auth(req, permission='legal.publish') { return authorizeStaff(req, permission); }
 const slugify=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,80);
 const vv=x=>String(x||'informational');
 const clean=b=>{const title=String(b.title||'').trim().slice(0,180),body=String(b.body||'').trim().slice(0,50000),file=String(b.file_url||'').trim().slice(0,1500),category=String(b.category||'inspection');if(title.length<3||(!body&&!file))throw Error('Add a title and document text or a PDF URL.');if(file&&!/^https:\/\//i.test(file))throw Error('Document URL must use HTTPS.');if(!['inspection','registration','purchase','rental','general'].includes(category))throw Error('Choose a valid workflow.');if(!['informational','minor','material'].includes(vv(b.change_type)))throw Error('Choose a valid change type.');return {title,body,file_url:file||null,category,required:b.required!==false,slug:slugify(b.slug||title),change_summary:String(b.change_summary||'').trim().slice(0,2000),change_type:String(b.change_type||'informational'),effective_at:b.effective_at||null}};
