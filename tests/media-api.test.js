@@ -51,3 +51,12 @@ test('committed media operations report legacy synchronization warnings', () => 
   assert.match(route, /async function syncLegacyWithWarning/);
   assert.match(route, /Gallery saved, but the older property image fields could not be synchronized/);
 });
+
+
+test('cancellation commits status before external calendar cleanup', () => {
+  const statusWrite = inspectionAdmin.indexOf("const q=await pool.query('UPDATE public.inspection_requests");
+  const calendarCleanup = inspectionAdmin.indexOf("calendarRemoval=await deleteCalendarEvent(row)");
+  assert.ok(statusWrite >= 0);
+  assert.ok(calendarCleanup > statusWrite);
+  assert.match(inspectionAdmin, /if\(calendarRemoval\.deleted\) row\.calendar_event_id=null/);
+});
