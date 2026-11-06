@@ -60,3 +60,10 @@ test('cancellation commits status before external calendar cleanup', () => {
   assert.ok(calendarCleanup > statusWrite);
   assert.match(inspectionAdmin, /if\(calendarRemoval\.deleted\) row\.calendar_event_id=null/);
 });
+
+
+const inspectionAdminPage = readFileSync(new URL('../app/admin/page.js', import.meta.url), 'utf8');
+test('admin can retry calendar cleanup for cancelled inspections', () => {
+  assert.match(inspectionAdminPage, /x\.status==='cancelled'&&x\.calendar_event_id/);
+  assert.match(inspectionAdminPage, /Retry calendar cleanup/);
+});
