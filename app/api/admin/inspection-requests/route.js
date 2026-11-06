@@ -1,10 +1,11 @@
+import { authorizeStaffOrLegacySuperAdmin } from '../../../../lib/staff-auth';
 import { NextResponse } from 'next/server';
 import { getDatabasePool } from '../../../../lib/db';
 import { queueInspectionEmails, deliverInspectionEmails } from '../../../../lib/inspection-email-outbox';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function auth(req) { const expected = process.env.ADMIN_SECRET; const got = req.headers.get('authorization') || ''; return !!expected && got === 'Bearer ' + expected; }
+async function auth(req, permission='inspections.view') { return authorizeStaffOrLegacySuperAdmin(req, permission); }
 function calendarEventId(requestId) {
   const hex=String(requestId).replace(/-/g,'').toLowerCase();
   if(!/^[0-9a-f]{32}$/.test(hex)) throw new Error('Invalid inspection request ID');
