@@ -19,7 +19,8 @@ function validFile(type,b){
  if(type==='application/pdf')return String.fromCharCode(...b.slice(0,5))==='%PDF-';
  return false;
 }
-const clean=(v,n)=>String(v??'').trim().slice(0,n);\nconst safe=s=>String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));
+const clean=(v,n)=>String(v??'').trim().slice(0,n);
+const safe=s=>String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));
 async function sendEmail(to,subject,html){
  if(!to||!process.env.RESEND_API_KEY||!process.env.RESEND_FROM_EMAIL)return false;
  const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({from:process.env.RESEND_FROM_EMAIL,to:[to],subject,html})});
