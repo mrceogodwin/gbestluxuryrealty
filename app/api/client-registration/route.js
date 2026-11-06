@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { AwsClient } from 'aws4fetch';
 import { randomUUID } from 'node:crypto';
-import { getDatabasePool } from '../../../../lib/db';
+import { getDatabasePool } from '../../../lib/db';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
