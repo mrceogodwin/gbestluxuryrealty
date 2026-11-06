@@ -44,3 +44,17 @@ test('inspection outbox uses the shared Neon pool', async () => {
   assert.match(code, /getDatabasePool\\(\\)\\.query/);
   assert.doesNotMatch(code, /new Pool\\(/);
 });
+
+test('admin property API validates and persists gallery image arrays', async () => {
+  const code = await source('app/api/admin/properties/route.js');
+  assert.match(code, /Property gallery must contain no more than 20 image URLs/);
+  assert.match(code, /Every gallery image must use an HTTPS URL/);
+  assert.match(code, /d\.images=d\.images\.slice\(0,20\)/);
+});
+
+test('inspection confirmation requires calendar event creation first', async () => {
+  const code = await source('app/api/admin/inspection-requests/route.js');
+  assert.match(code, /pre-confirmation failed/);
+  assert.match(code, /The inspection was not confirmed because its calendar event could not be created/);
+  assert.match(code, /if\(!calendar\.created\)return NextResponse\.json/);
+});
