@@ -84,6 +84,16 @@ async function syncLegacy(pool, id) {
     [images, images[0] || '', video ? publicUrl(video.object_key) : '', id]
   );
 }
+
+async function syncLegacyWithWarning(pool, id) {
+  try {
+    await syncLegacy(pool, id);
+    return null;
+  } catch (error) {
+    console.error('Property media committed but legacy image fields need synchronization:', error?.message || error);
+    return 'Gallery saved, but the older property image fields could not be synchronized. Refresh the admin panel and retry.';
+  }
+}
 function failure(error) {
   console.error('Property media API:', error?.message || error);
   return NextResponse.json({ error: 'Property media operation failed. Please try again.' }, { status: 500 });
@@ -153,8 +163,8 @@ export async function POST(request, { params }) {
       connection.release();
     }
     uploadedKey = null;
-    await syncLegacy(pool, id);
-    return NextResponse.json({ media: await getMedia(pool, id) }, { status: 201, headers: { 'Cache-Control': 'no-store' } });
+    const warning = await syncLegacyWithWarning(pool, id);
+    return NextResponse.json({ media: await getMedia(pool, id), warning }, { status: 201, headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     if (uploadedKey) {
       try {
@@ -177,15 +187,18 @@ export async function PATCH(request, { params }) {
     const body = await request.json();
     const pool = getDatabasePool();
     if (body.action === 'cover') {
-      const chosen = await pool.query(
-        "SELECT id FROM public.property_media WHERE id=$1 AND property_id=$2 AND media_type='image'",
-        [body.media_id, id]
-      );
-      if (!chosen.rowCount) return NextResponse.json({ error: 'Image not found for this property.' }, { status: 404 });
       const connection = await pool.connect();
       try {
         await connection.query('BEGIN');
         await connection.query('SELECT pg_advisory_xact_lock(hashtext($1))', [String(id)]);
+        const chosen = await connection.query(
+          "SELECT id FROM public.property_media WHERE id=$1 AND property_id=$2 AND media_type='image' FOR UPDATE",
+          [body.media_id, id]
+        );
+        if (!chosen.rowCount) {
+          await connection.query('ROLLBACK');
+          return NextResponse.json({ error: 'Image not found for this property.' }, { status: 404 });
+        }
         await connection.query('UPDATE public.property_media SET is_cover=false WHERE property_id=$1', [id]);
         await connection.query('UPDATE public.property_media SET is_cover=true WHERE id=$1 AND property_id=$2', [body.media_id, id]);
         const orderedIds = await connection.query(
@@ -199,16 +212,21 @@ export async function PATCH(request, { params }) {
         throw error;
       } finally { connection.release(); }
     } else if (body.action === 'reorder') {
-      const existing = await pool.query('SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY sort_order', [id]);
-      if (!Array.isArray(body.media_ids) || existing.rowCount !== body.media_ids.length ||
-          new Set(body.media_ids).size !== existing.rowCount ||
-          existing.rows.some(row => !body.media_ids.includes(row.id))) {
+      if (!Array.isArray(body.media_ids) || body.media_ids.length > MAX_ITEMS ||
+          body.media_ids.some(value => typeof value !== 'string') ||
+          new Set(body.media_ids).size !== body.media_ids.length) {
         return NextResponse.json({ error: 'Invalid gallery order.' }, { status: 400 });
       }
       const connection = await pool.connect();
       try {
         await connection.query('BEGIN');
         await connection.query('SELECT pg_advisory_xact_lock(hashtext($1))', [String(id)]);
+        const existing = await connection.query('SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY sort_order FOR UPDATE', [id]);
+        if (existing.rowCount !== body.media_ids.length ||
+            existing.rows.some(row => !body.media_ids.includes(row.id))) {
+          await connection.query('ROLLBACK');
+          return NextResponse.json({ error: 'Gallery changed while you were editing. Refresh and try again.' }, { status: 409 });
+        }
         await resequence(connection, id, body.media_ids);
         await connection.query('COMMIT');
       } catch (error) {
@@ -218,8 +236,8 @@ export async function PATCH(request, { params }) {
     } else {
       return NextResponse.json({ error: 'Unknown media action.' }, { status: 400 });
     }
-    await syncLegacy(pool, id);
-    return NextResponse.json({ media: await getMedia(pool, id) });
+    const warning = await syncLegacyWithWarning(pool, id);
+    return NextResponse.json({ media: await getMedia(pool, id), warning });
   } catch (error) { return failure(error); }
 }
 
@@ -274,7 +292,7 @@ export async function DELETE(request, { params }) {
       console.error('Neon media object cleanup pending:', storageError?.message || storageError);
       storageWarning = 'The gallery item was removed, but its unused storage object needs cleanup.';
     }
-    await syncLegacy(pool, id);
-    return NextResponse.json({ media: await getMedia(pool, id), warning: storageWarning });
+    const syncWarning = await syncLegacyWithWarning(pool, id);
+    return NextResponse.json({ media: await getMedia(pool, id), warning: [storageWarning, syncWarning].filter(Boolean).join(' ') || null });
   } catch (error) { return failure(error); }
 }
