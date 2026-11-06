@@ -1,5 +1,6 @@
-import './clients.css';
 'use client';
+
+import './clients.css';
 import {useState} from 'react';
 export default function ClientRegistrationsAdmin(){
  const [secret,setSecret]=useState(''),[items,setItems]=useState([]),[ready,setReady]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notes,setNotes]=useState({});
