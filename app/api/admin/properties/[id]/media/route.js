@@ -1,18 +1,251 @@
-import {NextResponse} from 'next/server';
-import {AwsClient} from 'aws4fetch';
-import {getDatabasePool} from '../../../../../../lib/db';
-export const runtime='nodejs',dynamic='force-dynamic';
-const BUCKET='property-media',MAX=5*1024*1024,LIMIT=20,TYPES={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/avif':'avif','video/mp4':'mp4','video/webm':'webm'};
-const auth=r=>!!process.env.ADMIN_SECRET&&r.headers.get('authorization')==='Bearer '+process.env.ADMIN_SECRET;
-function client(){const e=process.env;if(!e.AWS_ACCESS_KEY_ID||!e.AWS_SECRET_ACCESS_KEY||!e.AWS_ENDPOINT_URL_S3)throw Error('Neon Object Storage is not configured.');return {aws:new AwsClient({accessKeyId:e.AWS_ACCESS_KEY_ID,secretAccessKey:e.AWS_SECRET_ACCESS_KEY,service:'s3',region:e.AWS_REGION||'eu-central-1'}),endpoint:e.AWS_ENDPOINT_URL_S3.replace(/\/$/,'')}}
-const url=k=>{const {endpoint}=client();return endpoint+'/'+BUCKET+'/'+k.split('/').map(encodeURIComponent).join('/')};
-async function signed(k,m,t){const {aws}=client();return (await aws.sign(url(k),{method:m,headers:t?{'content-type':t}:{},aws:{signQuery:true,allHeaders:true}})).url}
-async function rows(p,id){const q=await p.query('SELECT id::text,object_key,media_type,mime_type,file_size_bytes,sort_order,alt_text,is_cover FROM public.property_media WHERE property_id=$1 ORDER BY sort_order',[id]);return q.rows.map(x=>({...x,url:url(x.object_key),file_size_bytes:Number(x.file_size_bytes)}))}
-async function sync(p,id){const q=await p.query('SELECT object_key,media_type FROM public.property_media WHERE property_id=$1 ORDER BY sort_order',[id]),imgs=q.rows.filter(x=>x.media_type==='image').map(x=>url(x.object_key)),v=q.rows.find(x=>x.media_type==='video');await p.query('UPDATE public.properties SET images=$1,image_url=$2,video_url=$3,updated_at=now() WHERE id=$4',[imgs,imgs[0]||'',v?url(v.object_key):'',id])}
-const fail=e=>{console.error('Property media:',e);return NextResponse.json({error:e.message||'Media operation failed.'},{status:500})};
-export async function GET(r,{params}){if(!auth(r))return NextResponse.json({error:'Unauthorized'},{status:401});try{const {id}=await params,p=getDatabasePool();if(!(await p.query('SELECT 1 FROM public.properties WHERE id=$1',[id])).rowCount)return NextResponse.json({error:'Property not found'},{status:404});return NextResponse.json({media:await rows(p,id)},{headers:{'Cache-Control':'no-store'}})}catch(e){return fail(e)}}
-export async function POST(r,{params}){if(!auth(r))return NextResponse.json({error:'Unauthorized'},{status:401});try{const {id}=await params,b=await r.json(),p=getDatabasePool();if(!(await p.query('SELECT 1 FROM public.properties WHERE id=$1',[id])).rowCount)return NextResponse.json({error:'Property not found'},{status:404});const n=Number((await p.query('SELECT count(*)::int n FROM public.property_media WHERE property_id=$1',[id])).rows[0].n);
-if(b.action==='sign'){if(!Array.isArray(b.files)||!b.files.length||b.files.length>10||n+b.files.length>LIMIT)return NextResponse.json({error:'Choose 1–10 files; maximum 20 media items per property.'},{status:400});const uploads=[];for(const f of b.files){const type=String(f.type||'').toLowerCase(),ext=TYPES[type],size=Number(f.size);if(!ext||!Number.isInteger(size)||size<1||size>MAX)return NextResponse.json({error:'Use JPG, PNG, WebP, AVIF, MP4 or WebM. Maximum 5 MB each.'},{status:400});const key='properties/'+id+'/'+crypto.randomUUID()+'.'+ext;uploads.push({object_key:key,upload_url:await signed(key,'PUT',type),headers:{'Content-Type':type},media_type:type.startsWith('image/')?'image':'video',mime_type:type,file_size_bytes:size})}return NextResponse.json({uploads})}
-if(b.action==='complete'){if(!Array.isArray(b.uploads)||!b.uploads.length||b.uploads.length>10||n+b.uploads.length>LIMIT)return NextResponse.json({error:'Invalid upload batch or property media limit reached.'},{status:400});const {aws}=client();for(const f of b.uploads){if(!f.object_key?.startsWith('properties/'+id+'/')||!TYPES[f.mime_type]||Number(f.file_size_bytes)<1||Number(f.file_size_bytes)>MAX)throw Error('Invalid media metadata.');const h=await aws.fetch(await signed(f.object_key,'HEAD'),{method:'HEAD'});if(!h.ok||h.headers.get('content-type')?.split(';')[0].toLowerCase()!==f.mime_type)throw Error('Could not verify uploaded file in Neon.');const order=Number((await p.query('SELECT COALESCE(MAX(sort_order),-1)+1 n FROM public.property_media WHERE property_id=$1',[id])).rows[0].n),cover=f.media_type==='image'&&!(await p.query('SELECT 1 FROM public.property_media WHERE property_id=$1 AND is_cover',[id])).rowCount;await p.query('INSERT INTO public.property_media(property_id,object_key,media_type,mime_type,file_size_bytes,sort_order,alt_text,is_cover) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',[id,f.object_key,f.media_type,f.mime_type,Number(f.file_size_bytes),order,String(f.alt_text||'').slice(0,250),cover])}await sync(p,id);return NextResponse.json({media:await rows(p,id)},{status:201})}return NextResponse.json({error:'Unknown action'},{status:400})}catch(e){return fail(e)}}
-export async function PATCH(r,{params}){if(!auth(r))return NextResponse.json({error:'Unauthorized'},{status:401});try{const {id}=await params,b=await r.json(),p=getDatabasePool();if(b.action==='cover'){const q=await p.query("SELECT id FROM public.property_media WHERE id=$1 AND property_id=$2 AND media_type='image'",[b.media_id,id]);if(!q.rowCount)return NextResponse.json({error:'Image not found'},{status:404});const all=await p.query('SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY (id=$2) DESC,sort_order',[id,b.media_id]),c=await p.connect();try{await c.query('BEGIN');await c.query('UPDATE public.property_media SET sort_order=sort_order+100 WHERE property_id=$1',[id]);for(let i=0;i<all.rows.length;i++)await c.query('UPDATE public.property_media SET sort_order=$1,is_cover=(id=$2) WHERE id=$2',[i,all.rows[i].id]);await c.query('COMMIT')}catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}}else if(b.action==='reorder'){const all=await p.query('SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY sort_order',[id]);if(!Array.isArray(b.media_ids)||all.rowCount!==b.media_ids.length||new Set(b.media_ids).size!==all.rowCount||all.rows.some(x=>!b.media_ids.includes(x.id)))return NextResponse.json({error:'Invalid gallery order'},{status:400});const c=await p.connect();try{await c.query('BEGIN');await c.query('UPDATE public.property_media SET sort_order=sort_order+100 WHERE property_id=$1',[id]);for(let i=0;i<b.media_ids.length;i++)await c.query('UPDATE public.property_media SET sort_order=$1 WHERE id=$2',[i,b.media_ids[i]]);await c.query('COMMIT')}catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}}else return NextResponse.json({error:'Unknown action'},{status:400});await sync(p,id);return NextResponse.json({media:await rows(p,id)})}catch(e){return fail(e)}}
-export async function DELETE(r,{params}){if(!auth(r))return NextResponse.json({error:'Unauthorized'},{status:401});try{const {id}=await params,b=await r.json(),p=getDatabasePool(),q=await p.query('SELECT object_key FROM public.property_media WHERE id=$1 AND property_id=$2',[b.media_id,id]);if(!q.rowCount)return NextResponse.json({error:'Media item not found'},{status:404});const {aws}=client(),d=await aws.fetch(await signed(q.rows[0].object_key,'DELETE'),{method:'DELETE'});if(!d.ok&&d.status!==404)throw Error('Neon object deletion failed');await p.query('DELETE FROM public.property_media WHERE id=$1',[b.media_id]);const left=await p.query("SELECT id FROM public.property_media WHERE property_id=$1 AND media_type='image' ORDER BY sort_order LIMIT 1",[id]);if(left.rowCount)await p.query('UPDATE public.property_media SET is_cover=(id=$1) WHERE property_id=$2',[left.rows[0].id,id]);const all=await p.query('SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY sort_order',[id]),c=await p.connect();try{await c.query('BEGIN');await c.query('UPDATE public.property_media SET sort_order=sort_order+100 WHERE property_id=$1',[id]);for(let i=0;i<all.rows.length;i++)await c.query('UPDATE public.property_media SET sort_order=$1 WHERE id=$2',[i,all.rows[i].id]);await c.query('COMMIT')}catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}await sync(p,id);return NextResponse.json({media:await rows(p,id)})}catch(e){return fail(e)}}
+import { NextResponse } from 'next/server';
+import { AwsClient } from 'aws4fetch';
+import { getDatabasePool } from '../../../../../../lib/db';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const BUCKET = 'property-media';
+const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_ITEMS = 20;
+const MIME = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/avif': 'avif',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm'
+};
+
+function authorized(request) {
+  return Boolean(process.env.ADMIN_SECRET) &&
+    request.headers.get('authorization') === 'Bearer ' + process.env.ADMIN_SECRET;
+}
+function storageClient() {
+  const env = process.env;
+  if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY || !env.AWS_ENDPOINT_URL_S3) {
+    throw new Error('Neon Object Storage is not configured on this deployment.');
+  }
+  return {
+    client: new AwsClient({
+      accessKeyId: env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+      service: 's3',
+      region: env.AWS_REGION || 'eu-central-1'
+    }),
+    endpoint: env.AWS_ENDPOINT_URL_S3.replace(/\/$/, '')
+  };
+}
+function objectUrl(key) {
+  const { endpoint } = storageClient();
+  return endpoint + '/' + BUCKET + '/' + key.split('/').map(encodeURIComponent).join('/');
+}
+function matchesSignature(type, bytes) {
+  if (type === 'image/jpeg') return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  if (type === 'image/png') return bytes.length > 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+  if (type === 'image/webp') return String.fromCharCode(...bytes.slice(0,4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8,12)) === 'WEBP';
+  if (type === 'image/avif') return String.fromCharCode(...bytes.slice(4,12)).includes('ftypavif');
+  if (type === 'video/mp4') return String.fromCharCode(...bytes.slice(4,8)) === 'ftyp';
+  if (type === 'video/webm') return bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3;
+  return false;
+}
+function publicUrl(key) { return objectUrl(key); }
+async function getMedia(pool, id) {
+  const result = await pool.query(
+    'SELECT id::text, object_key, media_type, mime_type, file_size_bytes, sort_order, alt_text, is_cover, created_at FROM public.property_media WHERE property_id=$1 ORDER BY sort_order, created_at',
+    [id]
+  );
+  return result.rows.map(row => ({ ...row, url: publicUrl(row.object_key), file_size_bytes: Number(row.file_size_bytes) }));
+}
+async function syncLegacy(pool, id) {
+  const result = await pool.query(
+    'SELECT object_key, media_type FROM public.property_media WHERE property_id=$1 ORDER BY sort_order, created_at',
+    [id]
+  );
+  const images = result.rows.filter(row => row.media_type === 'image').map(row => publicUrl(row.object_key));
+  const video = result.rows.find(row => row.media_type === 'video');
+  await pool.query(
+    'UPDATE public.properties SET images=$1, image_url=$2, video_url=$3, updated_at=now() WHERE id=$4',
+    [images, images[0] || '', video ? publicUrl(video.object_key) : '', id]
+  );
+}
+function failure(error) {
+  console.error('Property media API:', error?.message || error);
+  return NextResponse.json({ error: error?.message || 'Property media operation failed.' }, { status: 500 });
+}
+
+export async function GET(request, { params }) {
+  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const { id } = await params;
+    const pool = getDatabasePool();
+    const property = await pool.query('SELECT id FROM public.properties WHERE id=$1', [id]);
+    if (!property.rowCount) return NextResponse.json({ error: 'Property not found.' }, { status: 404 });
+    return NextResponse.json({ media: await getMedia(pool, id) }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (error) { return failure(error); }
+}
+
+export async function POST(request, { params }) {
+  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  let uploadedKey = null;
+  try {
+    const { id } = await params;
+    const form = await request.formData();
+    const file = form.get('file');
+    if (!file || typeof file.arrayBuffer !== 'function') {
+      return NextResponse.json({ error: 'Choose an image or video file.' }, { status: 400 });
+    }
+    const mime = String(file.type || '').toLowerCase();
+    const extension = MIME[mime];
+    if (!extension) return NextResponse.json({ error: 'Allowed formats: JPG, PNG, WebP, AVIF, MP4 and WebM.' }, { status: 400 });
+    if (file.size < 1 || file.size > MAX_BYTES) {
+      return NextResponse.json({ error: 'Each media file must be no larger than 5 MB.' }, { status: 400 });
+    }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (!matchesSignature(mime, bytes)) return NextResponse.json({ error: 'The file content does not match its declared file type.' }, { status: 400 });
+
+    const key = 'properties/' + id + '/' + crypto.randomUUID() + '.' + extension;
+    uploadedKey = key;
+    const { client } = storageClient();
+    const uploaded = await client.fetch(objectUrl(key), {
+      method: 'PUT',
+      headers: { 'content-type': mime },
+      body: bytes
+    });
+    if (!uploaded.ok) throw new Error('Neon Object Storage rejected the upload (' + uploaded.status + ').');
+
+    const pool = getDatabasePool();
+    const connection = await pool.connect();
+    try {
+      await connection.query('BEGIN');
+      await connection.query('SELECT pg_advisory_xact_lock(hashtext($1))', [String(id)]);
+      const property = await connection.query('SELECT id FROM public.properties WHERE id=$1 FOR UPDATE', [id]);
+      if (!property.rowCount) throw new Error('Property not found.');
+      const count = Number((await connection.query('SELECT count(*)::int AS count FROM public.property_media WHERE property_id=$1', [id])).rows[0].count);
+      if (count >= MAX_ITEMS) throw new Error('A property can have a maximum of 20 media items.');
+      const order = Number((await connection.query('SELECT COALESCE(MAX(sort_order),-1)+1 AS next FROM public.property_media WHERE property_id=$1', [id])).rows[0].next);
+      const mediaType = mime.startsWith('image/') ? 'image' : 'video';
+      const isCover = mediaType === 'image' && !(await connection.query('SELECT 1 FROM public.property_media WHERE property_id=$1 AND is_cover=true', [id])).rowCount;
+      await connection.query(
+        'INSERT INTO public.property_media (property_id, object_key, media_type, mime_type, file_size_bytes, sort_order, alt_text, is_cover) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+        [id, key, mediaType, mime, file.size, order, String(form.get('alt_text') || file.name || '').slice(0, 250), isCover]
+      );
+      await connection.query('COMMIT');
+    } catch (error) {
+      await connection.query('ROLLBACK');
+      throw error;
+    } finally {
+      connection.release();
+    }
+    uploadedKey = null;
+    await syncLegacy(pool, id);
+    return NextResponse.json({ media: await getMedia(pool, id) }, { status: 201, headers: { 'Cache-Control': 'no-store' } });
+  } catch (error) {
+    if (uploadedKey) {
+      try {
+        const { client } = storageClient();
+        await client.fetch(objectUrl(uploadedKey), { method: 'DELETE' });
+      } catch (cleanupError) {
+        console.error('Neon media orphan cleanup failed:', cleanupError?.message || cleanupError);
+      }
+    }
+    if (error?.message === 'Property not found.') return NextResponse.json({ error: error.message }, { status: 404 });
+    if (error?.message === 'A property can have a maximum of 20 media items.') return NextResponse.json({ error: error.message }, { status: 409 });
+    return failure(error);
+  }
+}
+
+export async function PATCH(request, { params }) {
+  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const pool = getDatabasePool();
+    if (body.action === 'cover') {
+      const chosen = await pool.query(
+        "SELECT id FROM public.property_media WHERE id=$1 AND property_id=$2 AND media_type='image'",
+        [body.media_id, id]
+      );
+      if (!chosen.rowCount) return NextResponse.json({ error: 'Image not found for this property.' }, { status: 404 });
+      const connection = await pool.connect();
+      try {
+        await connection.query('BEGIN');
+        await connection.query('SELECT pg_advisory_xact_lock(hashtext($1))', [String(id)]);
+        const ordered = await connection.query(
+          'SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY (id=$2) DESC, sort_order',
+          [id, body.media_id]
+        );
+        await connection.query('UPDATE public.property_media SET sort_order=sort_order+100 WHERE property_id=$1', [id]);
+        for (let index = 0; index < ordered.rows.length; index++) {
+          await connection.query(
+            'UPDATE public.property_media SET sort_order=$1, is_cover=(id=$2) WHERE id=$2',
+            [index, ordered.rows[index].id]
+          );
+        }
+        await connection.query('COMMIT');
+      } catch (error) {
+        await connection.query('ROLLBACK');
+        throw error;
+      } finally { connection.release(); }
+    } else if (body.action === 'reorder') {
+      const existing = await pool.query('SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY sort_order', [id]);
+      if (!Array.isArray(body.media_ids) || existing.rowCount !== body.media_ids.length ||
+          new Set(body.media_ids).size !== existing.rowCount ||
+          existing.rows.some(row => !body.media_ids.includes(row.id))) {
+        return NextResponse.json({ error: 'Invalid gallery order.' }, { status: 400 });
+      }
+      const connection = await pool.connect();
+      try {
+        await connection.query('BEGIN');
+        await connection.query('SELECT pg_advisory_xact_lock(hashtext($1))', [String(id)]);
+        await connection.query('UPDATE public.property_media SET sort_order=sort_order+100 WHERE property_id=$1', [id]);
+        for (let index = 0; index < body.media_ids.length; index++) {
+          await connection.query('UPDATE public.property_media SET sort_order=$1 WHERE id=$2 AND property_id=$3', [index, body.media_ids[index], id]);
+        }
+        await connection.query('COMMIT');
+      } catch (error) {
+        await connection.query('ROLLBACK');
+        throw error;
+      } finally { connection.release(); }
+    } else {
+      return NextResponse.json({ error: 'Unknown media action.' }, { status: 400 });
+    }
+    await syncLegacy(pool, id);
+    return NextResponse.json({ media: await getMedia(pool, id) });
+  } catch (error) { return failure(error); }
+}
+
+export async function DELETE(request, { params }) {
+  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const pool = getDatabasePool();
+    const found = await pool.query('SELECT object_key FROM public.property_media WHERE id=$1 AND property_id=$2', [body.media_id, id]);
+    if (!found.rowCount) return NextResponse.json({ error: 'Media item not found.' }, { status: 404 });
+    const { client } = storageClient();
+    const deleted = await client.fetch(objectUrl(found.rows[0].object_key), { method: 'DELETE' });
+    if (!deleted.ok && deleted.status !== 404) throw new Error('Could not delete the file from Neon Object Storage.');
+    await pool.query('DELETE FROM public.property_media WHERE id=$1 AND property_id=$2', [body.media_id, id]);
+    const cover = await pool.query(
+      "SELECT id FROM public.property_media WHERE property_id=$1 AND media_type='image' ORDER BY sort_order LIMIT 1",
+      [id]
+    );
+    if (cover.rowCount) await pool.query('UPDATE public.property_media SET is_cover=(id=$1) WHERE property_id=$2', [cover.rows[0].id, id]);
+    const remaining = await pool.query('SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY sort_order', [id]);
+    const connection = await pool.connect();
+    try {
+      await connection.query('BEGIN');
+      await connection.query('UPDATE public.property_media SET sort_order=sort_order+100 WHERE property_id=$1', [id]);
+      for (let index = 0; index < remaining.rows.length; index++) {
+        await connection.query('UPDATE public.property_media SET sort_order=$1 WHERE id=$2', [index, remaining.rows[index].id]);
+      }
+      await connection.query('COMMIT');
+    } catch (error) {
+      await connection.query('ROLLBACK');
+      throw error;
+    } finally { connection.release(); }
+    await syncLegacy(pool, id);
+    return NextResponse.json({ media: await getMedia(pool, id) });
+  } catch (error) { return failure(error); }
+}
