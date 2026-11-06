@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 
-export default function PropertyMediaManager({ propertyId, secret }) {
+export default function PropertyMediaManager({ propertyId }) {
   const [media, setMedia] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -12,7 +12,7 @@ export default function PropertyMediaManager({ propertyId, secret }) {
   async function call(method = 'GET', body) {
     const response = await fetch(endpoint, {
       method,
-      headers: { Authorization: 'Bearer ' + secret, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      headers: { ...(body ? { 'Content-Type': 'application/json' } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}),
       cache: 'no-store'
     });
@@ -25,7 +25,7 @@ export default function PropertyMediaManager({ propertyId, secret }) {
     setMedia(data.media || []);
   }
   useEffect(() => {
-    if (secret) refresh().catch(error => setError(error.message));
+    refresh().catch(error => setError(error.message));
   }, [propertyId, secret]);
 
   async function upload(files) {
