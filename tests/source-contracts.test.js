@@ -19,7 +19,7 @@ test('admin property API archives records and validates gallery arrays', async (
 test('inspection requests reject presentation-only sample IDs and require published listings', async () => {
   const code = await source('app/api/inspection-requests/route.js');
   assert.ok(code.includes('Demo cards are for presentation only'));
-  assert.ok(code.includes("status IN ('published', 'available')"));
+  assert.ok(code.includes("status IN ('published','available')"));
 });
 test('inspection APIs use the shared Neon pool', async () => {
   for (const path of ['app/api/inspection-requests/route.js','app/api/admin/inspection-requests/route.js','lib/inspection-email-outbox.js']) {
