@@ -1,5 +1,6 @@
-import './registration.css';
 'use client';
+
+import './registration.css';
 import {useState} from 'react';
 
 const groups=[
