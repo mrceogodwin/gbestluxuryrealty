@@ -44,6 +44,20 @@ async function createCalendarEvent(reqRow) {
   await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1',[reqRow.id,eventId]);
   return {created:true,eventId,htmlLink:ev.htmlLink};
 }
+async function deleteCalendarEvent(reqRow) {
+  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN, GOOGLE_CALENDAR_ID } = process.env;
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN || !GOOGLE_CALENDAR_ID)
+    return { deleted:false, reason:'Google Calendar credentials are not configured.' };
+  const tokenRes=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:GOOGLE_CLIENT_ID,client_secret:GOOGLE_CLIENT_SECRET,refresh_token:GOOGLE_REFRESH_TOKEN,grant_type:'refresh_token'})});
+  if(!tokenRes.ok)return {deleted:false,reason:'Google authorization failed.'};
+  const token=await tokenRes.json();
+  const eventId=reqRow.calendar_event_id||calendarEventId(reqRow.id);
+  const url='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(GOOGLE_CALENDAR_ID)+'/events/'+encodeURIComponent(eventId);
+  const res=await fetch(url,{method:'DELETE',headers:{Authorization:'Bearer '+token.access_token}});
+  if(res.status===404||res.status===410)return {deleted:true,eventId,alreadyAbsent:true};
+  if(!res.ok){console.error('Google Calendar event deletion failed',res.status);return {deleted:false,reason:'Could not remove the inspection from Google Calendar.'};}
+  return {deleted:true,eventId};
+}
 export async function GET(req) {
   if (!auth(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
@@ -92,8 +106,16 @@ export async function PATCH(req) {
     const currentRow=current.rows[0];
     if(!allowedPrevious[status].includes(currentRow.status) && currentRow.status!==status)
       return NextResponse.json({error:'This status change is not allowed from '+currentRow.status+'. Refresh the request and choose a valid next action.',currentStatus:currentRow.status},{status:409});
-    // A request is not marked confirmed unless Google Calendar confirms the event.
+    // Remove the calendar event before cancelling or moving a confirmed request
+    // back to contacted. If Google cannot remove it, leave the database unchanged.
     let calendar={created:false,reason:'Calendar event only applies to confirmed requests.'};
+    if((status==='cancelled'||status==='contacted')&&currentRow.status==='confirmed') {
+      let removal;
+      try { removal=await deleteCalendarEvent(currentRow); }
+      catch(e) { console.error('Calendar cancellation failed',e.message); removal={deleted:false,reason:'Google Calendar could not be reached.'}; }
+      if(!removal.deleted)return NextResponse.json({error:removal.reason||'Could not cancel the calendar event. The request status was not changed.'},{status:503});
+      calendar={created:false,deleted:true,eventId:removal.eventId};
+    }
     if(status==='confirmed') {
       try { calendar=await createCalendarEvent(currentRow); }
       catch(e) { console.error('Calendar integration failed',e.message); calendar={created:false,reason:'Google Calendar could not be reached.'}; }
