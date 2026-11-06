@@ -173,6 +173,14 @@ export async function PATCH(request, { params }) {
         await connection.query('SELECT pg_advisory_xact_lock(hashtext($1))', [String(id)]);
         await connection.query('UPDATE public.property_media SET is_cover=false WHERE property_id=$1', [id]);
         await connection.query('UPDATE public.property_media SET is_cover=true WHERE id=$1 AND property_id=$2', [body.media_id, id]);
+        const orderedIds = await connection.query(
+          'SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY (id=$2) DESC, sort_order',
+          [id, body.media_id]
+        );
+        await connection.query(
+          'UPDATE public.property_media AS media SET sort_order=ordered.new_order FROM unnest($2::uuid[]) WITH ORDINALITY AS ordered(id, ord) WHERE media.id=ordered.id AND media.property_id=$1',
+          [id, orderedIds.rows.map(row => row.id)]
+        );
         await connection.query('COMMIT');
       } catch (error) {
         await connection.query('ROLLBACK');
@@ -189,10 +197,10 @@ export async function PATCH(request, { params }) {
       try {
         await connection.query('BEGIN');
         await connection.query('SELECT pg_advisory_xact_lock(hashtext($1))', [String(id)]);
-        await connection.query('UPDATE public.property_media SET sort_order=sort_order+100 WHERE property_id=$1', [id]);
-        for (let index = 0; index < body.media_ids.length; index++) {
-          await connection.query('UPDATE public.property_media SET sort_order=$1 WHERE id=$2 AND property_id=$3', [index, body.media_ids[index], id]);
-        }
+        await connection.query(
+          'UPDATE public.property_media AS media SET sort_order=ordered.new_order FROM unnest($2::uuid[]) WITH ORDINALITY AS ordered(id, ord) WHERE media.id=ordered.id AND media.property_id=$1',
+          [id, body.media_ids]
+        );
         await connection.query('COMMIT');
       } catch (error) {
         await connection.query('ROLLBACK');
@@ -227,10 +235,10 @@ export async function DELETE(request, { params }) {
     const connection = await pool.connect();
     try {
       await connection.query('BEGIN');
-      await connection.query('UPDATE public.property_media SET sort_order=sort_order+100 WHERE property_id=$1', [id]);
-      for (let index = 0; index < remaining.rows.length; index++) {
-        await connection.query('UPDATE public.property_media SET sort_order=$1 WHERE id=$2', [index, remaining.rows[index].id]);
-      }
+      await connection.query(
+        'UPDATE public.property_media AS media SET sort_order=ordered.new_order FROM unnest($2::uuid[]) WITH ORDINALITY AS ordered(id, ord) WHERE media.id=ordered.id AND media.property_id=$1',
+        [id, remaining.rows.map(row => row.id)]
+      );
       await connection.query('COMMIT');
     } catch (error) {
       await connection.query('ROLLBACK');
