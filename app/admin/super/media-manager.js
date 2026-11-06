@@ -26,7 +26,7 @@ export default function PropertyMediaManager({ propertyId }) {
   }
   useEffect(() => {
     refresh().catch(error => setError(error.message));
-  }, [propertyId, secret]);
+  }, [propertyId]);
 
   async function upload(files) {
     if (!files.length) return;
@@ -40,7 +40,7 @@ export default function PropertyMediaManager({ propertyId }) {
         body.append('alt_text', file.name.replace(/\.[^.]+$/, ''));
         const response = await fetch(endpoint, {
           method: 'POST',
-          headers: { Authorization: 'Bearer ' + secret },
+          headers: {},
           body,
           cache: 'no-store'
         });
