@@ -30,6 +30,8 @@ export async function POST(req){
   propertyLabel=listing.rows[0].title;
   const client=await pool.connect();let requestId;
   try{await client.query('BEGIN');
+   const slot=await client.query('SELECT id FROM public.inspection_availability WHERE starts_at=$1::timestamptz AND is_open=true FOR UPDATE',[when.toISOString()]);
+   if(!slot.rowCount)throw Object.assign(new Error('That time is not currently available. Please choose an open slot.'),{code:'SLOT_CLOSED'});
    const q=await client.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',30,$6,$7,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,pid,message]);
    requestId=q.rows[0].id;
    for(const doc of requiredDocs.rows.filter(x=>byId.has(x.id))){
@@ -53,5 +55,5 @@ export async function POST(req){
    warnings.push('Your inspection request was saved, but email notifications could not be queued. Please contact our team if you do not hear back.');
   }
   return NextResponse.json({ok:true,requestId:q.rows[0].id,status:'pending',email:emailResult,warnings},{status:201,headers:{'Cache-Control':'no-store'}});
- }catch(e){console.error('inspection API failure',e.code||e.message);if(e.code==='23505')return NextResponse.json({error:'That slot is already held by another request. Please choose another.'},{status:409});return NextResponse.json({error:'Unable to submit right now. Please try again.'},{status:500});}
+ }catch(e){console.error('inspection API failure',e.code||e.message);if(e.code==='SLOT_CLOSED')return NextResponse.json({error:e.message},{status:409});if(e.code==='23505')return NextResponse.json({error:'That slot is already held by another request. Please choose another.'},{status:409});return NextResponse.json({error:'Unable to submit right now. Please try again.'},{status:500});}
 }
