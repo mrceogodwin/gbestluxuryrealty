@@ -479,3 +479,25 @@ body{min-height:100vh}
 .property-card-reference>span{font-size:9px!important;font-weight:900!important;color:#14251b!important;letter-spacing:.13em!important}
 .property-card-reference .copy-property-id{min-width:64px!important;padding:10px 12px!important;font-size:10px!important;font-weight:900!important}
 @media(max-width:680px){.property-card-reference{grid-template-columns:minmax(0,1fr) auto!important;gap:7px 12px!important;padding:13px 12px!important}.property-card-reference>span{grid-column:1/-1!important;max-width:none!important}.property-card-reference>strong{grid-column:1!important;grid-row:2!important;font-size:clamp(21px,6vw,25px)!important}.property-card-reference .copy-property-id{grid-column:2!important;grid-row:2!important}}
+
+
+/* Premium black mobile masthead requested: black safe-area band and black brand navigation. */
+@media(max-width:680px){
+ html,body{background:#050505!important}
+ body{padding-top:env(safe-area-inset-top,0px)!important}
+ .topline{background:#d7ff32!important;color:#07140b!important}
+ nav{background:#050505!important;border-bottom:1px solid #252525!important;color:#fff!important;min-height:104px!important}
+ nav .brand,nav .brand b{color:#fff!important}
+ nav .brand small{color:#d9b45b!important}
+ nav .brand-building{filter:drop-shadow(0 2px 8px #d9b45b35)}
+ nav>div>a:not(.navbtn){color:#fff!important}
+ nav .navbtn{background:#d7ff32!important;color:#050505!important;border:2px solid #fff!important;box-shadow:4px 4px 0 #d7ff32!important}
+}
+/* Footer official-brand position: logo/wordmark sits as the final visual anchor. */
+footer{display:flex;flex-wrap:wrap!important;align-items:center!important}
+footer .brand{order:3!important;flex:0 0 100%!important;justify-content:center!important;padding-top:22px!important;margin-top:12px!important;border-top:1px solid #ffffff35!important}
+footer .brand-building{width:54px!important;height:54px!important}
+footer .brand b{font-size:34px!important}
+footer>span{order:1!important}
+footer>a:last-child{order:2!important}
+@media(max-width:600px){footer{justify-content:center!important;text-align:center!important;gap:15px!important}footer .brand{margin-top:10px!important}}
