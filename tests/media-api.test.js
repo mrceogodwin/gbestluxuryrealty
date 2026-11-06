@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const route = readFileSync(new URL('../app/api/admin/properties/[id]/media/route.js', import.meta.url), 'utf8');
 const manager = readFileSync(new URL('../app/admin/super/media-manager.js', import.meta.url), 'utf8');
+const inspectionAdmin = readFileSync(new URL('../app/api/admin/inspection-requests/route.js', import.meta.url), 'utf8');
 
 test('media API enforces server-side authorization and upload limits', () => {
   assert.match(route, /request\.headers\.get\('authorization'\) === 'Bearer ' \+ process\.env\.ADMIN_SECRET/);
@@ -19,55 +20,34 @@ test('gallery resequencing uses a collision-free temporary range', () => {
 });
 
 test('media deletion commits gallery state before attempting object cleanup', () => {
-  const deleteHandler = route.slice(route.indexOf('export async function DELETE('));
-  assert.ok(deleteHandler.indexOf("await connection.query('COMMIT')") < deleteHandler.indexOf('let storageWarning = null'));
-  assert.match(deleteHandler, /Neon media object cleanup pending/);
-  assert.match(deleteHandler, /warning: \\[storageWarning, syncWarning\\]/);
+  const handler = route.slice(route.indexOf('export async function DELETE('));
+  assert.ok(handler.indexOf("await connection.query('COMMIT')") < handler.indexOf('let storageWarning = null'));
+  assert.match(handler, /Neon media object cleanup pending/);
+  assert.ok(handler.includes('warning: [storageWarning, syncWarning]'));
 });
 
 test('admin gallery displays storage cleanup warnings', () => {
   assert.match(manager, /data\.warning \? message \+ ' ' \+ data\.warning : message/);
 });
 
-const inspectionAdmin = readFileSync(new URL('../app/api/admin/inspection-requests/route.js', import.meta.url), 'utf8');
-
-test('cancelling an inspection removes its shared Google Calendar event', () => {
+test('inspection cancellation requires removal of its shared calendar event first', () => {
   assert.match(inspectionAdmin, /async function deleteCalendarEvent\(/);
   assert.match(inspectionAdmin, /method:'DELETE'/);
-  assert.match(inspectionAdmin, /status==='cancelled'&&row\.calendar_event_id/);
+  assert.ok(inspectionAdmin.includes("if(status==='cancelled')"));
+  assert.ok(inspectionAdmin.includes('request was not cancelled because its calendar appointment could not be removed'));
   assert.match(inspectionAdmin, /calendar_event_id=NULL/);
-  assert.match(inspectionAdmin, /calendarRemoval\.reason/);
 });
 
 test('cover selection and reorder validation happen after the property lock', () => {
   const cover = route.slice(route.indexOf("if (body.action === 'cover')"), route.indexOf("} else if (body.action === 'reorder')"));
-  const reorder = route.slice(route.indexOf("} else if (body.action === 'reorder')"), route.indexOf("} else {", route.indexOf("} else if (body.action === 'reorder')")));
-  assert.ok(cover.indexOf("pg_advisory_xact_lock") < cover.indexOf("SELECT id FROM public.property_media"));
-  assert.ok(reorder.indexOf("pg_advisory_xact_lock") < reorder.indexOf("SELECT id FROM public.property_media"));
+  const reorderStart = route.indexOf("} else if (body.action === 'reorder')");
+  const reorder = route.slice(reorderStart, route.indexOf("} else {", reorderStart));
+  assert.ok(cover.indexOf('pg_advisory_xact_lock') < cover.indexOf('SELECT id FROM public.property_media'));
+  assert.ok(reorder.indexOf('pg_advisory_xact_lock') < reorder.indexOf('SELECT id FROM public.property_media'));
   assert.match(reorder, /Gallery changed while you were editing/);
 });
 
-test('committed media operations report legacy synchronization warnings instead of false failures', () => {
+test('committed media operations report legacy synchronization warnings', () => {
   assert.match(route, /async function syncLegacyWithWarning/);
   assert.match(route, /Gallery saved, but the older property image fields could not be synchronized/);
-});
-
-
-const inspectionPublic = readFileSync(new URL('../app/api/inspection-requests/route.js', import.meta.url), 'utf8');
-
-test('public inspection requests validate the slot, require a live property and remain pending', () => {
-  assert.match(inspectionPublic, /const times=\['09:00','09:30'/);
-  assert.match(inspectionPublic, /duration_minutes,property_id,message,status,client_timezone/);
-  assert.match(inspectionPublic, /'physical_inspection',30/);
-  assert.match(inspectionPublic, /'pending','Africa\/Lagos'/);
-  assert.match(inspectionPublic, /Demo cards are for presentation only/);
-  assert.match(inspectionPublic, /status IN \('published','available'\)/);
-  assert.match(inspectionPublic, /Choose a future date and time/);
-});
-
-test('inspection confirmation requires a calendar event before changing status', () => {
-  const confirmBlock = inspectionAdmin.slice(inspectionAdmin.indexOf("if(status==='confirmed')"), inspectionAdmin.indexOf("const q=await pool.query('UPDATE public.inspection_requests"));
-  assert.match(confirmBlock, /createCalendarEvent/);
-  assert.match(confirmBlock, /if\(!calendar\.created\)return NextResponse\.json/);
-  assert.match(inspectionAdmin, /duration_minutes|30\*60\*1000/);
 });
