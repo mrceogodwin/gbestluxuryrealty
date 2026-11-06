@@ -17,9 +17,9 @@ const MIME = {
   'video/webm': 'webm'
 };
 
-function authorized(request) {
-  return Boolean(process.env.ADMIN_SECRET) &&
-    request.headers.get('authorization') === 'Bearer ' + process.env.ADMIN_SECRET;
+async function authorized(request) {
+  const { authorizeStaffOrLegacySuperAdmin } = await import('../../../../../../lib/staff-auth');
+  return authorizeStaffOrLegacySuperAdmin(request, 'properties.manage');
 }
 function storageClient() {
   const env = process.env;
@@ -100,7 +100,7 @@ function failure(error) {
 }
 
 export async function GET(request, { params }) {
-  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!await authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const { id } = await params;
     const pool = getDatabasePool();
@@ -111,7 +111,7 @@ export async function GET(request, { params }) {
 }
 
 export async function POST(request, { params }) {
-  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!await authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   let uploadedKey = null;
   try {
     const { id } = await params;
@@ -181,7 +181,7 @@ export async function POST(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
-  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!await authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const { id } = await params;
     const body = await request.json();
@@ -242,7 +242,7 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!await authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const { id } = await params;
     const body = await request.json();
