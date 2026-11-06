@@ -60,9 +60,10 @@ export async function GET(req) {
   if (!auth(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
   try {
-    const q=await getDatabasePool().query(`SELECT r.id,r.full_name,r.contact,r.client_email,r.preferred_date,r.preferred_time,r.property_id,r.message,r.status,r.calendar_event_id,r.created_at,
+    const q=await getDatabasePool().query(`SELECT r.id,r.full_name,r.contact,r.client_email,cr.client_id,r.client_registration_id,r.preferred_date,r.preferred_time,r.property_id,r.message,r.status,r.calendar_event_id,r.created_at,
       COALESCE(o.sent_count,0)::int AS emails_sent,COALESCE(o.failed_count,0)::int AS emails_failed,COALESCE(o.pending_count,0)::int AS emails_pending
       FROM public.inspection_requests r
+      LEFT JOIN public.client_registrations cr ON cr.id=r.client_registration_id
       LEFT JOIN LATERAL (SELECT count(*) FILTER (WHERE status='sent') AS sent_count,count(*) FILTER (WHERE status='failed') AS failed_count,count(*) FILTER (WHERE status='pending') AS pending_count FROM public.inspection_email_outbox WHERE inspection_request_id=r.id) o ON true
       ORDER BY r.created_at DESC LIMIT 100`);
     return NextResponse.json({requests:q.rows},{headers:{'Cache-Control':'no-store'}});
