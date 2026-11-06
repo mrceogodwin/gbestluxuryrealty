@@ -22,7 +22,7 @@ test('media deletion commits gallery state before attempting object cleanup', ()
   const deleteHandler = route.slice(route.indexOf('export async function DELETE('));
   assert.ok(deleteHandler.indexOf("await connection.query('COMMIT')") < deleteHandler.indexOf('let storageWarning = null'));
   assert.match(deleteHandler, /Neon media object cleanup pending/);
-  assert.match(deleteHandler, /warning: storageWarning/);
+  assert.match(deleteHandler, /warning: \\[storageWarning, syncWarning\\]/);
 });
 
 test('admin gallery displays storage cleanup warnings', () => {
