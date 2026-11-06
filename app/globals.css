@@ -466,3 +466,16 @@ html,body{background:#050505}
 body{background:var(--cream)}
 .topline{background:#050505!important;color:#f0cd61!important;border-bottom:2px solid #075b35!important}
 @media(max-width:680px){html{background:#050505!important}body{background:#050505!important}.topline{background:#050505!important}nav{background:#f4f6f1!important}}
+
+
+/* Mobile browser top safe-area: use the brand's black finish above the lime announcement strip. */
+html,body{background:#050505!important}
+body{min-height:100vh}
+@media(max-width:680px){body{background:#050505!important}.topline{margin-top:0}}
+
+/* Compact, high-contrast property ID panel; full ID remains available through Copy. */
+.property-card-reference{border:2px solid #14251b!important;border-left:6px solid #075b35!important;border-radius:0!important;background:#fff!important;box-shadow:4px 4px 0 #14251b!important;padding:15px 14px!important;min-height:76px}
+.property-card-reference strong{font-family:'Barlow Condensed','DM Mono',monospace!important;font-size:clamp(21px,2.5vw,27px)!important;font-weight:900!important;letter-spacing:.09em!important;line-height:1!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.property-card-reference>span{font-size:9px!important;font-weight:900!important;color:#14251b!important;letter-spacing:.13em!important}
+.property-card-reference .copy-property-id{min-width:64px!important;padding:10px 12px!important;font-size:10px!important;font-weight:900!important}
+@media(max-width:680px){.property-card-reference{grid-template-columns:minmax(0,1fr) auto!important;gap:7px 12px!important;padding:13px 12px!important}.property-card-reference>span{grid-column:1/-1!important;max-width:none!important}.property-card-reference>strong{grid-column:1!important;grid-row:2!important;font-size:clamp(21px,6vw,25px)!important}.property-card-reference .copy-property-id{grid-column:2!important;grid-row:2!important}}
