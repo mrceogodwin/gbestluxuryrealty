@@ -1,3 +1,4 @@
+import './registration.css';
 'use client';
 import {useState} from 'react';
 
