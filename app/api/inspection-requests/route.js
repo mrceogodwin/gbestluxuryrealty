@@ -18,8 +18,11 @@ export async function POST(req){
   const when=new Date(date+'T'+time+':00+01:00');if(Number.isNaN(when.getTime())||when.toISOString().slice(0,10)!==date||when.getTime()<Date.now())return NextResponse.json({error:'Choose a future date and time.'},{status:400});
   // Demo cards are for presentation only and must never create real inspection records.
   if(/^gb-00[1-8]$/.test(pid))return NextResponse.json({error:'This is a sample property, not a live listing. Please choose a published property before requesting an inspection.'},{status:400});
-  const registration=await getDatabasePool().query("SELECT id FROM public.client_registrations WHERE email_normalized=$1 AND payment_status='approved' AND client_status='active' LIMIT 1",[email.toLowerCase()]);
-  if(!registration.rowCount)return NextResponse.json({error:'Client registration and ₦15,000 payment must be approved by G-BEST before you can book an inspection. Please complete client registration and upload your receipt first.'},{status:403});
+  const sessionToken=req.cookies.get('gbest_client_session')?.value;
+  if(!sessionToken)return NextResponse.json({error:'Please sign in with your approved G-BEST client email before booking an inspection.'},{status:401});
+  const session=await getDatabasePool().query("SELECT r.id,r.email FROM public.client_sessions s JOIN public.client_registrations r ON r.id=s.registration_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND r.payment_status='approved' AND r.client_status='active' LIMIT 1",[createHash('sha256').update(sessionToken).digest('hex')]);
+  if(!session.rowCount)return NextResponse.json({error:'Your client session has expired. Please sign in again.'},{status:401});
+  if(session.rows[0].email.toLowerCase()!==email.toLowerCase())return NextResponse.json({error:'The booking email must match your verified client account.'},{status:403});
   const pool=await ensureLegalDocumentTables();
   const accepted=Array.isArray(d.acceptedDocuments)?d.acceptedDocuments:[];
   const requiredDocs=await pool.query("SELECT id,version,title,body,file_url,required FROM public.legal_documents WHERE status='published' AND category IN ('inspection','general')");
