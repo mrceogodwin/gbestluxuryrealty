@@ -22,8 +22,8 @@ export async function POST(req){
   // by G-BEST staff may request an inspection.
   const registrationTable=await pool.query("SELECT to_regclass('public.client_registrations') AS table_name");
   if(!registrationTable.rows[0]?.table_name)return NextResponse.json({error:'Complete client registration and payment verification before requesting an inspection.'},{status:403});
-  const registration=await pool.query("SELECT id FROM public.client_registrations WHERE lower(email)=lower($1) AND payment_status='approved' ORDER BY updated_at DESC LIMIT 1",[email]);
-  if(!registration.rowCount)return NextResponse.json({error:'Your client registration or payment is not yet approved. Please complete registration and wait for G-BEST to verify your bank transfer before booking an inspection.'},{status:403});
+  const registration=await pool.query("SELECT id FROM public.client_registrations WHERE lower(email)=lower($1) ORDER BY updated_at DESC,created_at DESC LIMIT 1",[email]);
+  if(!registration.rowCount||registration.rows[0].payment_status!=='approved')return NextResponse.json({error:'Your client registration or payment is not yet approved. Please complete registration and wait for G-BEST to verify your bank transfer before booking an inspection.'},{status:403});
   let propertyLabel=pid;
   const listing=await pool.query("SELECT id,title FROM public.properties WHERE status IN ('published','available') AND (id::text=$1 OR upper(slug)=upper($1) OR (CASE WHEN id::text ~ '^[0-9]+$' THEN 'GB-' || lpad(id::text, 6, '0') ELSE 'GB-' || upper(replace(id::text, '-', '')) END)=$1) LIMIT 1",[pid]);
   if(!listing.rowCount)return NextResponse.json({error:'That property is no longer available. Refresh the listings and try again.'},{status:400});
