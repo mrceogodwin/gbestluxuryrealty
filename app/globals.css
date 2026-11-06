@@ -394,3 +394,13 @@ footer .brand{color:var(--ink)}footer .logo{background:var(--ink);color:var(--go
 .formbox .legal-agreement>label{display:flex;align-items:flex-start;gap:9px;font-size:10px;line-height:1.6;font-weight:600;color:#334b3a}
 .legal-agreement input{margin:2px 0 0;accent-color:#075b35;flex:0 0 auto}
 @media(max-width:600px){.legal-agreements{padding:12px}.legal-agreement{padding:11px}.legal-links{gap:12px}}
+
+.availability-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0}
+.availability-slot{padding:17px;background:#fff;border:1px solid #d5dfd6;border-top:4px solid #9aa99d;display:grid;gap:8px}
+.availability-slot.open{border-top-color:#16884b}.availability-slot.booked{border-top-color:#c89d3d;background:#fbf8ef}
+.availability-slot b{font:900 22px 'Barlow Condensed',sans-serif;color:#075b35}
+.availability-slot small{font:700 9px 'DM Mono',monospace;letter-spacing:.07em;color:#53655a}
+.availability-slot button{padding:10px;border:0;background:#075b35;color:#fff;font-size:9px;font-weight:900}
+.availability-slot.closed button{background:#e2bd54;color:#183522}
+.availability-slot button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:650px){.availability-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
