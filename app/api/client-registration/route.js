@@ -36,6 +36,9 @@ export async function POST(req){
   const reference=clean(form.get('bank_reference'),100),transferDate=clean(form.get('transfer_date'),10);
   const file=form.get('receipt');
   if(name.length<2||!/^\S+@\S+\.\S+$/.test(email)||phone.length<7||reference.length<3||!/^\d{4}-\d{2}-\d{2}$/.test(transferDate))return NextResponse.json({error:'Complete your name, valid email, phone, transfer reference and transfer date.'},{status:400});
+  const parsedTransferDate=new Date(transferDate+'T00:00:00+01:00');
+  const lagosToday=new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Lagos',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  if(Number.isNaN(parsedTransferDate.getTime())||parsedTransferDate.toISOString().slice(0,10)!==transferDate||transferDate>lagosToday)return NextResponse.json({error:'Enter a real transfer date that is not in the future.'},{status:400});
   if(!file||typeof file.arrayBuffer!=='function')return NextResponse.json({error:'Upload your payment receipt.'},{status:400});
   const mime=String(file.type||'').toLowerCase(),ext=TYPES[mime];
   if(!ext||file.size<1||file.size>MAX_BYTES)return NextResponse.json({error:'Receipt must be JPG, PNG, WebP or PDF, up to 5 MB.'},{status:400});
