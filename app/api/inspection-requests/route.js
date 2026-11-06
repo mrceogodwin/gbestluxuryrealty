@@ -28,7 +28,29 @@ export async function POST(req){
   const listing=await pool.query("SELECT id,title FROM public.properties WHERE status IN ('published','available') AND (id::text=$1 OR upper(slug)=upper($1) OR (CASE WHEN id::text ~ '^[0-9]+$' THEN 'GB-' || lpad(id::text, 6, '0') ELSE 'GB-' || upper(replace(id::text, '-', '')) END)=$1) LIMIT 1",[pid]);
   if(!listing.rowCount)return NextResponse.json({error:'That property is no longer available. Refresh the listings and try again.'},{status:400});
   propertyLabel=listing.rows[0].title;
-  const q=await pool.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',30,$6,$7,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,String(listing.rows[0].id),message]);
+  const client=await pool.connect();
+  let q;
+  try {
+   await client.query('BEGIN');
+   // Serialize requests for the same local date and start time, then re-check
+   // the full interval inside the transaction before inserting.
+   await client.query('SELECT pg_advisory_xact_lock(hashtext($1),hashtext($2))',[date,time]);
+   const duration=Number(schedule.slotMinutes);
+   const overlap=await client.query(`SELECT 1 FROM public.inspection_requests
+     WHERE preferred_date=$1::date AND status IN ('pending','confirmed')
+       AND preferred_time < ($2::time + ($3 * interval '1 minute'))
+       AND (preferred_time + (COALESCE(duration_minutes,30) * interval '1 minute')) > $2::time
+     LIMIT 1`,[date,time,duration]);
+   if(overlap.rowCount) {
+    await client.query('ROLLBACK');
+    return NextResponse.json({error:'That inspection slot has just been taken. Please choose another available time.'},{status:409});
+   }
+   q=await client.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',$6,$7,$8,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,duration,String(listing.rows[0].id),message]);
+   await client.query('COMMIT');
+  } catch(insertError) {
+   await client.query('ROLLBACK').catch(()=>{});
+   throw insertError;
+  } finally { client.release(); }
   const warnings=[];
   let emailResult={sent:0,failed:0,skipped:0};
   try {
