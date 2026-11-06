@@ -34,7 +34,7 @@ test('inspection cancellation requires removal of its shared calendar event firs
   assert.match(inspectionAdmin, /async function deleteCalendarEvent\(/);
   assert.match(inspectionAdmin, /method:'DELETE'/);
   assert.ok(inspectionAdmin.includes("if(status==='cancelled')"));
-  assert.ok(inspectionAdmin.includes('request was not cancelled because its calendar appointment could not be removed'));
+  assert.ok(inspectionAdmin.includes('Retry cancellation cleanup from the admin panel.'));
   assert.match(inspectionAdmin, /calendar_event_id=NULL/);
 });
 
@@ -112,7 +112,7 @@ test('public availability only returns future open slots without active requests
   assert.match(availabilityPublic, /r\.status IN \('pending','confirmed'\)/);
 });
 test('availability administration authenticates and protects booked slots', () => {
-  assert.match(availabilityAdmin, /authorization.*Bearer.*ADMIN_SECRET/);
+  assert.match(availabilityAdmin, /authorizeStaff\\(req, permission\\)/);
   assert.match(availabilityAdmin, /This slot has a pending or confirmed request/);
   assert.match(availabilityAdmin, /starts_at,ends_at,is_open/);
 });
