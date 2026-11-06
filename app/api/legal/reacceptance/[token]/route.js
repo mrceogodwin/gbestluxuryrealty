@@ -1,7 +1,7 @@
 import {NextResponse} from 'next/server';
 import {createHash} from 'node:crypto';
-import {getDatabasePool} from '../../../../lib/db';
-import {ensureLegalDocumentTables} from '../../../../lib/legal-documents';
+import {getDatabasePool} from '../../../../../lib/db';
+import {ensureLegalDocumentTables} from '../../../../../lib/legal-documents';
 export const runtime='nodejs';export const dynamic='force-dynamic';
 const digest=t=>createHash('sha256').update(String(t||'')).digest('hex');
 export async function GET(_req,{params}){
