@@ -9,8 +9,8 @@ const groups=[
 export default function ClientRegistrationPage(){
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[result,setResult]=useState('');
  async function submit(e){
-  e.preventDefault();setBusy(true);setError('');setResult('');
-  try{const form=new FormData(e.currentTarget);const r=await fetch('/api/client-registrations',{method:'POST',body:form});const d=await r.json();if(!r.ok)throw new Error(d.error||'Submission failed');setResult('Registration submitted. Reference: '+d.registration.id+'. Payment verification is pending.');e.currentTarget.reset();}
+  e.preventDefault();const formElement=e.currentTarget;setBusy(true);setError('');setResult('');
+  try{const form=new FormData(e.currentTarget);const r=await fetch('/api/client-registrations',{method:'POST',body:form});const d=await r.json();if(!r.ok)throw new Error(d.error||'Submission failed');setResult('Registration submitted. Reference: '+d.registration.id+'. Payment verification is pending.');formElement.reset();}
   catch(err){setError(err.message)}finally{setBusy(false)}
  }
  return <main className="client-registration-shell">
