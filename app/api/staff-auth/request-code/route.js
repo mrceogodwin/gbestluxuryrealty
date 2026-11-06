@@ -13,7 +13,7 @@ export async function POST(req){
   if(q.rowCount){
    const recent=await pool.query("SELECT 1 FROM public.staff_login_codes WHERE staff_id=$1 AND created_at>now()-interval '60 seconds' LIMIT 1",[q.rows[0].id]);
    if(!recent.rowCount){
-    const secret=process.env.STAFF_AUTH_SECRET||process.env.ADMIN_SECRET;
+    const secret=process.env.STAFF_AUTH_SECRET;
     if(!secret||!process.env.RESEND_API_KEY||!process.env.RESEND_FROM_EMAIL)throw new Error('Staff authentication or email is not configured.');
     const code=String(randomInt(0,1000000)).padStart(6,'0');
     await pool.query("UPDATE public.staff_login_codes SET consumed_at=now() WHERE staff_id=$1 AND consumed_at IS NULL",[q.rows[0].id]);
