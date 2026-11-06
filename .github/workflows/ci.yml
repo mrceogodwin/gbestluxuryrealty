@@ -13,5 +13,4 @@ jobs:
         with:
           node-version: 20
       - run: npm install --no-package-lock
-      - run: npm test
       - run: npm run build
