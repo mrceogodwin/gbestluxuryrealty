@@ -85,9 +85,10 @@ export async function PATCH(req) {
     if (status === 'confirmed') {
       const eligibility = await getDatabasePool().query(
         `SELECT r.id FROM public.inspection_requests i
-         JOIN public.client_registrations r ON lower(r.email)=lower(i.client_email)
-         WHERE i.id=$1 AND r.payment_status='approved'
-         ORDER BY r.updated_at DESC LIMIT 1`,
+         JOIN LATERAL (SELECT id,payment_status FROM public.client_registrations
+           WHERE lower(email)=lower(i.client_email)
+           ORDER BY updated_at DESC,created_at DESC LIMIT 1) r ON true
+         WHERE i.id=$1 AND r.payment_status='approved'`,
         [id]
       );
       if (!eligibility.rowCount) return NextResponse.json({error:'This client does not have an approved registration and verified payment. Do not confirm this inspection.'},{status:403});
