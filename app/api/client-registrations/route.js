@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDatabasePool } from '../../../lib/db';
+import { sendClientRegistrationEmail, escapeHtml } from '../../../lib/client-registration-email';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,9 @@ async function ensureTable(pool) {
 const clean=(v,n=500)=>String(v??'').trim().slice(0,n);
 export async function POST(req) {
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Registration is temporarily unavailable.'},{status:503});
+  if (req.headers.get('origin') && req.headers.get('origin') !== req.nextUrl.origin) return NextResponse.json({error:'Invalid request origin.'},{status:403});
+  const declaredLength = Number(req.headers.get('content-length') || 0);
+  if (declaredLength > 6 * 1024 * 1024) return NextResponse.json({error:'Submission is too large. Keep the receipt under 5 MB.'},{status:413});
   try {
     const form=await req.formData();
     const fields={
@@ -64,7 +68,21 @@ export async function POST(req) {
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true,$14,$15,$16,$17,'pending')
       RETURNING id,payment_status,created_at`,
       [...Object.values(fields),reference,file.name.slice(0,255),file.type,bytes]);
-    return NextResponse.json({ok:true,registration:q.rows[0],message:'Registration received. Your payment is awaiting manual verification.'},{status:201,headers:{'Cache-Control':'no-store'}});
+    const fullName = fields.surname + ' ' + fields.other_names;
+    const adminEmail = await sendClientRegistrationEmail({
+      to: process.env.ADMIN_EMAIL,
+      subject: 'New client registration awaiting payment verification',
+      html: '<p>A new client registration has been submitted.</p><p><strong>Client:</strong> ' + escapeHtml(fullName) + '<br/><strong>Email:</strong> ' + escapeHtml(fields.email) + '<br/><strong>Phone:</strong> ' + escapeHtml(fields.phone) + '<br/><strong>Property:</strong> ' + escapeHtml(fields.property_type) + ' — ' + escapeHtml(fields.price_range) + '<br/><strong>Transfer reference:</strong> ' + escapeHtml(reference) + '</p><p>Sign in to the G-BEST admin area to inspect the receipt and verify the bank transaction manually.</p>'
+    });
+    const clientEmail = await sendClientRegistrationEmail({
+      to: fields.email,
+      subject: 'G-BEST received your client registration',
+      html: '<p>Hello ' + escapeHtml(fullName) + ',</p><p>We have received your client registration and transfer receipt. Your payment is <strong>pending manual verification</strong>. Uploading a receipt does not confirm payment.</p><p>Our team will review the transfer against the bank account and update you. You may request an inspection only after your registration is approved. Please use this same email address when booking.</p><p>G-BEST Luxury Realty</p>'
+    });
+    const warnings = [];
+    if (!adminEmail.sent) warnings.push('The admin notification email could not be sent. The registration was still saved.');
+    if (!clientEmail.sent) warnings.push('The confirmation email could not be sent. Keep your registration reference.');
+    return NextResponse.json({ok:true,registration:q.rows[0],message:'Registration received. Your payment is awaiting manual verification.',email:{admin:adminEmail.sent,client:clientEmail.sent},warnings},{status:201,headers:{'Cache-Control':'no-store'}});
   } catch(e) {
     console.error('Client registration failed',e.code||e.message);
     return NextResponse.json({error:'Could not submit registration. Please try again.'},{status:500});
