@@ -63,6 +63,15 @@ export async function POST(req) {
     if(!reference) return NextResponse.json({error:'Enter your transfer reference.'},{status:400});
     const pool=getDatabasePool(); await ensureTable(pool);
     const bytes=Buffer.from(await file.arrayBuffer());
+    const signatures={
+      'image/jpeg':bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff,
+      'image/png':bytes.length>=8&&bytes.subarray(0,8).equals(Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a])),
+      'image/webp':bytes.length>=12&&bytes.toString('ascii',0,4)==='RIFF'&&bytes.toString('ascii',8,12)==='WEBP',
+      'application/pdf':bytes.length>=5&&bytes.toString('ascii',0,5)==='%PDF-'
+    };
+    if(!signatures[file.type])return NextResponse.json({error:'The uploaded receipt content does not match its file type.'},{status:400});
+    const duplicate=await pool.query("SELECT id FROM public.client_registrations WHERE lower(email)=lower($1) AND payment_status='pending' ORDER BY created_at DESC LIMIT 1",[fields.email]);
+    if(duplicate.rowCount)return NextResponse.json({error:'A registration for this email is already awaiting payment verification. Contact G-BEST if you need to update the submitted details.'},{status:409});
     const q=await pool.query(`INSERT INTO public.client_registrations
       (surname,other_names,address,email,phone,nationality,state_of_origin,lga,occupation,property_type,price_range,preferred_location,property_description,terms_accepted,payment_reference,receipt_name,receipt_type,receipt_data,payment_status)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true,$14,$15,$16,$17,'pending')
