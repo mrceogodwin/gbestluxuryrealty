@@ -1,0 +1,43 @@
+.client-registration-shell{max-width:920px;margin:0 auto;padding:32px 22px 80px;color:#20251e}.registration-back{display:inline-block;color:inherit;text-decoration:none;margin-bottom:34px}.registration-header{border-top:8px solid #38e900;padding:28px 0 24px}.registration-header p,.registration-header span{color:#36b900;font-size:12px;font-weight:800;letter-spacing:.16em}.registration-header h1{font-size:clamp(34px,7vw,66px);line-height:.98;margin:14px 0;font-weight:850;letter-spacing:-.06em}.registration-header h1 i{color:#39c900;font-style:normal}.registration-payment{background:#f3f8ef;border:1px solid #dcebd5;border-radius:14px;padding:20px;margin-bottom:28px}.registration-payment h2,.registration-form h2{font-size:14px;letter-spacing:.08em;color:#e56b45;margin:0 0 16px}.registration-payment p{line-height:1.6;margin:8px 0}.registration-form{display:grid;gap:30px}.registration-form section{border-bottom:1px solid #e5e8e2;padding-bottom:26px}.registration-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.registration-grid label{display:grid;gap:8px;font-size:13px;font-weight:650}.registration-grid label.wide{grid-column:1/-1}.registration-grid input,.registration-grid textarea{width:100%;border:1px solid #cfd5ca;border-radius:8px;padding:13px;background:#fff;color:#20251e;font:inherit;min-width:0}.registration-grid input:focus,.registration-grid textarea:focus{outline:2px solid #40d800;outline-offset:1px}.registration-help{font-size:12px;color:#667060}.registration-terms p{line-height:1.7}.registration-consent{display:flex;gap:10px;align-items:flex-start;font-size:14px}.registration-consent input{margin-top:4px;accent-color:#35c900}.registration-form button{border:0;border-radius:8px;padding:16px 22px;background:#39d600;color:#102000;font-weight:850;letter-spacing:.04em;cursor:pointer}.registration-form button:disabled{opacity:.6}.registration-error,.registration-success{padding:14px;border-radius:8px;background:#fff0ed;color:#a33b27}.registration-success{background:#edf9e9;color:#246b16}@media(max-width:600px){.client-registration-shell{padding:22px 16px 54px}.registration-grid{grid-template-columns:1fr}.registration-grid label.wide{grid-column:auto}.registration-header{padding-top:22px}.registration-payment{padding:16px}}
+
+.registration-bank-details{margin-top:18px;padding:18px;background:#fff;border:1px solid #dcebd5;border-radius:10px}.registration-fee-label{font-size:11px;font-weight:800;letter-spacing:.1em;color:#667060}.registration-fee{display:block;font-size:clamp(30px,5vw,42px);line-height:1.1;color:#218b08;margin:4px 0 18px}.registration-bank-details dl{display:grid;gap:0;margin:0 0 14px}.registration-bank-details dl div{display:flex;justify-content:space-between;gap:18px;padding:11px 0;border-top:1px solid #edf0e9}.registration-bank-details dt{font-size:13px;color:#667060}.registration-bank-details dd{margin:0;text-align:right;font-size:14px;font-weight:800}.registration-bank-details a{color:#218b08;font-weight:700}@media(max-width:420px){.registration-bank-details dl div{display:grid;gap:4px}.registration-bank-details dd{text-align:left}}
+
+.registration-intro{max-width:590px;color:#667060;font-size:15px;line-height:1.65;letter-spacing:0!important;font-weight:450!important;margin-top:18px}
+.registration-section-kicker{font-size:10px;font-weight:850;letter-spacing:.14em;color:#258c0b;margin-bottom:9px}
+.registration-payment h2,.registration-form h2{font-size:clamp(17px,2.4vw,21px);letter-spacing:-.025em;color:#20251e;margin:0 0 12px}
+.registration-payment-copy{max-width:690px;color:#4f594b}
+.registration-bank-details{padding:clamp(18px,3vw,26px);margin:20px 0 16px;box-shadow:0 8px 28px rgba(27,58,14,.045)}
+.registration-fee-label{display:block;font-size:10px;font-weight:850;letter-spacing:.13em;color:#687361}
+.registration-fee{font-size:clamp(38px,7vw,54px);letter-spacing:-.055em;margin:8px 0 20px}
+.registration-account-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 0;border-top:1px solid #edf0e9}
+.registration-account-row div{display:grid;gap:5px;min-width:0}
+.registration-account-row span{font-size:9px;letter-spacing:.13em;font-weight:850;color:#7a8474}
+.registration-account-row strong{font-size:15px;overflow-wrap:anywhere}
+.registration-account-number strong{font-size:clamp(20px,4vw,25px);letter-spacing:.06em}
+.registration-copy{flex:0 0 auto;border:1px solid #b8d6ad;border-radius:7px;background:#f3faef;color:#247b0b;font-size:10px;font-weight:850;padding:10px 12px;cursor:pointer}
+.registration-support{border-top:1px solid #edf0e9;padding-top:14px;margin-top:4px!important;font-size:12px;color:#64705e}
+.registration-support a{color:#218b08;font-weight:750;text-decoration:none;overflow-wrap:anywhere}
+.registration-next-steps{background:#fff;border:1px solid #e4eadf;border-radius:10px;padding:18px 20px;margin:16px 0}
+.registration-next-steps>strong{font-size:10px;letter-spacing:.12em;color:#667060}
+.registration-next-steps ol{padding-left:20px;margin:12px 0 0;display:grid;gap:9px}
+.registration-next-steps li{padding-left:4px;font-size:13px;line-height:1.55;color:#394234}
+.registration-form section{padding:22px 0 28px}
+.registration-grid{gap:20px}
+.registration-grid label{font-size:13px;line-height:1.4;color:#30392c}
+.registration-grid input,.registration-grid textarea{border-radius:10px;padding:14px 15px;min-height:48px}
+.registration-grid textarea{resize:vertical}
+.registration-form button[type=submit]{min-height:54px;font-size:13px}
+.registration-terms{background:#fafbf8;border:1px solid #e7ebe3!important;border-radius:12px;padding:22px!important}
+.registration-terms p{font-size:13px;color:#4f594b;line-height:1.75}
+.registration-consent{margin-top:16px;line-height:1.5}
+@media(max-width:600px){
+ .registration-header h1{font-size:clamp(34px,10vw,48px);line-height:1.02}
+ .registration-intro{font-size:14px}
+ .registration-payment{padding:17px}
+ .registration-account-row{align-items:flex-start}
+ .registration-account-number{flex-wrap:wrap}
+ .registration-copy{margin-left:auto}
+ .registration-next-steps{padding:16px}
+ .registration-form{gap:18px}
+ .registration-form section{padding:18px 0 23px}
+}

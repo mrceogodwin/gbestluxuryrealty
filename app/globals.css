@@ -172,8 +172,13 @@ nav>div a:not(.navbtn){text-decoration:underline;text-decoration-thickness:2px;t
 .property-card{background:var(--paper);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);transition:transform .15s,box-shadow .15s}
 .property-card:hover{transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--ink);border-color:var(--ink)}
 .photo-wrap{height:245px;border-bottom:2px solid var(--ink);background:#d9dfd2}.photo-wrap img{filter:saturate(.78) contrast(1.05)}
-.property-tag{left:12px;top:12px;background:var(--gold);border:1px solid var(--ink);color:var(--ink);font:500 8px 'DM Mono',monospace;padding:7px 9px}
-.card-arrow{right:12px;bottom:12px;background:var(--gold);color:var(--ink);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);font-weight:900}
+.property-tag{left:12px;top:12px;right:auto;bottom:auto;z-index:3;background:var(--gold);border:1px solid var(--ink);color:var(--ink);font:700 9px 'DM Mono',monospace;padding:8px 11px;max-width:calc(100% - 76px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:3px 3px 0 var(--ink)}
+.card-arrow{right:12px;top:12px;bottom:auto;background:var(--gold);color:var(--ink);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);font-weight:900}
+.card-arrow::before{content:'↗';font-size:17px;line-height:1}
+.property-card-reference{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--ink);font:500 8px 'DM Mono',monospace;letter-spacing:.08em;color:var(--muted)}
+.property-card-reference b{color:#145536;font-weight:800;letter-spacing:.12em;overflow-wrap:anywhere}
+.field-hint{display:block;margin-top:5px;color:var(--muted);font:500 10px/1.5 'DM Mono',monospace}
+@media(max-width:420px){.property-tag{left:8px;top:8px;padding:7px 8px;font-size:8px}.card-arrow{right:8px;top:8px}}
 .pad{padding:20px}.loc{font:500 9px 'DM Mono',monospace;color:#1b5a30}.pad h3{font:400 25px/1 'Archivo Black',sans-serif;letter-spacing:-.7px;color:var(--ink);margin:13px 0 11px}.pad>p{font-size:11px;line-height:1.7;color:var(--muted);min-height:40px}
 .facts{border-top:1px solid var(--ink);gap:9px;padding:13px 0;font:500 8px 'DM Mono',monospace;color:#35382e}
 .price{border-top:1px solid var(--ink);padding-top:13px}.price b{font:700 10px 'Space Grotesk',sans-serif;color:var(--ink)}.price button{font:500 9px 'DM Mono',monospace;text-transform:uppercase;text-decoration:underline;text-underline-offset:3px;color:var(--ink)}
@@ -337,3 +342,192 @@ footer .brand{color:var(--ink)}footer .logo{background:var(--ink);color:var(--go
 .homepage-cms-history article p{grid-column:1/-1;margin:0;font-size:13px;color:#28231f}
 .homepage-cms-history article>button{grid-column:1/-1;justify-self:start;background:#25231f;color:#fff;border-color:#25231f}
 @media(max-width:640px){.homepage-cms-history{padding:14px}.homepage-cms-history article{grid-template-columns:1fr}.homepage-cms-history article time{grid-row:2}.homepage-cms-history article p{grid-column:1}.homepage-cms-actions{flex-wrap:wrap}.homepage-cms-actions button,.homepage-cms-actions a{flex:1 1 100%;text-align:center}}
+
+/* G-BEST header mark and clearer featured-property photography */
+nav .brand{gap:12px;min-width:0}
+nav .brand-building{display:block;width:48px;height:48px;flex:0 0 48px}
+nav .brand b{font-size:31px;letter-spacing:.2px;color:#123b27}
+nav .brand small{color:#8b6b31;font-size:8px;letter-spacing:1.65px}
+.hero.hero-bold{background-blend-mode:normal}
+.hero-video{opacity:.52}
+.hero-video-shade{background:linear-gradient(90deg,#073c26a8 0%,#073c2678 43%,#073c2628 76%,#073c2610 100%)}
+.hero-stamp{display:none!important}
+@media(max-width:680px){
+ nav .brand{gap:8px}
+ nav .brand-building{width:42px;height:42px;flex-basis:42px}
+ nav .brand b{font-size:25px}
+ nav .brand small{font-size:7px;letter-spacing:1.25px}
+ .hero-video{opacity:.40}
+ .hero-video-shade{background:linear-gradient(90deg,#073c26bd 0%,#073c2690 47%,#073c2645 78%,#073c2620 100%)}
+}
+
+/* G-BEST identity refresh: keep the emblem proportionate and suppress legacy hero seal */
+.brand-building{display:block;width:58px;height:58px;flex:0 0 58px;object-fit:contain}
+.footer-building{width:48px;height:48px;flex-basis:48px}
+.hero-stamp,.hero .hero-stamp{display:none!important}
+@media(max-width:680px){nav .brand-building{width:46px;height:46px;flex-basis:46px}.footer-building{width:42px;height:42px;flex-basis:42px}}
+
+
+/* Listing card refinements: keep category and quick-view controls at the top edge. */
+.photo-wrap{position:relative}
+.property-tag{position:absolute!important;left:12px!important;top:12px!important;right:auto!important;bottom:auto!important;z-index:4!important;max-width:calc(100% - 72px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-arrow{position:absolute!important;right:12px!important;top:12px!important;bottom:auto!important;z-index:4!important;width:40px;height:40px;display:grid;place-items:center;border:2px solid var(--ink)!important;background:var(--gold)!important;color:var(--ink)!important;box-shadow:3px 3px 0 var(--ink)!important}
+.card-arrow::before{content:'↗';font-size:18px;line-height:1}
+.property-card-reference{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--ink);font:500 8px 'DM Mono',monospace;letter-spacing:.08em;color:var(--muted)}
+.property-card-reference b{color:#145536;font-weight:800;letter-spacing:.12em;overflow-wrap:anywhere}
+.field-hint{display:block;margin-top:5px;color:var(--muted);font:500 10px/1.5 'DM Mono',monospace}
+@media(max-width:420px){.property-tag{left:8px!important;top:8px!important;padding:7px 8px!important;font-size:8px!important}.card-arrow{right:8px!important;top:8px!important}}
+
+
+/* Mobile Safari scroll stability: avoid a continuously composited hero video and dynamic vh sizing. */
+@media(max-width:680px){
+ .hero.hero-bold{height:auto!important;min-height:max(560px,min(760px,calc(100svh - 108px)))!important;max-height:none!important;background-attachment:scroll!important;}
+ .hero.hero-bold .hero-video{display:none!important;}
+ .hero.hero-bold .herotext{transform:none!important;will-change:auto!important;}
+}
+
+
+/* Keep the category chip pinned to the very top edge of each listing photo. */
+.photo-wrap>.property-tag{top:6px!important;left:8px!important;right:auto!important;bottom:auto!important;margin:0!important;transform:none!important;}
+
+
+/* G-BEST footer: switch the former lime panel to a true black brand finish. */
+footer{background:#050505!important;color:#fff!important;border-top:2px solid #050505!important}
+footer .brand,footer .brand b,footer .brand small,footer>span,footer>a:last-child{color:#fff!important}
+footer .brand-building{filter:none}
+
+
+/* Footer uses the black brand finish requested by the owner. */
+footer{background:#050505!important;color:#fff!important;border-top:2px solid #050505!important}
+footer .brand,footer .brand b,footer .brand small,footer>span,footer>a:last-child{color:#fff!important}
+
+.schedule-help{font-size:12px;line-height:1.7;color:var(--muted);margin:0 0 20px}.schedule-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0 22px}.schedule-days label{display:flex;align-items:center;gap:9px;background:#f4f1e8;padding:12px;border:1px solid var(--line);font-size:11px;font-weight:800}.schedule-days input{accent-color:var(--g);width:17px;height:17px}.schedule-editor .super-editor-head span{font-size:10px;letter-spacing:1px;color:var(--g);font-weight:900}@media(max-width:600px){.schedule-days{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Flagship property reference panel: readable on narrow mobile screens */
+.property-card-reference,.property-reference{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  margin:12px 0 14px;
+  padding:14px 13px;
+  border:1.5px solid #14251b;
+  border-left:5px solid #075b35;
+  background:#f7f8f3;
+  box-shadow:3px 3px 0 #075b3518;
+  color:#46554a;
+  font:700 9px/1.35 'DM Mono',monospace;
+  letter-spacing:.09em;
+}
+.property-card-reference>span,.property-reference{ text-transform:uppercase; }
+.property-card-reference>span{max-width:72px}
+.property-card-reference strong,.property-reference b{
+  display:block;
+  min-width:0;
+  color:#075b35;
+  font:800 15px/1.2 'DM Mono',monospace;
+  letter-spacing:.06em;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.copy-property-id{
+  justify-self:end;
+  border:1px solid #14251b;
+  border-radius:2px;
+  background:#14251b;
+  color:#fff;
+  padding:9px 12px;
+  min-width:58px;
+  font:800 9px 'DM Mono',monospace;
+  letter-spacing:.06em;
+}
+.copy-property-id:hover{background:#075b35;border-color:#075b35}
+.property-reference{display:grid;grid-template-columns:auto minmax(0,1fr) auto}
+.property-reference b{font-size:14px}
+html{background:#050505}
+@media(max-width:680px){
+ .property-card-reference,.property-reference{
+  grid-template-columns:1fr auto;
+  gap:7px 10px;
+  padding:13px 11px;
+ }
+ .property-card-reference>span,.property-reference{grid-column:1/-1}
+ .property-card-reference>strong,.property-reference b{grid-column:1;grid-row:2;font-size:16px;letter-spacing:.07em;overflow-wrap:anywhere}
+ .property-card-reference .copy-property-id,.property-reference .copy-property-id{grid-column:2;grid-row:2}
+ .property-card-reference>span{font-size:8px;letter-spacing:.12em}
+ nav{background:var(--cream)}
+}
+
+
+/* Black mobile top safe-area above the cream navigation bar. */
+html,body{background:#050505}
+body{background:var(--cream)}
+.topline{background:#050505!important;color:#f0cd61!important;border-bottom:2px solid #075b35!important}
+@media(max-width:680px){html{background:#050505!important}body{background:#050505!important}.topline{background:#050505!important}nav{background:#f4f6f1!important}}
+
+
+/* Mobile browser top safe-area: use the brand's black finish above the lime announcement strip. */
+html,body{background:#050505!important}
+body{min-height:100vh}
+@media(max-width:680px){body{background:#050505!important}.topline{margin-top:0}}
+
+/* Compact, high-contrast property ID panel; full ID remains available through Copy. */
+.property-card-reference{border:2px solid #14251b!important;border-left:6px solid #075b35!important;border-radius:0!important;background:#fff!important;box-shadow:4px 4px 0 #14251b!important;padding:15px 14px!important;min-height:76px}
+.property-card-reference strong{font-family:'Barlow Condensed','DM Mono',monospace!important;font-size:clamp(21px,2.5vw,27px)!important;font-weight:900!important;letter-spacing:.09em!important;line-height:1!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.property-card-reference>span{font-size:9px!important;font-weight:900!important;color:#14251b!important;letter-spacing:.13em!important}
+.property-card-reference .copy-property-id{min-width:64px!important;padding:10px 12px!important;font-size:10px!important;font-weight:900!important}
+@media(max-width:680px){.property-card-reference{grid-template-columns:minmax(0,1fr) auto!important;gap:7px 12px!important;padding:13px 12px!important}.property-card-reference>span{grid-column:1/-1!important;max-width:none!important}.property-card-reference>strong{grid-column:1!important;grid-row:2!important;font-size:clamp(21px,6vw,25px)!important}.property-card-reference .copy-property-id{grid-column:2!important;grid-row:2!important}}
+
+
+/* Premium black mobile masthead requested: black safe-area band and black brand navigation. */
+@media(max-width:680px){
+ html,body{background:#050505!important}
+ body{padding-top:env(safe-area-inset-top,0px)!important}
+ .topline{background:#d7ff32!important;color:#07140b!important}
+ nav{background:#050505!important;border-bottom:1px solid #252525!important;color:#fff!important;min-height:104px!important}
+ nav .brand,nav .brand b{color:#fff!important}
+ nav .brand small{color:#d9b45b!important}
+ nav .brand-building{filter:drop-shadow(0 2px 8px #d9b45b35)}
+ nav>div>a:not(.navbtn){color:#fff!important}
+ nav .navbtn{background:#d7ff32!important;color:#050505!important;border:2px solid #fff!important;box-shadow:4px 4px 0 #d7ff32!important}
+}
+/* Footer official-brand position: logo/wordmark sits as the final visual anchor. */
+footer{display:flex;flex-wrap:wrap!important;align-items:center!important}
+footer .brand{order:3!important;flex:0 0 100%!important;justify-content:center!important;padding-top:22px!important;margin-top:12px!important;border-top:1px solid #ffffff35!important}
+footer .brand-building{width:54px!important;height:54px!important}
+footer .brand b{font-size:34px!important}
+footer>span{order:1!important}
+footer>a:last-child{order:2!important}
+@media(max-width:600px){footer{justify-content:center!important;text-align:center!important;gap:15px!important}footer .brand{margin-top:10px!important}}
+
+
+/* Official supplied G-BEST logo: replace the temporary CSS/SVG wordmark. */
+.brand{min-width:0;gap:0!important}
+.brand-official-logo{display:block;width:clamp(190px,30vw,390px);height:auto;max-height:88px;object-fit:contain;object-position:left center}
+footer{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:42px 7% 30px!important;text-align:center}
+footer .brand{justify-content:center;width:min(100%,420px)}
+footer .brand-official-logo{width:min(100%,390px);max-height:145px;object-position:center}
+footer>span,footer>a:last-child{display:block;text-align:center}
+@media(max-width:680px){
+ nav{min-height:100px;height:auto!important;padding:14px 4%!important;gap:8px}
+ nav .brand{flex:1 1 auto;min-width:0}
+ nav .brand-official-logo{width:clamp(145px,43vw,230px);max-height:68px}
+ nav>div{gap:8px!important}
+ nav .navbtn{padding:12px 10px!important;font-size:9px!important;white-space:nowrap}
+}
+
+
+/* Property media controls: visible only when a listing has a gallery or video. */
+.photo-wrap{position:relative;overflow:hidden}
+.property-image-navigation{position:absolute;z-index:4;inset:50% 12px auto;transform:translateY(-50%);display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.property-image-navigation button{pointer-events:auto;width:42px;height:42px;border:2px solid #fff;background:#071b12eF;color:#fff;font-size:30px;line-height:1;border-radius:50%;box-shadow:0 3px 12px #0005;display:grid;place-items:center}
+.property-image-navigation span{background:#071b12d9;color:#fff;padding:7px 11px;font-size:11px;font-weight:800;letter-spacing:.1em;border-radius:30px}
+.property-video-play{position:absolute;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);width:76px;height:76px;border:3px solid #fff;border-radius:50%;background:#061b12d9;color:#d8ff32;font-size:27px;display:grid;place-items:center;box-shadow:0 5px 24px #0008;cursor:pointer}
+.property-video-play:focus-visible,.property-image-navigation button:focus-visible{outline:3px solid #d8ff32;outline-offset:3px}
+
+
+/* Keep a failed listing image from silently showing an unrelated property photo. */
+.photo-wrap.photo-unavailable{display:grid;place-items:center;background:linear-gradient(135deg,#e8e7df,#d7d8ce);}
+.photo-wrap.photo-unavailable::after{content:'PROPERTY IMAGE UNAVAILABLE';padding:12px 16px;border:1px solid #68746a;color:#46554a;background:#f7f7f1;font:800 10px/1.4 'DM Mono',monospace;letter-spacing:.12em;text-align:center;}

@@ -16,6 +16,7 @@ export async function GET() {
     const q = await pool.query(`
       SELECT
         id::text AS id,
+        CASE WHEN id::text ~ '^[0-9]+$' THEN 'GB-' || lpad(id::text, 8, '0') ELSE 'GB-' || right(upper(replace(id::text, '-', '')), 8) END AS property_code,
         slug,
         title,
         location,
