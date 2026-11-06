@@ -25,48 +25,17 @@ export async function POST(req){
   const registration=await pool.query("SELECT id,payment_status FROM public.client_registrations WHERE lower(email)=lower($1) ORDER BY updated_at DESC,created_at DESC LIMIT 1",[email]);
   if(!registration.rowCount||registration.rows[0].payment_status!=='approved')return NextResponse.json({error:'Your client registration or payment is not yet approved. Please complete registration and wait for G-BEST to verify your bank transfer before booking an inspection.'},{status:403});
   let propertyLabel=pid;
-  const listing=await pool.query("SELECT id,title FROM public.properties WHERE status IN ('published','available') AND (id::text=$1 OR upper(slug)=upper($1) OR (CASE WHEN id::text ~ '^[0-9]+ LIMIT 1",[pid]);
-  if(!listing.rowCount)return NextResponse.json({error:'That property is no longer available. Refresh the listings and try again.'},{status:400});
-  propertyLabel=listing.rows[0].title;
-  const client=await pool.connect();
-  let q;
-  try {
-   await client.query('BEGIN');
-   // Serialize requests for the same local date and start time, then re-check
-   // the full interval inside the transaction before inserting.
-   await client.query("SELECT pg_advisory_xact_lock(hashtext($1),hashtext('inspection-booking'))",[date]);
-   const duration=Number(schedule.slotMinutes);
-   const overlap=await client.query(`SELECT 1 FROM public.inspection_requests
-     WHERE preferred_date=$1::date AND status IN ('pending','confirmed')
-       AND preferred_time < ($2::time + ($3 * interval '1 minute'))
-       AND (preferred_time + (COALESCE(duration_minutes,30) * interval '1 minute')) > $2::time
-     LIMIT 1`,[date,time,duration]);
-   if(overlap.rowCount) {
-    await client.query('ROLLBACK');
-    return NextResponse.json({error:'That inspection slot has just been taken. Please choose another available time.'},{status:409});
-   }
-   q=await client.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',$6,$7,$8,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,duration,String(listing.rows[0].id),message]);
-   await client.query('COMMIT');
-  } catch(insertError) {
-   await client.query('ROLLBACK').catch(()=>{});
-   throw insertError;
-  } finally { client.release(); }
-  const warnings=[];
-  let emailResult={sent:0,failed:0,skipped:0};
-  try {
-   await queueInspectionEmails([
-    {requestId:q.rows[0].id,type:'admin',to:process.env.ADMIN_EMAIL,subject:'New inspection request — '+name,html:'<p>New physical inspection request from '+safe(name)+' ('+safe(contact)+').</p><p>Property: '+safe(propertyLabel)+'<br/>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p><p>Status: pending admin approval.</p>'},
-    {requestId:q.rows[0].id,type:'client',to:email,subject:'We received your G-BEST inspection request',html:'<p>Hello '+safe(name)+',</p><p>We received your physical inspection request for '+safe(propertyLabel)+' on '+safe(date)+' at '+safe(time)+' WAT.</p><p>This is a request only and is not yet confirmed. Our team will contact you after review.</p>'}
-   ]);
-   emailResult=await deliverInspectionEmails(q.rows[0].id);
-   if(emailResult.failed||emailResult.skipped)warnings.push('One or more emails are queued for retry.');
-  } catch(notificationError) {
-   console.error('Inspection request saved but email queueing failed',notificationError.code||notificationError.message);
-   warnings.push('Your inspection request was saved, but email notifications could not be queued. Please contact our team if you do not hear back.');
-  }
-  return NextResponse.json({ok:true,requestId:q.rows[0].id,status:'pending',email:emailResult,warnings},{status:201,headers:{'Cache-Control':'no-store'}});
- }catch(e){console.error('inspection API failure',e.code||e.message);if(e.code==='23505')return NextResponse.json({error:'That slot is already held by another request. Please choose another.'},{status:409});return NextResponse.json({error:'Unable to submit right now. Please try again.'},{status:500});}
-} THEN 'GB-' || lpad(id::text, 6, '0') ELSE 'GB-' || upper(replace(id::text, '-', '')) END)=$1 OR ('GB-' || RIGHT(upper(replace(id::text, '-', '')),6))=$1) LIMIT 1",[pid]);
+  const listing=await pool.query(`SELECT id,title FROM public.properties
+    WHERE status IN ('published','available')
+      AND (
+        id::text=$1
+        OR upper(slug)=upper($1)
+        OR ('GB-' || CASE
+          WHEN id::text ~ '^[0-9]+$' THEN lpad(id::text,6,'0')
+          ELSE right(upper(replace(id::text,'-','')),6)
+        END)=$1
+      )
+    LIMIT 1`,[pid]);
   if(!listing.rowCount)return NextResponse.json({error:'That property is no longer available. Refresh the listings and try again.'},{status:400});
   propertyLabel=listing.rows[0].title;
   const client=await pool.connect();
