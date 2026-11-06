@@ -38,3 +38,16 @@ test('cancelling an inspection removes its shared Google Calendar event', () => 
   assert.match(inspectionAdmin, /calendar_event_id=NULL/);
   assert.match(inspectionAdmin, /calendarRemoval\.reason/);
 });
+
+test('cover selection and reorder validation happen after the property lock', () => {
+  const cover = route.slice(route.indexOf("if (body.action === 'cover')"), route.indexOf("} else if (body.action === 'reorder')"));
+  const reorder = route.slice(route.indexOf("} else if (body.action === 'reorder')"), route.indexOf("} else {", route.indexOf("} else if (body.action === 'reorder')")));
+  assert.ok(cover.indexOf("pg_advisory_xact_lock") < cover.indexOf("SELECT id FROM public.property_media"));
+  assert.ok(reorder.indexOf("pg_advisory_xact_lock") < reorder.indexOf("SELECT id FROM public.property_media"));
+  assert.match(reorder, /Gallery changed while you were editing/);
+});
+
+test('committed media operations report legacy synchronization warnings instead of false failures', () => {
+  assert.match(route, /async function syncLegacyWithWarning/);
+  assert.match(route, /Gallery saved, but the older property image fields could not be synchronized/);
+});
