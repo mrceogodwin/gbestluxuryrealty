@@ -3,7 +3,7 @@ import { getDatabasePool } from '../../../../lib/db';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 
-const propertyCode=id=>{const value=String(id??'');return 'GB-'+(/^\d+$/.test(value)?value.padStart(6,'0'):value.replace(/-/g,'').toUpperCase());};
+const propertyCode=id=>{const value=String(id??'');if(/^\d+$/.test(value))return 'GB-'+value.padStart(6,'0');return 'GB-'+value.replace(/[^a-z0-9]/gi,'').toUpperCase().slice(-6).padStart(6,'0');};
 function authorized(req){const secret=process.env.ADMIN_SECRET;return Boolean(secret)&&req.headers.get('authorization')==='Bearer '+secret;}
 
 class ValidationError extends Error {}
