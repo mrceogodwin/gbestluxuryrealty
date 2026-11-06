@@ -526,3 +526,8 @@ footer>span,footer>a:last-child{display:block;text-align:center}
 .property-image-navigation span{background:#071b12d9;color:#fff;padding:7px 11px;font-size:11px;font-weight:800;letter-spacing:.1em;border-radius:30px}
 .property-video-play{position:absolute;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);width:76px;height:76px;border:3px solid #fff;border-radius:50%;background:#061b12d9;color:#d8ff32;font-size:27px;display:grid;place-items:center;box-shadow:0 5px 24px #0008;cursor:pointer}
 .property-video-play:focus-visible,.property-image-navigation button:focus-visible{outline:3px solid #d8ff32;outline-offset:3px}
+
+
+/* Keep a failed listing image from silently showing an unrelated property photo. */
+.photo-wrap.photo-unavailable{display:grid;place-items:center;background:linear-gradient(135deg,#e8e7df,#d7d8ce);}
+.photo-wrap.photo-unavailable::after{content:'PROPERTY IMAGE UNAVAILABLE';padding:12px 16px;border:1px solid #68746a;color:#46554a;background:#f7f7f1;font:800 10px/1.4 'DM Mono',monospace;letter-spacing:.12em;text-align:center;}
