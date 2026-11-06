@@ -59,7 +59,19 @@ export async function PATCH(req) {
       cancelled:['pending','confirmed','contacted']
     };
     if(!/^[0-9a-f-]{36}$/i.test(id)||!Object.hasOwn(allowedPrevious,status)) return NextResponse.json({error:'Invalid action'},{status:400});
-    const q=await getDatabasePool().query('UPDATE public.inspection_requests SET status=$2,updated_at=now() WHERE id=$1 AND status=ANY($3::text[]) AND status IS DISTINCT FROM $2 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id',[id,status,allowedPrevious[status]]);
+    const pool=getDatabasePool();
+    let calendar={created:false,reason:'Calendar event only applies to confirmed requests.'};
+    if(status==='confirmed'){
+      const current=await pool.query('SELECT id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1',[id]);
+      if(!current.rowCount)return NextResponse.json({error:'Request not found'},{status:404});
+      if(!allowedPrevious.confirmed.includes(current.rows[0].status)&&current.rows[0].status!=='confirmed')return NextResponse.json({error:'This request cannot be confirmed from its current status.',currentStatus:current.rows[0].status},{status:409});
+      if(!current.rows[0].calendar_event_id){
+        try{calendar=await createCalendarEvent(current.rows[0]);}
+        catch(e){console.error('Calendar pre-confirmation failed',e.message);calendar={created:false,reason:'Google Calendar could not be reached.'};}
+        if(!calendar.created)return NextResponse.json({error:'The inspection was not confirmed because its calendar event could not be created.',calendar},{status:503,headers:{'Cache-Control':'no-store'}});
+      }else calendar={created:true,eventId:current.rows[0].calendar_event_id};
+    }
+    const q=await pool.query('UPDATE public.inspection_requests SET status=$2,updated_at=now() WHERE id=$1 AND status=ANY($3::text[]) AND status IS DISTINCT FROM $2 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id',[id,status,allowedPrevious[status]]);
     if(!q.rowCount) {
       const existing=await getDatabasePool().query('SELECT id,status,full_name,contact,client_email,preferred_date,preferred_time,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1',[id]);
       if(!existing.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
@@ -76,12 +88,7 @@ export async function PATCH(req) {
       return NextResponse.json({ok:true,unchanged:true,request:prior,calendar:retryCalendar,email:{retried},warnings:[...(!retryCalendar.created&&status==='confirmed'&&!prior.calendar_event_id?[retryCalendar.reason]:[]),...(retried.failed?['Some emails remain queued for retry.']:[])]},{headers:{'Cache-Control':'no-store'}});
     }
     const row=q.rows[0];
-    let calendar={created:false,reason:'Calendar event only applies to confirmed requests.'};
-    if(status==='confirmed'&&!row.calendar_event_id) {
-      try { calendar=await createCalendarEvent(row); }
-      catch(e) { console.error('Calendar integration failed',e.message); calendar={created:false,reason:'Google Calendar could not be reached.'}; }
-      if(calendar.created) row.calendar_event_id=calendar.eventId;
-    }
+    if(status==='confirmed'&&calendar.created) row.calendar_event_id=calendar.eventId;
     const date=String(row.preferred_date).slice(0,10), time=String(row.preferred_time||'').slice(0,5);
     const subject=status==='confirmed'?'Your G-BEST inspection is confirmed':status==='declined'?'Update on your G-BEST inspection request':'Update to your G-BEST inspection request';
     const message=status==='confirmed'?'Your physical inspection has been approved for '+date+' at '+time+' WAT. The appointment is 30 minutes.':status==='declined'?'We are sorry, but we cannot approve your requested inspection slot. Please contact our team to arrange another time.':'Your inspection request status has been updated to '+status+'.';
