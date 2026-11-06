@@ -395,3 +395,8 @@ nav .brand small{color:#8b6b31;font-size:8px;letter-spacing:1.65px}
 footer{background:#050505!important;color:#fff!important;border-top:2px solid #050505!important}
 footer .brand,footer .brand b,footer .brand small,footer>span,footer>a:last-child{color:#fff!important}
 footer .brand-building{filter:none}
+
+
+/* Footer uses the black brand finish requested by the owner. */
+footer{background:#050505!important;color:#fff!important;border-top:2px solid #050505!important}
+footer .brand,footer .brand b,footer .brand small,footer>span,footer>a:last-child{color:#fff!important}
