@@ -14,7 +14,7 @@ test('media API enforces server-side authorization and upload limits', () => {
 
 test('gallery resequencing uses a collision-free temporary range', () => {
   assert.match(route, /sort_order=sort_order\+20/);
-  assert.match(route, /0\\.\\.39/);
+  assert.ok(route.includes('0..39'));
   assert.match(route, /async function resequence\(/);
 });
 
