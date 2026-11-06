@@ -385,3 +385,7 @@ nav .brand small{color:#8b6b31;font-size:8px;letter-spacing:1.65px}
  .hero.hero-bold .hero-video{display:none!important;}
  .hero.hero-bold .herotext{transform:none!important;will-change:auto!important;}
 }
+
+
+/* Keep the category chip pinned to the very top edge of each listing photo. */
+.photo-wrap>.property-tag{top:6px!important;left:8px!important;right:auto!important;bottom:auto!important;margin:0!important;transform:none!important;}
