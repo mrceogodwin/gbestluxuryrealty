@@ -377,3 +377,11 @@ nav .brand small{color:#8b6b31;font-size:8px;letter-spacing:1.65px}
 .property-card-reference b{color:#145536;font-weight:800;letter-spacing:.12em;overflow-wrap:anywhere}
 .field-hint{display:block;margin-top:5px;color:var(--muted);font:500 10px/1.5 'DM Mono',monospace}
 @media(max-width:420px){.property-tag{left:8px!important;top:8px!important;padding:7px 8px!important;font-size:8px!important}.card-arrow{right:8px!important;top:8px!important}}
+
+
+/* Mobile Safari scroll stability: avoid a continuously composited hero video and dynamic vh sizing. */
+@media(max-width:680px){
+ .hero.hero-bold{height:auto!important;min-height:max(560px,min(760px,calc(100svh - 108px)))!important;max-height:none!important;background-attachment:scroll!important;}
+ .hero.hero-bold .hero-video{display:none!important;}
+ .hero.hero-bold .herotext{transform:none!important;will-change:auto!important;}
+}
