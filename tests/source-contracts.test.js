@@ -58,3 +58,20 @@ test('property media manager uploads through the authenticated server route', as
   assert.ok(code.includes('SET COVER'));
   assert.ok(code.includes('Neon Object Storage'));
 });
+
+test('client registration assigns permanent IDs and inspection records retain client linkage', async () => {
+  const registration = await source('app/api/client-registration/route.js');
+  const inspection = await source('app/api/inspection-requests/route.js');
+  const adminRequests = await source('app/api/admin/inspection-requests/route.js');
+  assert.ok(registration.includes('client_registrations'));
+  assert.ok(inspection.includes('client_registration_id'));
+  assert.ok(inspection.includes('session.rows[0].id'));
+  assert.ok(adminRequests.includes('cr.client_id'));
+});
+test('client identity is required for inspection booking', async () => {
+  const code = await source('app/api/inspection-requests/route.js');
+  assert.ok(code.includes("req.cookies.get('gbest_client_session')"));
+  assert.ok(code.includes('client_sessions'));
+  assert.ok(code.includes('payment_status=\'approved\''));
+  assert.ok(code.includes('client_status=\'active\''));
+});
