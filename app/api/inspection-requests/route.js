@@ -34,7 +34,7 @@ export async function POST(req){
    await client.query('BEGIN');
    // Serialize requests for the same local date and start time, then re-check
    // the full interval inside the transaction before inserting.
-   await client.query('SELECT pg_advisory_xact_lock(hashtext($1),hashtext('inspection-booking'))',[date]);
+   await client.query("SELECT pg_advisory_xact_lock(hashtext($1),hashtext('inspection-booking'))",[date]);
    const duration=Number(schedule.slotMinutes);
    const overlap=await client.query(`SELECT 1 FROM public.inspection_requests
      WHERE preferred_date=$1::date AND status IN ('pending','confirmed')
