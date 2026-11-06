@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { AwsClient } from 'aws4fetch';
 import { getDatabasePool } from '../../../../lib/db';
 export const runtime='nodejs';
-export const dynamic='force-dynamic';
+export const dynamic='force-dynamic';\nconst safe=s=>String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));
 function auth(req){return Boolean(process.env.ADMIN_SECRET)&&req.headers.get('authorization')==='Bearer '+process.env.ADMIN_SECRET;}
 function storage(){const e=process.env;if(!e.AWS_ACCESS_KEY_ID||!e.AWS_SECRET_ACCESS_KEY||!e.AWS_ENDPOINT_URL_S3)throw new Error('Private receipt storage is not configured.');return {client:new AwsClient({accessKeyId:e.AWS_ACCESS_KEY_ID,secretAccessKey:e.AWS_SECRET_ACCESS_KEY,service:'s3',region:e.AWS_REGION||'eu-central-1'}),endpoint:e.AWS_ENDPOINT_URL_S3.replace(/\/$/,'')};}
-async function receiptUrl(key){const {client,endpoint}=storage();const url=endpoint+'/payment-receipts/'+key.split('/').map(encodeURIComponent).join('/');const signed=await client.sign(url,{method:'GET',aws:{signQuery:true},headers:{'content-type':'application/octet-stream'}});return signed.url;}
+async function receiptUrl(key){const {client,endpoint}=storage();const url=endpoint+'/payment-receipts/'+key.split('/').map(encodeURIComponent).join('/');const signed=await client.sign(url,{method:'GET',aws:{signQuery:true},headers:{}});return signed.url;}
 export async function GET(req){
  if(!auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
@@ -34,7 +34,7 @@ export async function PATCH(req){
   let emailSent=false;
   if(process.env.RESEND_API_KEY&&process.env.RESEND_FROM_EMAIL){
    const message=action==='approve'?'Your G-BEST registration payment has been verified. Your client registration is now active.':'Your G-BEST payment submission was not approved. Please contact our team for assistance.';
-   try{const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({from:process.env.RESEND_FROM_EMAIL,to:[row.email],subject:action==='approve'?'G-BEST registration approved':'G-BEST payment review update',html:'<p>Hello '+row.full_name+',</p><p>'+message+'</p>'+(note?'<p>Admin note: '+note+'</p>':'')})});emailSent=response.ok;if(!response.ok)console.error('Payment decision email failed',response.status);}catch(e){console.error('Payment decision email failed',e.message);}
+   try{const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({from:process.env.RESEND_FROM_EMAIL,to:[row.email],subject:action==='approve'?'G-BEST registration approved':'G-BEST payment review update',html:'<p>Hello '+safe(row.full_name)+',</p><p>'+safe(message)+'</p>'+(note?'<p>Admin note: '+safe(note)+'</p>':'')})});emailSent=response.ok;if(!response.ok)console.error('Payment decision email failed',response.status);}catch(e){console.error('Payment decision email failed',e.message);}
   }
   return NextResponse.json({ok:true,status,emailSent},{headers:{'Cache-Control':'no-store'}});
  }catch(e){await db.query('ROLLBACK');console.error('Payment review failed',e.code||e.message);return NextResponse.json({error:'Could not save payment decision.'},{status:500});}finally{db.release();}
