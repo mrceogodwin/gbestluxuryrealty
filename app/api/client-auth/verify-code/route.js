@@ -7,6 +7,7 @@ const digest=value=>createHash('sha256').update(value).digest('hex');
 export async function POST(req){
  const db=await getDatabasePool().connect();
  try{
+  if(req.headers.get('origin')&&req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
   const d=await req.json(),email=String(d?.email||'').trim().toLowerCase(),code=String(d?.code||'').trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^\d{6}$/.test(code))return NextResponse.json({error:'Enter your email and the six-digit code.'},{status:400});
   const secret=process.env.CLIENT_AUTH_SECRET||process.env.ADMIN_SECRET;
