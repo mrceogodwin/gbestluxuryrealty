@@ -171,17 +171,8 @@ export async function PATCH(request, { params }) {
       try {
         await connection.query('BEGIN');
         await connection.query('SELECT pg_advisory_xact_lock(hashtext($1))', [String(id)]);
-        const ordered = await connection.query(
-          'SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY (id=$2) DESC, sort_order',
-          [id, body.media_id]
-        );
-        await connection.query('UPDATE public.property_media SET sort_order=sort_order+100 WHERE property_id=$1', [id]);
-        for (let index = 0; index < ordered.rows.length; index++) {
-          await connection.query(
-            'UPDATE public.property_media SET sort_order=$1, is_cover=(id=$2) WHERE id=$2',
-            [index, ordered.rows[index].id]
-          );
-        }
+        await connection.query('UPDATE public.property_media SET is_cover=false WHERE property_id=$1', [id]);
+        await connection.query('UPDATE public.property_media SET is_cover=true WHERE id=$1 AND property_id=$2', [body.media_id, id]);
         await connection.query('COMMIT');
       } catch (error) {
         await connection.query('ROLLBACK');
