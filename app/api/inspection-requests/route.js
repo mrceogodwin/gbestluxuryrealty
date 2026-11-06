@@ -16,11 +16,18 @@ export async function POST(req){
   const when=new Date(date+'T'+time+':00+01:00');if(Number.isNaN(when.getTime())||when.toISOString().slice(0,10)!==date||when.getTime()<Date.now())return NextResponse.json({error:'Choose a future date and time.'},{status:400});
   // Demo cards are for presentation only and must never create real inspection records.
   if(/^gb-00[1-8]$/.test(pid))return NextResponse.json({error:'This is a sample property, not a live listing. Please choose a published property before requesting an inspection.'},{status:400});
+  const pool=getDatabasePool();
+  // Only clients whose manual bank transfer has been checked and approved
+  // by G-BEST staff may request an inspection.
+  const registrationTable=await pool.query("SELECT to_regclass('public.client_registrations') AS table_name");
+  if(!registrationTable.rows[0]?.table_name)return NextResponse.json({error:'Complete client registration and payment verification before requesting an inspection.'},{status:403});
+  const registration=await pool.query("SELECT id FROM public.client_registrations WHERE lower(email)=lower($1) AND payment_status='approved' ORDER BY updated_at DESC LIMIT 1",[email]);
+  if(!registration.rowCount)return NextResponse.json({error:'Your client registration or payment is not yet approved. Please complete registration and wait for G-BEST to verify your bank transfer before booking an inspection.'},{status:403});
   let propertyLabel=pid;
-  const listing=await getDatabasePool().query("SELECT id,title FROM public.properties WHERE status IN ('published','available') AND (id::text=$1 OR slug=$1) LIMIT 1",[pid]);
+  const listing=await pool.query("SELECT id,title FROM public.properties WHERE status IN ('published','available') AND (id::text=$1 OR slug=$1) LIMIT 1",[pid]);
   if(!listing.rowCount)return NextResponse.json({error:'That property is no longer available. Refresh the listings and try again.'},{status:400});
   propertyLabel=listing.rows[0].title;
-  const q=await getDatabasePool().query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',30,$6,$7,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,pid,message]);
+  const q=await pool.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',30,$6,$7,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,pid,message]);
   const warnings=[];
   let emailResult={sent:0,failed:0,skipped:0};
   try {
