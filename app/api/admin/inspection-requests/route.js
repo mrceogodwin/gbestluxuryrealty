@@ -17,7 +17,8 @@ async function createCalendarEvent(reqRow) {
   if (!tokenRes.ok) { console.error('Google OAuth token refresh failed',tokenRes.status); return {created:false,reason:'Google authorization failed.'}; }
   const token = await tokenRes.json();
   const start = new Date(String(reqRow.preferred_date).slice(0,10)+'T'+String(reqRow.preferred_time).slice(0,8)+'+01:00');
-  const durationMinutes=Number(reqRow.duration_minutes||30);\n  const end = new Date(start.getTime()+durationMinutes*60*1000);
+  const durationMinutes=Number(reqRow.duration_minutes||30);
+  const end = new Date(start.getTime()+durationMinutes*60*1000);
   const eventId=calendarEventId(reqRow.id);
   const event = { id:eventId, summary:'G-BEST property inspection — '+reqRow.full_name, description:'Approved physical property inspection. Property reference: '+(reqRow.property_id||'Not specified')+'. Client contact: '+reqRow.contact+'. Request ID: '+reqRow.id, start:{dateTime:start.toISOString(),timeZone:'Africa/Lagos'}, end:{dateTime:end.toISOString(),timeZone:'Africa/Lagos'}, attendees:reqRow.client_email?[{email:reqRow.client_email}]:[], guestsCanModify:false };
   const base='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(GOOGLE_CALENDAR_ID)+'/events';
