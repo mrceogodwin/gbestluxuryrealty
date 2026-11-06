@@ -1,14 +1,15 @@
+import { authorizeStaffOrLegacySuperAdmin } from '../../../../lib/staff-auth';
 import { NextResponse } from 'next/server';
 import { AwsClient } from 'aws4fetch';
 import { getDatabasePool } from '../../../../lib/db';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function auth(req){return Boolean(process.env.ADMIN_SECRET)&&req.headers.get('authorization')==='Bearer '+process.env.ADMIN_SECRET;}
+async function auth(req, permission='clients.view') { return authorizeStaffOrLegacySuperAdmin(req, permission); }
 function storage(){const e=process.env;if(!e.AWS_ACCESS_KEY_ID||!e.AWS_SECRET_ACCESS_KEY||!e.AWS_ENDPOINT_URL_S3)throw new Error('Private receipt storage is not configured.');return {client:new AwsClient({accessKeyId:e.AWS_ACCESS_KEY_ID,secretAccessKey:e.AWS_SECRET_ACCESS_KEY,service:'s3',region:e.AWS_REGION||'eu-central-1'}),endpoint:e.AWS_ENDPOINT_URL_S3.replace(/\/$/,'')};}
 async function receiptUrl(key){const {client,endpoint}=storage();const url=endpoint+'/payment-receipts/'+key.split('/').map(encodeURIComponent).join('/');const signed=await client.sign(url,{method:'GET',aws:{signQuery:true},headers:{}});return signed.url;}
 export async function GET(req){
- if(!auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});
+ if(!await auth(req,'clients.view'))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
   const q=await getDatabasePool().query(`SELECT r.id AS registration_id,r.client_id,r.full_name,r.email,r.phone,r.payment_status,r.client_status,r.created_at AS registered_at,p.id AS payment_id,p.amount_kobo,p.bank_reference,p.transfer_date,p.receipt_object_key,p.receipt_mime_type,p.receipt_size_bytes,p.status AS submission_status,p.submitted_at,p.reviewed_at,p.reviewed_by,p.review_note FROM public.client_registrations r LEFT JOIN LATERAL (SELECT * FROM public.registration_payment_submissions x WHERE x.registration_id=r.id ORDER BY x.submitted_at DESC LIMIT 1) p ON true ORDER BY r.created_at DESC LIMIT 200`);
   const registrations=await Promise.all(q.rows.map(async row=>({...row,receipt_url:row.receipt_object_key?await receiptUrl(row.receipt_object_key):null,amount_naira:Number(row.amount_kobo||0)/100})));
@@ -16,7 +17,7 @@ export async function GET(req){
  }catch(e){console.error('Admin registrations list failed',e.code||e.message);return NextResponse.json({error:'Could not load registrations.'},{status:500});}
 }
 export async function PATCH(req){
- if(!auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});
+ if(!await auth(req,'payments.review'))return NextResponse.json({error:'Unauthorized'},{status:401});
  let d;try{d=await req.json();}catch{return NextResponse.json({error:'Invalid JSON.'},{status:400});}
  const id=String(d?.payment_id||''),action=String(d?.action||''),note=String(d?.note||'').trim().slice(0,1000);
  if(!/^[0-9a-f-]{36}$/i.test(id)||!['approve','reject'].includes(action))return NextResponse.json({error:'Invalid review action.'},{status:400});
