@@ -71,7 +71,8 @@ export async function POST(req){
   return NextResponse.json({ok:true,status:'pending',message:'Registration submitted. Your payment is awaiting manual verification.',adminNotified,clientNotified},{status:201,headers:{'Cache-Control':'no-store'}});
  }catch(e){
   if(key){try{const {client,endpoint}=storage();await client.fetch(endpoint+'/payment-receipts/'+key.split('/').map(encodeURIComponent).join('/'),{method:'DELETE'});}catch{}}
-  if(e.code==='DUPLICATE_REGISTRATION')return NextResponse.json({error:e.message},{status:409});\n  if(e.code==='23505')return NextResponse.json({error:'This bank transfer reference has already been submitted. Contact G-BEST if you believe this is an error.'},{status:409});
+  if(e.code==='DUPLICATE_REGISTRATION')return NextResponse.json({error:e.message},{status:409});
+  if(e.code==='23505')return NextResponse.json({error:'This bank transfer reference has already been submitted. Contact G-BEST if you believe this is an error.'},{status:409});
   console.error('Client registration submission failed',e.code||e.message);
   return NextResponse.json({error:'We could not submit your registration. Please try again or contact G-BEST.'},{status:500});
  }
