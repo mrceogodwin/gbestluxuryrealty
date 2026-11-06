@@ -18,8 +18,8 @@ const MIME = {
 };
 
 async function authorized(request) {
-  const { authorizeStaffOrLegacySuperAdmin } = await import('../../../../../../lib/staff-auth');
-  return authorizeStaffOrLegacySuperAdmin(request, 'properties.manage');
+  const { authorizeStaff } = await import('../../../../../../lib/staff-auth');
+  return authorizeStaff(request, 'properties.manage');
 }
 function storageClient() {
   const env = process.env;
