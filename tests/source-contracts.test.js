@@ -75,3 +75,24 @@ test('client identity is required for inspection booking', async () => {
   assert.ok(code.includes('payment_status=\'approved\''));
   assert.ok(code.includes('client_status=\'active\''));
 });
+
+test('staff sessions and Super Admin-only account management are enforced server-side', async () => {
+  const auth = await source('lib/staff-auth.js');
+  const manager = await source('app/api/admin/staff-management/route.js');
+  const verify = await source('app/api/staff-auth/verify-code/route.js');
+  assert.ok(auth.includes('gbest_staff_session'));
+  assert.ok(auth.includes("staff.role==='super_admin'"));
+  assert.ok(manager.includes("a.staff.role!=='super_admin'"));
+  assert.ok(manager.includes("['administrator','moderator']"));
+  assert.ok(manager.includes("target.rows[0].role==='super_admin'"));
+  assert.ok(verify.includes('timingSafeEqual'));
+  assert.ok(verify.includes('staff_sessions'));
+});
+test('staff login endpoints reject cross-origin requests and revoke sessions on sign-out', async () => {
+  const request = await source('app/api/staff-auth/request-code/route.js');
+  const verify = await source('app/api/staff-auth/verify-code/route.js');
+  const signout = await source('app/api/staff-auth/sign-out/route.js');
+  assert.ok(request.includes('Invalid request origin'));
+  assert.ok(verify.includes('Invalid request origin'));
+  assert.ok(signout.includes('revoked_at=now()'));
+});
