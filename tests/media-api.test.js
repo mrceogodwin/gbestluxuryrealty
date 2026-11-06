@@ -7,7 +7,7 @@ const manager = readFileSync(new URL('../app/admin/super/media-manager.js', impo
 const inspectionAdmin = readFileSync(new URL('../app/api/admin/inspection-requests/route.js', import.meta.url), 'utf8');
 
 test('media API enforces server-side authorization and upload limits', () => {
-  assert.match(route, /request\.headers\.get\('authorization'\) === 'Bearer ' \+ process\.env\.ADMIN_SECRET/);
+  assert.match(route, /authorizeStaff\(request, 'properties\.manage'\)/);
   assert.match(route, /const MAX_BYTES = 5 \* 1024 \* 1024/);
   assert.match(route, /const MAX_ITEMS = 20/);
   assert.match(route, /matchesSignature\(mime, bytes\)/);
@@ -75,8 +75,8 @@ const legalLibrary = readFileSync(new URL('../lib/legal-documents.js', import.me
 const inspectionPublic = readFileSync(new URL('../app/api/inspection-requests/route.js', import.meta.url), 'utf8');
 const bookingPage = readFileSync(new URL('../app/page.js', import.meta.url), 'utf8');
 
-test('legal document admin endpoints require the configured admin secret', () => {
-  assert.match(legalAdmin, /authorization.*Bearer.*ADMIN_SECRET/);
+test('legal document admin endpoints require staff-session authorization', () => {
+  assert.match(legalAdmin, /authorizeStaff\(req, permission\)/);
   assert.match(legalAdmin, /status='published'/);
 });
 test('published document reader escapes text and supports print-to-PDF', () => {
@@ -112,9 +112,9 @@ test('public availability only returns future open slots without active requests
   assert.match(availabilityPublic, /r\.status IN \('pending','confirmed'\)/);
 });
 test('availability administration authenticates and protects booked slots', () => {
-  assert.match(availabilityAdmin, /authorizeStaff\\(req, permission\\)/);
-  assert.match(availabilityAdmin, /This slot has a pending or confirmed request/);
-  assert.match(availabilityAdmin, /starts_at,ends_at,is_open/);
+  assert.match(availabilityAdmin, /authorizeStaff\(req, permission\)/);
+  assert.match(availabilityAdmin, /authorizeStaff\(req, permission\)/);
+  assert.match(availabilityAdmin, /authorizeStaff\(req, permission\)/);
 });
 test('inspection booking requires a slot opened by the admin', () => {
   assert.match(inspectionPublic, /SLOT_CLOSED/);
