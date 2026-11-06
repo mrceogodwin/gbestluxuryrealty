@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDatabasePool } from '../../../lib/db';
 import { queueInspectionEmails, deliverInspectionEmails } from '../../../lib/inspection-email-outbox';
+import {getSchedule,slotIsAvailable,validClock} from '../../../lib/inspection-schedule';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 
