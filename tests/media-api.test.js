@@ -67,3 +67,38 @@ test('admin can retry calendar cleanup for cancelled inspections', () => {
   assert.match(inspectionAdminPage, /x\.status==='cancelled'&&x\.calendar_event_id/);
   assert.match(inspectionAdminPage, /Retry calendar cleanup/);
 });
+
+const legalAdmin = readFileSync(new URL('../app/api/admin/legal-documents/route.js', import.meta.url), 'utf8');
+const legalPublic = readFileSync(new URL('../app/api/legal-documents/route.js', import.meta.url), 'utf8');
+const legalReader = readFileSync(new URL('../app/api/legal-documents/[slug]/route.js', import.meta.url), 'utf8');
+const legalLibrary = readFileSync(new URL('../lib/legal-documents.js', import.meta.url), 'utf8');
+const inspectionPublic = readFileSync(new URL('../app/api/inspection-requests/route.js', import.meta.url), 'utf8');
+const bookingPage = readFileSync(new URL('../app/page.js', import.meta.url), 'utf8');
+
+test('legal document admin endpoints require the configured admin secret', () => {
+  assert.match(legalAdmin, /authorization.*Bearer.*ADMIN_SECRET/);
+  assert.match(legalAdmin, /status='published'/);
+});
+test('published document reader escapes text and supports print-to-PDF', () => {
+  assert.match(legalReader, /replace\(\/\[&<>\]/);
+  assert.match(legalReader, /window\.print\(\)/);
+  assert.match(legalReader, /status='published'/);
+});
+test('legal document records preserve prior versions and client acceptance evidence', () => {
+  assert.match(legalLibrary, /legal_document_revisions/);
+  assert.match(legalLibrary, /legal_document_acceptances/);
+  assert.match(legalLibrary, /content_sha256/);
+  assert.match(legalLibrary, /document_version/);
+});
+test('public booking API rejects missing or stale required document acknowledgements', () => {
+  assert.match(inspectionPublic, /Please read and accept every required agreement/);
+  assert.match(inspectionPublic, /An agreement changed/);
+  assert.match(inspectionPublic, /createHash\('sha256'\)/);
+  assert.match(inspectionPublic, /legal_document_acceptances/);
+});
+test('inspection form displays published documents and blocks missing required acknowledgements', () => {
+  assert.match(bookingPage, /api\/legal-documents/);
+  assert.match(bookingPage, /acceptedDocs/);
+  assert.match(bookingPage, /d\.required/);
+  assert.match(bookingPage, /Read document/);
+});
