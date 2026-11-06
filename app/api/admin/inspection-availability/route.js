@@ -1,8 +1,8 @@
-import {authorizeStaffOrLegacySuperAdmin} from '../../../../lib/staff-auth';
+import {authorizeStaff} from '../../../../lib/staff-auth';
 import {NextResponse} from 'next/server';
 import {getDatabasePool} from '../../../../lib/db';
 export const runtime='nodejs';export const dynamic='force-dynamic';
-async function auth(req, permission='inspections.manage') { return authorizeStaffOrLegacySuperAdmin(req, permission); }
+async function auth(req, permission='inspections.manage') { return authorizeStaff(req, permission); }
 const times=['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00'];
 const validDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(new Date(s+'T00:00:00Z').getTime())&&new Date(s+'T00:00:00Z').toISOString().slice(0,10)===s;
 export async function GET(req){if(!await auth(req,'inspections.view'))return NextResponse.json({error:'Unauthorized'},{status:401});const date=req.nextUrl.searchParams.get('date')||'';if(!validDate(date))return NextResponse.json({error:'Choose a valid date.'},{status:400});try{const q=await getDatabasePool().query(`SELECT to_char(a.starts_at AT TIME ZONE 'Africa/Lagos','HH24:MI') AS time,a.is_open,
