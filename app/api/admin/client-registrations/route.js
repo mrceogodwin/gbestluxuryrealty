@@ -1,11 +1,11 @@
-import { authorizeStaffOrLegacySuperAdmin } from '../../../../lib/staff-auth';
+import { authorizeStaff } from '../../../../lib/staff-auth';
 import { NextResponse } from 'next/server';
 import { AwsClient } from 'aws4fetch';
 import { getDatabasePool } from '../../../../lib/db';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function auth(req, permission='clients.view') { return authorizeStaffOrLegacySuperAdmin(req, permission); }
+async function auth(req, permission='clients.view') { return authorizeStaff(req, permission); }
 function storage(){const e=process.env;if(!e.AWS_ACCESS_KEY_ID||!e.AWS_SECRET_ACCESS_KEY||!e.AWS_ENDPOINT_URL_S3)throw new Error('Private receipt storage is not configured.');return {client:new AwsClient({accessKeyId:e.AWS_ACCESS_KEY_ID,secretAccessKey:e.AWS_SECRET_ACCESS_KEY,service:'s3',region:e.AWS_REGION||'eu-central-1'}),endpoint:e.AWS_ENDPOINT_URL_S3.replace(/\/$/,'')};}
 async function receiptUrl(key){const {client,endpoint}=storage();const url=endpoint+'/payment-receipts/'+key.split('/').map(encodeURIComponent).join('/');const signed=await client.sign(url,{method:'GET',aws:{signQuery:true},headers:{}});return signed.url;}
 export async function GET(req){
