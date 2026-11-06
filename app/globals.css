@@ -517,3 +517,12 @@ footer>span,footer>a:last-child{display:block;text-align:center}
  nav>div{gap:8px!important}
  nav .navbtn{padding:12px 10px!important;font-size:9px!important;white-space:nowrap}
 }
+
+
+/* Property media controls: visible only when a listing has a gallery or video. */
+.photo-wrap{position:relative;overflow:hidden}
+.property-image-navigation{position:absolute;z-index:4;inset:50% 12px auto;transform:translateY(-50%);display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.property-image-navigation button{pointer-events:auto;width:42px;height:42px;border:2px solid #fff;background:#071b12eF;color:#fff;font-size:30px;line-height:1;border-radius:50%;box-shadow:0 3px 12px #0005;display:grid;place-items:center}
+.property-image-navigation span{background:#071b12d9;color:#fff;padding:7px 11px;font-size:11px;font-weight:800;letter-spacing:.1em;border-radius:30px}
+.property-video-play{position:absolute;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);width:76px;height:76px;border:3px solid #fff;border-radius:50%;background:#061b12d9;color:#d8ff32;font-size:27px;display:grid;place-items:center;box-shadow:0 5px 24px #0008;cursor:pointer}
+.property-video-play:focus-visible,.property-image-navigation button:focus-visible{outline:3px solid #d8ff32;outline-offset:3px}
