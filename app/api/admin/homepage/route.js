@@ -1,9 +1,9 @@
-import {authorizeStaffOrLegacySuperAdmin} from '../../../../lib/staff-auth';
+import {authorizeStaff} from '../../../../lib/staff-auth';
 import { NextResponse } from 'next/server';
 import { ensureHomepageTables } from '../../../../lib/homepage-cms';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
-async function auth(req, permission='content.manage') { return authorizeStaffOrLegacySuperAdmin(req, permission); }
+async function auth(req, permission='content.manage') { return authorizeStaff(req, permission); }
 const allowed=new Set(['eyebrow','title','description','buttonText','buttonUrl','imageUrl','videoUrl','extraText','visible']);
 function cleanContent(value){
  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Section content must be an object.');
