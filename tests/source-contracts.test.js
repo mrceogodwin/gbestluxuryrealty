@@ -40,3 +40,21 @@ test('email failure does not turn a saved inspection request into a failed submi
   assert.ok(code.includes('Inspection request saved but email queueing failed'));
   assert.ok(code.includes('status:201'));
 });
+
+test('property media API authenticates admin and validates file type, signature and size', async () => {
+  const code = await source('app/api/admin/properties/[id]/media/route.js');
+  assert.ok(code.includes("request.headers.get('authorization')"));
+  assert.ok(code.includes('MAX_BYTES = 5 * 1024 * 1024'));
+  assert.ok(code.includes('matchesSignature'));
+  assert.ok(code.includes('public.property_media'));
+  assert.ok(code.includes('pg_advisory_xact_lock'));
+  assert.ok(code.includes("SET is_cover=false WHERE property_id=$1"));
+});
+test('property media manager uploads through the authenticated server route', async () => {
+  const code = await source('app/admin/super/media-manager.js');
+  assert.ok(code.includes('new FormData()'));
+  assert.ok(code.includes("method: 'POST'"));
+  assert.ok(code.includes("Authorization: 'Bearer ' + secret"));
+  assert.ok(code.includes('SET COVER'));
+  assert.ok(code.includes('Neon Object Storage'));
+});
