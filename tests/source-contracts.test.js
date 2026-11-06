@@ -43,7 +43,7 @@ test('email failure does not turn a saved inspection request into a failed submi
 
 test('property media API authenticates admin and validates file type, signature and size', async () => {
   const code = await source('app/api/admin/properties/[id]/media/route.js');
-  assert.ok(code.includes("request.headers.get('authorization')"));
+  assert.ok(code.includes("authorizeStaff(request, 'properties.manage')"));
   assert.ok(code.includes('MAX_BYTES = 5 * 1024 * 1024'));
   assert.ok(code.includes('matchesSignature'));
   assert.ok(code.includes('public.property_media'));
@@ -54,7 +54,7 @@ test('property media manager uploads through the authenticated server route', as
   const code = await source('app/admin/super/media-manager.js');
   assert.ok(code.includes('new FormData()'));
   assert.ok(code.includes("method: 'POST'"));
-  assert.ok(code.includes("Authorization: 'Bearer ' + secret"));
+  assert.ok(!code.includes('Authorization'));
   assert.ok(code.includes('SET COVER'));
   assert.ok(code.includes('Neon Object Storage'));
 });
@@ -84,7 +84,7 @@ test('staff sessions and Super Admin-only account management are enforced server
   assert.ok(auth.includes("staff.role==='super_admin'"));
   assert.ok(manager.includes("a.staff.role!=='super_admin'"));
   assert.ok(manager.includes("['administrator','moderator']"));
-  assert.ok(manager.includes("target.rows[0].role==='super_admin'"));
+  assert.ok(manager.includes("q.rows[0].role==='super_admin'"));
   assert.ok(verify.includes('timingSafeEqual'));
   assert.ok(verify.includes('staff_sessions'));
 });
