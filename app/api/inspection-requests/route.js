@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDatabasePool } from '../../../lib/db';
+import { createHash } from 'node:crypto';
+import { ensureLegalDocumentTables } from '../../../lib/legal-documents';
 import { queueInspectionEmails, deliverInspectionEmails } from '../../../lib/inspection-email-outbox';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -16,11 +18,27 @@ export async function POST(req){
   const when=new Date(date+'T'+time+':00+01:00');if(Number.isNaN(when.getTime())||when.toISOString().slice(0,10)!==date||when.getTime()<Date.now())return NextResponse.json({error:'Choose a future date and time.'},{status:400});
   // Demo cards are for presentation only and must never create real inspection records.
   if(/^gb-00[1-8]$/.test(pid))return NextResponse.json({error:'This is a sample property, not a live listing. Please choose a published property before requesting an inspection.'},{status:400});
+  const pool=await ensureLegalDocumentTables();
+  const accepted=Array.isArray(d.acceptedDocuments)?d.acceptedDocuments:[];
+  const requiredDocs=await pool.query("SELECT id,version,title,body,file_url,required FROM public.legal_documents WHERE status='published' AND category IN ('inspection','general')");
+  const byId=new Map(accepted.map(x=>[String(x.id),Number(x.version)]));
+  for(const doc of requiredDocs.rows){if(doc.required&&byId.get(doc.id)!==doc.version)return NextResponse.json({error:'Please read and accept every required agreement, then try again.'},{status:400});}
+  for(const item of accepted){if(!requiredDocs.rows.some(doc=>doc.id===String(item.id)&&doc.version===Number(item.version)))return NextResponse.json({error:'An agreement changed. Refresh the page and review the latest version.'},{status:409});}
   let propertyLabel=pid;
   const listing=await getDatabasePool().query("SELECT id,title FROM public.properties WHERE status IN ('published','available') AND (id::text=$1 OR slug=$1) LIMIT 1",[pid]);
   if(!listing.rowCount)return NextResponse.json({error:'That property is no longer available. Refresh the listings and try again.'},{status:400});
   propertyLabel=listing.rows[0].title;
-  const q=await getDatabasePool().query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',30,$6,$7,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,pid,message]);
+  const client=await pool.connect();let requestId;
+  try{await client.query('BEGIN');
+   const q=await client.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',30,$6,$7,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,pid,message]);
+   requestId=q.rows[0].id;
+   for(const doc of requiredDocs.rows.filter(x=>byId.has(x.id))){
+    const snapshot=JSON.stringify({id:doc.id,version:doc.version,title:doc.title,body:doc.body,file_url:doc.file_url});
+    await client.query('INSERT INTO public.legal_document_acceptances(inspection_request_id,document_id,document_version,document_title,content_sha256,accepted,client_email) VALUES($1,$2,$3,$4,$5,true,$6)',[requestId,doc.id,doc.version,doc.title,createHash('sha256').update(snapshot).digest('hex'),email]);
+   }
+   await client.query('COMMIT');
+  }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
+  const q={rows:[{id:requestId}]};
   const warnings=[];
   let emailResult={sent:0,failed:0,skipped:0};
   try {
