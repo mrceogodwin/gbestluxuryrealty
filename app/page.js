@@ -10,7 +10,7 @@ const P=[
 {id:'gb-007',name:'Palmview Residential Plot',loc:'Sangotedo, Lagos',state:'Lagos',type:'Land',price:'Price on request',beds:0,baths:0,size:'600 sqm',img:'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=85',desc:'Illustrative residential land opportunity for a future home or long-term hold.'},
 {id:'gb-008',name:'Greenfield Estate Land',loc:'Airport Road, Benin City',state:'Edo',type:'Land',price:'Price on request',beds:0,baths:0,size:'500 sqm',img:'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=90',desc:'A sample land listing to demonstrate how plots and development opportunities will appear.'}
 ];
-const propertyCode=id=>{const value=String(id??'');return 'GB-'+(/^\\d+$/.test(value)?value.padStart(6,'0'):value.replace(/-/g,'').toUpperCase());};
+const propertyCode=id=>{const value=String(id??'');return 'GB-'+(/^\d+$/.test(value)?value.padStart(6,'0'):value.replace(/-/g,'').toUpperCase());};
 const TIMES=['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00'];
 const TYPES=['All properties','Luxury home','Penthouse','Family home','Investment property','Land'];
 function cmsValue(data,key,field,fallback){const section=data?.[key];if(!section||section.visible===false)return fallback;const value=section[field];return typeof value==='string'&&value.length?value:fallback;}
