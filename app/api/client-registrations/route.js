@@ -70,7 +70,7 @@ export async function POST(req) {
       [...Object.values(fields),reference,file.name.slice(0,255),file.type,bytes]);
     const fullName = fields.surname + ' ' + fields.other_names;
     const adminEmail = await sendClientRegistrationEmail({
-      to: process.env.ADMIN_EMAIL,
+      to: process.env.ADMIN_EMAIL || 'gbestinnovations@gmail.com',
       subject: 'New client registration awaiting payment verification',
       html: '<p>A new client registration has been submitted.</p><p><strong>Client:</strong> ' + escapeHtml(fullName) + '<br/><strong>Email:</strong> ' + escapeHtml(fields.email) + '<br/><strong>Phone:</strong> ' + escapeHtml(fields.phone) + '<br/><strong>Property:</strong> ' + escapeHtml(fields.property_type) + ' — ' + escapeHtml(fields.price_range) + '<br/><strong>Transfer reference:</strong> ' + escapeHtml(reference) + '</p><p>Sign in to the G-BEST admin area to inspect the receipt and verify the bank transaction manually.</p>'
     });
