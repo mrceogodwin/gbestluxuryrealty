@@ -70,13 +70,26 @@ export async function POST(req) {
       'application/pdf':bytes.length>=5&&bytes.toString('ascii',0,5)==='%PDF-'
     };
     if(!signatures[file.type])return NextResponse.json({error:'The uploaded receipt content does not match its file type.'},{status:400});
-    const duplicate=await pool.query("SELECT id FROM public.client_registrations WHERE lower(email)=lower($1) AND payment_status='pending' ORDER BY created_at DESC LIMIT 1",[fields.email]);
-    if(duplicate.rowCount)return NextResponse.json({error:'A registration for this email is already awaiting payment verification. Contact G-BEST if you need to update the submitted details.'},{status:409});
-    const q=await pool.query(`INSERT INTO public.client_registrations
-      (surname,other_names,address,email,phone,nationality,state_of_origin,lga,occupation,property_type,price_range,preferred_location,property_description,terms_accepted,payment_reference,receipt_name,receipt_type,receipt_data,payment_status)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true,$14,$15,$16,$17,'pending')
-      RETURNING id,payment_status,created_at`,
-      [...Object.values(fields),reference,file.name.slice(0,255),file.type,bytes]);
+    const dbClient=await pool.connect();
+    let q;
+    try {
+      await dbClient.query('BEGIN');
+      await dbClient.query("SELECT pg_advisory_xact_lock(hashtext(lower($1)),hashtext('client-registration'))",[fields.email]);
+      const duplicate=await dbClient.query("SELECT id FROM public.client_registrations WHERE lower(email)=lower($1) AND payment_status='pending' ORDER BY created_at DESC LIMIT 1",[fields.email]);
+      if(duplicate.rowCount) {
+        await dbClient.query('ROLLBACK');
+        return NextResponse.json({error:'A registration for this email is already awaiting payment verification. Contact G-BEST if you need to update the submitted details.'},{status:409});
+      }
+      q=await dbClient.query(`INSERT INTO public.client_registrations
+        (surname,other_names,address,email,phone,nationality,state_of_origin,lga,occupation,property_type,price_range,preferred_location,property_description,terms_accepted,payment_reference,receipt_name,receipt_type,receipt_data,payment_status)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true,$14,$15,$16,$17,'pending')
+        RETURNING id,payment_status,created_at`,
+        [...Object.values(fields),reference,file.name.slice(0,255),file.type,bytes]);
+      await dbClient.query('COMMIT');
+    } catch(registrationError) {
+      await dbClient.query('ROLLBACK').catch(()=>{});
+      throw registrationError;
+    } finally { dbClient.release(); }
     const fullName = fields.surname + ' ' + fields.other_names;
     const adminEmail = await sendClientRegistrationEmail({
       to: process.env.ADMIN_EMAIL || 'gbestinnovations@gmail.com',
