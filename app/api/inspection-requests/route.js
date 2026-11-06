@@ -27,10 +27,10 @@ export async function POST(req){
   let propertyLabel=pid;
   const listing=await pool.query(`SELECT id,title FROM public.properties
     WHERE status IN ('published','available')
-      AND (
-        ('GB-' || CASE
-          WHEN id::text ~ '^[0-9]+
-      )
+      AND ('GB-' || CASE
+        WHEN id::text ~ '^[0-9]+$' THEN lpad(id::text,8,'0')
+        ELSE right(upper(replace(id::text,'-','')),8)
+      END)=$1
     LIMIT 1`,[pid]);
   if(!listing.rowCount)return NextResponse.json({error:'That property is no longer available. Refresh the listings and try again.'},{status:400});
   propertyLabel=listing.rows[0].title;
