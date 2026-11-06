@@ -64,7 +64,7 @@ export default function PropertyMediaManager({ propertyId, secret }) {
     try {
       const data = await call(method, body);
       setMedia(data.media || []);
-      setNotice(message);
+      setNotice(data.warning ? message + ' ' + data.warning : message);
     } catch (error) {
       setError(error.message);
     } finally {
