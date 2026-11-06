@@ -172,8 +172,13 @@ nav>div a:not(.navbtn){text-decoration:underline;text-decoration-thickness:2px;t
 .property-card{background:var(--paper);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);transition:transform .15s,box-shadow .15s}
 .property-card:hover{transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--ink);border-color:var(--ink)}
 .photo-wrap{height:245px;border-bottom:2px solid var(--ink);background:#d9dfd2}.photo-wrap img{filter:saturate(.78) contrast(1.05)}
-.property-tag{left:12px;top:12px;background:var(--gold);border:1px solid var(--ink);color:var(--ink);font:500 8px 'DM Mono',monospace;padding:7px 9px}
-.card-arrow{right:12px;bottom:12px;background:var(--gold);color:var(--ink);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);font-weight:900}
+.property-tag{left:12px;top:12px;right:auto;bottom:auto;z-index:3;background:var(--gold);border:1px solid var(--ink);color:var(--ink);font:700 9px 'DM Mono',monospace;padding:8px 11px;max-width:calc(100% - 76px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:3px 3px 0 var(--ink)}
+.card-arrow{right:12px;top:12px;bottom:auto;background:var(--gold);color:var(--ink);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);font-weight:900}
+.card-arrow::before{content:'↗';font-size:17px;line-height:1}
+.property-card-reference{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--ink);font:500 8px 'DM Mono',monospace;letter-spacing:.08em;color:var(--muted)}
+.property-card-reference b{color:#145536;font-weight:800;letter-spacing:.12em;overflow-wrap:anywhere}
+.field-hint{display:block;margin-top:5px;color:var(--muted);font:500 10px/1.5 'DM Mono',monospace}
+@media(max-width:420px){.property-tag{left:8px;top:8px;padding:7px 8px;font-size:8px}.card-arrow{right:8px;top:8px}}
 .pad{padding:20px}.loc{font:500 9px 'DM Mono',monospace;color:#1b5a30}.pad h3{font:400 25px/1 'Archivo Black',sans-serif;letter-spacing:-.7px;color:var(--ink);margin:13px 0 11px}.pad>p{font-size:11px;line-height:1.7;color:var(--muted);min-height:40px}
 .facts{border-top:1px solid var(--ink);gap:9px;padding:13px 0;font:500 8px 'DM Mono',monospace;color:#35382e}
 .price{border-top:1px solid var(--ink);padding-top:13px}.price b{font:700 10px 'Space Grotesk',sans-serif;color:var(--ink)}.price button{font:500 9px 'DM Mono',monospace;text-transform:uppercase;text-decoration:underline;text-underline-offset:3px;color:var(--ink)}
