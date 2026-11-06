@@ -102,3 +102,32 @@ test('inspection form displays published documents and blocks missing required a
   assert.match(bookingPage, /d\.required/);
   assert.match(bookingPage, /Read document/);
 });
+
+const availabilityPublic = readFileSync(new URL('../app/api/inspection-availability/route.js', import.meta.url), 'utf8');
+const availabilityAdmin = readFileSync(new URL('../app/api/admin/inspection-availability/route.js', import.meta.url), 'utf8');
+const availabilityPage = readFileSync(new URL('../app/admin/availability/page.js', import.meta.url), 'utf8');
+test('public availability only returns future open slots without active requests', () => {
+  assert.match(availabilityPublic, /a\.is_open=true/);
+  assert.match(availabilityPublic, /NOT EXISTS/);
+  assert.match(availabilityPublic, /r\.status IN \('pending','confirmed'\)/);
+});
+test('availability administration authenticates and protects booked slots', () => {
+  assert.match(availabilityAdmin, /authorization.*Bearer.*ADMIN_SECRET/);
+  assert.match(availabilityAdmin, /This slot has a pending or confirmed request/);
+  assert.match(availabilityAdmin, /starts_at,ends_at,is_open/);
+});
+test('inspection booking requires a slot opened by the admin', () => {
+  assert.match(inspectionPublic, /SLOT_CLOSED/);
+  assert.match(inspectionPublic, /inspection_availability WHERE starts_at=.*is_open=true FOR UPDATE/);
+});
+test('client booking form loads date-specific available slots', () => {
+  assert.match(bookingPage, /api\/inspection-availability\?date=/);
+  assert.match(bookingPage, /No open slots — choose another date/);
+  assert.match(bookingPage, /availableTimes\.map/);
+});
+test('admin dashboard exposes the slot manager and booked-slot protection', () => {
+  assert.match(availabilityPage, /OPEN SLOT/);
+  assert.match(availabilityPage, /CLOSE SLOT/);
+  assert.match(availabilityPage, /PROTECTED/);
+  assert.match(inspectionAdminPage, /Manage inspection slots/);
+});
