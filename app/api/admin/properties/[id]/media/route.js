@@ -50,6 +50,21 @@ function matchesSignature(type, bytes) {
   return false;
 }
 function publicUrl(key) { return objectUrl(key); }
+async function resequence(connection, propertyId, ids) {
+  // Move the current positions into a temporary range first. The DB check allows
+  // 0..39; the API still caps galleries at 20 items (0..19).
+  await connection.query(
+    'UPDATE public.property_media SET sort_order=sort_order+20 WHERE property_id=$1',
+    [propertyId]
+  );
+  for (let index = 0; index < ids.length; index++) {
+    await connection.query(
+      'UPDATE public.property_media SET sort_order=$1 WHERE id=$2 AND property_id=$3',
+      [index, ids[index], propertyId]
+    );
+  }
+}
+
 async function getMedia(pool, id) {
   const result = await pool.query(
     'SELECT id::text, object_key, media_type, mime_type, file_size_bytes, sort_order, alt_text, is_cover, created_at FROM public.property_media WHERE property_id=$1 ORDER BY sort_order, created_at',
@@ -71,7 +86,7 @@ async function syncLegacy(pool, id) {
 }
 function failure(error) {
   console.error('Property media API:', error?.message || error);
-  return NextResponse.json({ error: error?.message || 'Property media operation failed.' }, { status: 500 });
+  return NextResponse.json({ error: 'Property media operation failed. Please try again.' }, { status: 500 });
 }
 
 export async function GET(request, { params }) {
