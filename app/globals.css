@@ -501,3 +501,19 @@ footer .brand b{font-size:34px!important}
 footer>span{order:1!important}
 footer>a:last-child{order:2!important}
 @media(max-width:600px){footer{justify-content:center!important;text-align:center!important;gap:15px!important}footer .brand{margin-top:10px!important}}
+
+
+/* Official supplied G-BEST logo: replace the temporary CSS/SVG wordmark. */
+.brand{min-width:0;gap:0!important}
+.brand-official-logo{display:block;width:clamp(190px,30vw,390px);height:auto;max-height:88px;object-fit:contain;object-position:left center}
+footer{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:42px 7% 30px!important;text-align:center}
+footer .brand{justify-content:center;width:min(100%,420px)}
+footer .brand-official-logo{width:min(100%,390px);max-height:145px;object-position:center}
+footer>span,footer>a:last-child{display:block;text-align:center}
+@media(max-width:680px){
+ nav{min-height:100px;height:auto!important;padding:14px 4%!important;gap:8px}
+ nav .brand{flex:1 1 auto;min-width:0}
+ nav .brand-official-logo{width:clamp(145px,43vw,230px);max-height:68px}
+ nav>div{gap:8px!important}
+ nav .navbtn{padding:12px 10px!important;font-size:9px!important;white-space:nowrap}
+}
