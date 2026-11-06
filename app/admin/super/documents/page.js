@@ -1,8 +1,8 @@
 'use client';
 import {useState} from 'react';
 const blank={title:'',slug:'',category:'inspection',body:'',file_url:'',required:true,change_summary:'',change_type:'informational',effective_at:''};
-export default function DocumentsAdmin(){const [secret,S]=useState(''),[docs,D]=useState([]),[history,H]=useState({revisions:[],events:[],acceptances:[]}),[form,F]=useState(blank),[editing,E]=useState(null),[ready,R]=useState(false),[busy,B]=useState(false),[error,X]=useState(''),[notice,N]=useState('');
-async function api(method='GET',body){const r=await fetch('/api/admin/legal-documents',{method,headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Request failed');return d}
+export default function DocumentsAdmin(){[docs,D]=useState([]),[history,H]=useState({revisions:[],events:[],acceptances:[]}),[form,F]=useState(blank),[editing,E]=useState(null),[ready,R]=useState(false),[busy,B]=useState(false),[error,X]=useState(''),[notice,N]=useState('');
+async function api(method='GET',body){const r=await fetch('/api/admin/legal-documents',{method,headers:{'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Request failed');return d}
 async function load(e){e?.preventDefault();B(true);X('');try{const d=await api();D(d.documents||[]);H({revisions:d.revisions||[],events:d.events||[],acceptances:d.acceptances||[]});R(true);N('Document centre connected.')}catch(e){X(e.message);R(false)}finally{B(false)}}
 function edit(d){E(d.id);F({title:d.title,slug:d.slug,category:d.category,body:d.body||'',file_url:d.file_url||'',required:d.required,change_summary:'',change_type:'informational',effective_at:''})}
 async function save(e){e.preventDefault();B(true);X('');try{const d=await api(editing?'PATCH':'POST',editing?{...form,id:editing}:form);D(old=>editing?old.map(x=>x.id===editing?d.document:x):[d.document,...old]);N('Draft saved.');E(null);F(blank)}catch(e){X(e.message)}finally{B(false)}}
