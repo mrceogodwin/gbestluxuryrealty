@@ -21,13 +21,25 @@ async function createCalendarEvent(reqRow) {
   const eventId=calendarEventId(reqRow.id);
   const event = { id:eventId, summary:'G-BEST property inspection — '+reqRow.full_name, description:'Approved physical property inspection. Property reference: '+(reqRow.property_id||'Not specified')+'. Client contact: '+reqRow.contact+'. Request ID: '+reqRow.id, start:{dateTime:start.toISOString(),timeZone:'Africa/Lagos'}, end:{dateTime:end.toISOString(),timeZone:'Africa/Lagos'}, attendees:reqRow.client_email?[{email:reqRow.client_email}]:[], guestsCanModify:false };
   const base='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(GOOGLE_CALENDAR_ID)+'/events';
-  let evRes=await fetch(base+'?sendUpdates=all',{method:'POST',headers:{Authorization:'Bearer '+token.access_token,'Content-Type':'application/json'},body:JSON.stringify(event)});
-  let ev=await evRes.json().catch(()=>({}));
-  if(evRes.status===409) {
-    evRes=await fetch(base+'/'+encodeURIComponent(eventId),{headers:{Authorization:'Bearer '+token.access_token}});
-    ev=await evRes.json().catch(()=>({}));
+  const headers={Authorization:'Bearer '+token.access_token,'Content-Type':'application/json'};
+  // Idempotency: recover this request's event before checking availability.
+  // Otherwise a retry would see its own existing event as a conflict.
+  let existingRes=await fetch(base+'/'+encodeURIComponent(eventId),{headers});
+  if(existingRes.ok) {
+    const existing=await existingRes.json().catch(()=>({}));
+    await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1',[reqRow.id,eventId]);
+    return {created:true,eventId,htmlLink:existing.htmlLink,recovered:true};
   }
-  if(!evRes.ok){console.error('Google Calendar event create/recovery failed',evRes.status);return {created:false,reason:'Google Calendar rejected event creation.'};}
+  if(existingRes.status!==404){console.error('Google Calendar event lookup failed',existingRes.status);return {created:false,reason:'Could not verify whether this inspection is already on Google Calendar.'};}
+  // Ask Google Calendar FreeBusy for the exact 30-minute window before creating.
+  const freeBusyRes=await fetch('https://www.googleapis.com/calendar/v3/freeBusy',{method:'POST',headers,body:JSON.stringify({timeMin:start.toISOString(),timeMax:end.toISOString(),timeZone:'Africa/Lagos',items:[{id:GOOGLE_CALENDAR_ID}]})});
+  const freeBusy=await freeBusyRes.json().catch(()=>({}));
+  if(!freeBusyRes.ok){console.error('Google Calendar availability check failed',freeBusyRes.status);return {created:false,reason:'Could not verify calendar availability. The inspection was not added to the calendar.'};}
+  const busy=freeBusy.calendars?.[GOOGLE_CALENDAR_ID]?.busy||[];
+  if(busy.length)return {created:false,reason:'The requested time conflicts with an existing calendar event. Choose another inspection slot.'};
+  const evRes=await fetch(base+'?sendUpdates=all',{method:'POST',headers,body:JSON.stringify(event)});
+  const ev=await evRes.json().catch(()=>({}));
+  if(!evRes.ok){console.error('Google Calendar event creation failed',evRes.status);return {created:false,reason:'Google Calendar rejected event creation.'};}
   await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1',[reqRow.id,eventId]);
   return {created:true,eventId,htmlLink:ev.htmlLink};
 }
