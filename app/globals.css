@@ -366,3 +366,14 @@ nav .brand small{color:#8b6b31;font-size:8px;letter-spacing:1.65px}
 .footer-building{width:48px;height:48px;flex-basis:48px}
 .hero-stamp,.hero .hero-stamp{display:none!important}
 @media(max-width:680px){nav .brand-building{width:46px;height:46px;flex-basis:46px}.footer-building{width:42px;height:42px;flex-basis:42px}}
+
+
+/* Listing card refinements: keep category and quick-view controls at the top edge. */
+.photo-wrap{position:relative}
+.property-tag{position:absolute!important;left:12px!important;top:12px!important;right:auto!important;bottom:auto!important;z-index:4!important;max-width:calc(100% - 72px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-arrow{position:absolute!important;right:12px!important;top:12px!important;bottom:auto!important;z-index:4!important;width:40px;height:40px;display:grid;place-items:center;border:2px solid var(--ink)!important;background:var(--gold)!important;color:var(--ink)!important;box-shadow:3px 3px 0 var(--ink)!important}
+.card-arrow::before{content:'↗';font-size:18px;line-height:1}
+.property-card-reference{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--ink);font:500 8px 'DM Mono',monospace;letter-spacing:.08em;color:var(--muted)}
+.property-card-reference b{color:#145536;font-weight:800;letter-spacing:.12em;overflow-wrap:anywhere}
+.field-hint{display:block;margin-top:5px;color:var(--muted);font:500 10px/1.5 'DM Mono',monospace}
+@media(max-width:420px){.property-tag{left:8px!important;top:8px!important;padding:7px 8px!important;font-size:8px!important}.card-arrow{right:8px!important;top:8px!important}}
