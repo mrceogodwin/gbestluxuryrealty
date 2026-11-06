@@ -26,6 +26,7 @@ export async function GET() {
         COALESCE(NULLIF(baths, 0), bathrooms, 0) AS baths,
         COALESCE(NULLIF(size, ''), size_label, '') AS size,
         COALESCE(NULLIF(image_url, ''), images[1], '') AS image_url,
+        COALESCE(images, ARRAY[]::text[]) AS images,
         description,
         video_url
       FROM public.properties
@@ -40,6 +41,7 @@ export async function GET() {
       loc: (x.location || '') + (x.state ? ', ' + x.state : ''),
       type: x.property_type || 'Other',
       img: x.image_url || '',
+      images: Array.isArray(x.images) ? x.images.filter(Boolean) : [],
       desc: x.description || '',
       beds: Number(x.beds || 0),
       baths: Number(x.baths || 0),
