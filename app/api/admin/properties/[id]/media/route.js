@@ -228,28 +228,46 @@ export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
     const body = await request.json();
+    if (!body?.media_id) return NextResponse.json({ error: 'Media item not found.' }, { status: 404 });
     const pool = getDatabasePool();
-    const found = await pool.query('SELECT object_key FROM public.property_media WHERE id=$1 AND property_id=$2', [body.media_id, id]);
-    if (!found.rowCount) return NextResponse.json({ error: 'Media item not found.' }, { status: 404 });
-    const { client } = storageClient();
-    const deleted = await client.fetch(objectUrl(found.rows[0].object_key), { method: 'DELETE' });
-    if (!deleted.ok && deleted.status !== 404) throw new Error('Could not delete the file from Neon Object Storage.');
-    await pool.query('DELETE FROM public.property_media WHERE id=$1 AND property_id=$2', [body.media_id, id]);
-    const cover = await pool.query(
-      "SELECT id FROM public.property_media WHERE property_id=$1 AND media_type='image' ORDER BY sort_order LIMIT 1",
-      [id]
-    );
-    if (cover.rowCount) await pool.query('UPDATE public.property_media SET is_cover=(id=$1) WHERE property_id=$2', [cover.rows[0].id, id]);
-    const remaining = await pool.query('SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY sort_order', [id]);
     const connection = await pool.connect();
     try {
       await connection.query('BEGIN');
+      await connection.query('SELECT pg_advisory_xact_lock(hashtext($1))', [String(id)]);
+      const found = await connection.query(
+        'SELECT object_key FROM public.property_media WHERE id=$1 AND property_id=$2 FOR UPDATE',
+        [body.media_id, id]
+      );
+      if (!found.rowCount) {
+        await connection.query('ROLLBACK');
+        return NextResponse.json({ error: 'Media item not found.' }, { status: 404 });
+      }
+      const objectKey = found.rows[0].object_key;
+      const { client } = storageClient();
+      const deleted = await client.fetch(objectUrl(objectKey), { method: 'DELETE' });
+      if (!deleted.ok && deleted.status !== 404) throw new Error('Could not delete the file from Neon Object Storage.');
+
+      await connection.query('DELETE FROM public.property_media WHERE id=$1 AND property_id=$2', [body.media_id, id]);
+      const cover = await connection.query(
+        "SELECT id FROM public.property_media WHERE property_id=$1 AND media_type='image' ORDER BY sort_order LIMIT 1",
+        [id]
+      );
+      await connection.query('UPDATE public.property_media SET is_cover=false WHERE property_id=$1', [id]);
+      if (cover.rowCount) {
+        await connection.query('UPDATE public.property_media SET is_cover=true WHERE id=$1 AND property_id=$2', [cover.rows[0].id, id]);
+      }
+      const remaining = await connection.query(
+        'SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY sort_order',
+        [id]
+      );
       await resequence(connection, id, remaining.rows.map(row => row.id));
       await connection.query('COMMIT');
     } catch (error) {
       await connection.query('ROLLBACK');
       throw error;
-    } finally { connection.release(); }
+    } finally {
+      connection.release();
+    }
     await syncLegacy(pool, id);
     return NextResponse.json({ media: await getMedia(pool, id) });
   } catch (error) { return failure(error); }
