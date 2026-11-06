@@ -1,0 +1,14 @@
+import { NextResponse } from 'next/server';
+import { getDatabasePool } from '../../../../lib/db';
+export const runtime='nodejs'; export const dynamic='force-dynamic';
+function auth(req){return !!process.env.ADMIN_SECRET&&req.headers.get('authorization')==='Bearer '+process.env.ADMIN_SECRET;}
+async function ready(pool){await pool.query(`CREATE TABLE IF NOT EXISTS public.client_registrations (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), surname varchar(100) NOT NULL, other_names varchar(160) NOT NULL,
+ address text NOT NULL,email varchar(254) NOT NULL,phone varchar(40) NOT NULL,nationality varchar(80) NOT NULL,
+ state_of_origin varchar(100) NOT NULL,lga varchar(100) NOT NULL,occupation varchar(120) NOT NULL,
+ property_type varchar(100) NOT NULL,price_range varchar(160) NOT NULL,preferred_location varchar(180) NOT NULL,
+ property_description text,terms_accepted boolean NOT NULL DEFAULT false,fee_amount numeric(12,2),payment_reference varchar(120),
+ receipt_name varchar(255),receipt_type varchar(100),receipt_data bytea,payment_status varchar(24) NOT NULL DEFAULT 'pending',
+ admin_note text,created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now())`);}
+export async function GET(req){if(!auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});try{const pool=getDatabasePool();await ready(pool);const q=await pool.query(`SELECT id,surname,other_names,address,email,phone,nationality,state_of_origin,lga,occupation,property_type,price_range,preferred_location,property_description,terms_accepted,fee_amount,payment_reference,receipt_name,receipt_type,payment_status,admin_note,created_at FROM public.client_registrations ORDER BY created_at DESC LIMIT 200`);return NextResponse.json({registrations:q.rows},{headers:{'Cache-Control':'no-store'}});}catch(e){console.error('Client registrations admin GET',e.code||e.message);return NextResponse.json({error:'Could not load registrations'},{status:500});}}
+export async function PATCH(req){if(!auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});try{const d=await req.json();if(!/^[0-9a-f-]{36}$/i.test(String(d.id||''))||!['approved','rejected'].includes(d.payment_status))return NextResponse.json({error:'Invalid payment decision'},{status:400});const note=String(d.admin_note||'').trim().slice(0,1000);const pool=getDatabasePool();await ready(pool);const q=await pool.query(`UPDATE public.client_registrations SET payment_status=$2,admin_note=$3,updated_at=now() WHERE id=$1 RETURNING id,payment_status,admin_note,updated_at`,[d.id,d.payment_status,note]);if(!q.rowCount)return NextResponse.json({error:'Registration not found'},{status:404});return NextResponse.json({ok:true,registration:q.rows[0]},{headers:{'Cache-Control':'no-store'}});}catch(e){console.error('Client registration decision failed',e.code||e.message);return NextResponse.json({error:'Could not update payment status'},{status:500});}}
