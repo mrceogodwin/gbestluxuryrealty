@@ -37,7 +37,7 @@ export async function POST(req){
   try{await client.query('BEGIN');
    const slot=await client.query('SELECT id FROM public.inspection_availability WHERE starts_at=$1::timestamptz AND is_open=true FOR UPDATE',[when.toISOString()]);
    if(!slot.rowCount)throw Object.assign(new Error('That time is not currently available. Please choose an open slot.'),{code:'SLOT_CLOSED'});
-   const q=await client.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',30,$6,$7,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,pid,message]);
+   const q=await client.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,client_registration_id,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4,$5::date,$6::time,'physical_inspection',30,$7,$8,'pending','Africa/Lagos') RETURNING id",[name,contact,email,session.rows[0].id,date,time,pid,message]);
    requestId=q.rows[0].id;
    for(const doc of requiredDocs.rows.filter(x=>byId.has(x.id))){
     const snapshot=JSON.stringify({id:doc.id,version:doc.version,title:doc.title,body:doc.body,file_url:doc.file_url});
