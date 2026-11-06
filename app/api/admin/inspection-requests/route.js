@@ -10,6 +10,31 @@ function calendarEventId(requestId) {
   if(!/^[0-9a-f]{32}$/.test(hex)) throw new Error('Invalid inspection request ID');
   return 'gbest'+BigInt('0x'+hex).toString(32);
 }
+async function deleteCalendarEvent(reqRow) {
+  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN, GOOGLE_CALENDAR_ID } = process.env;
+  if (!reqRow.calendar_event_id) return { deleted:true, skipped:true };
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN || !GOOGLE_CALENDAR_ID) {
+    return { deleted:false, reason:'Google Calendar credentials are not configured.' };
+  }
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({client_id:GOOGLE_CLIENT_ID,client_secret:GOOGLE_CLIENT_SECRET,refresh_token:GOOGLE_REFRESH_TOKEN,grant_type:'refresh_token'})
+  });
+  if (!tokenRes.ok) {
+    console.error('Google OAuth token refresh for cancellation failed',tokenRes.status);
+    return { deleted:false, reason:'Google authorization failed.' };
+  }
+  const token = await tokenRes.json();
+  const url='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(GOOGLE_CALENDAR_ID)+'/events/'+encodeURIComponent(reqRow.calendar_event_id);
+  const response=await fetch(url,{method:'DELETE',headers:{Authorization:'Bearer '+token.access_token}});
+  if (!response.ok && response.status !== 404 && response.status !== 410) {
+    console.error('Google Calendar event deletion failed',response.status);
+    return { deleted:false, reason:'Google Calendar could not remove the appointment.' };
+  }
+  await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=NULL,updated_at=now() WHERE id=$1 AND calendar_event_id=$2',[reqRow.id,reqRow.calendar_event_id]);
+  return { deleted:true };
+}
 async function createCalendarEvent(reqRow) {
   const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN, GOOGLE_CALENDAR_ID } = process.env;
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN || !GOOGLE_CALENDAR_ID) return { created:false, reason:'Google Calendar credentials are not configured.' };
@@ -82,13 +107,23 @@ export async function PATCH(req) {
         try { retryCalendar=await createCalendarEvent(prior); }
         catch(e) { console.error('Calendar retry failed',e.message); retryCalendar={created:false,reason:'Google Calendar could not be reached.'}; }
       }
+      let calendarRemoval={deleted:false,reason:'Calendar removal only applies to cancelled requests.'};
+      if(status==='cancelled'&&prior.calendar_event_id){
+        try{calendarRemoval=await deleteCalendarEvent(prior);}
+        catch(e){console.error('Calendar cancellation retry failed',e.message);calendarRemoval={deleted:false,reason:'Google Calendar could not be reached.'};}
+      }
       const retried=await deliverInspectionEmails(id);
       const counts=await getDatabasePool().query(`SELECT count(*) FILTER (WHERE status='sent')::int AS emails_sent,count(*) FILTER (WHERE status='failed')::int AS emails_failed,count(*) FILTER (WHERE status='pending')::int AS emails_pending FROM public.inspection_email_outbox WHERE inspection_request_id=$1`,[id]);
       Object.assign(prior,counts.rows[0]||{});
-      return NextResponse.json({ok:true,unchanged:true,request:prior,calendar:retryCalendar,email:{retried},warnings:[...(!retryCalendar.created&&status==='confirmed'&&!prior.calendar_event_id?[retryCalendar.reason]:[]),...(retried.failed?['Some emails remain queued for retry.']:[])]},{headers:{'Cache-Control':'no-store'}});
+      return NextResponse.json({ok:true,unchanged:true,request:prior,calendar:retryCalendar,email:{retried},warnings:[...(!retryCalendar.created&&status==='confirmed'&&!prior.calendar_event_id?[retryCalendar.reason]:[]),...(!calendarRemoval.deleted&&status==='cancelled'&&prior.calendar_event_id?[calendarRemoval.reason]:[]),...(retried.failed?['Some emails remain queued for retry.']:[])]},{headers:{'Cache-Control':'no-store'}});
     }
     const row=q.rows[0];
     if(status==='confirmed'&&calendar.created) row.calendar_event_id=calendar.eventId;
+    let calendarRemoval={deleted:false,reason:'Calendar removal only applies to cancelled requests.'};
+    if(status==='cancelled'&&row.calendar_event_id){
+      try{calendarRemoval=await deleteCalendarEvent(row);if(calendarRemoval.deleted)row.calendar_event_id=null;}
+      catch(e){console.error('Calendar cancellation failed',e.message);calendarRemoval={deleted:false,reason:'Google Calendar could not be reached.'};}
+    }
     const date=String(row.preferred_date).slice(0,10), time=String(row.preferred_time||'').slice(0,5);
     const subject=status==='confirmed'?'Your G-BEST inspection is confirmed':status==='declined'?'Update on your G-BEST inspection request':'Update to your G-BEST inspection request';
     const message=status==='confirmed'?'Your physical inspection has been approved for '+date+' at '+time+' WAT. The appointment is 30 minutes.':status==='declined'?'We are sorry, but we cannot approve your requested inspection slot. Please contact our team to arrange another time.':'Your inspection request status has been updated to '+status+'.';
@@ -107,7 +142,7 @@ export async function PATCH(req) {
     }
     const counts=await getDatabasePool().query(`SELECT count(*) FILTER (WHERE status='sent')::int AS emails_sent,count(*) FILTER (WHERE status='failed')::int AS emails_failed,count(*) FILTER (WHERE status='pending')::int AS emails_pending FROM public.inspection_email_outbox WHERE inspection_request_id=$1`,[row.id]);
     Object.assign(row,counts.rows[0]||{});
-    return NextResponse.json({ok:true,request:row,calendar,email,warnings:[...(!calendar.created&&status==='confirmed'?[calendar.reason]:[]),...warnings]},{headers:{'Cache-Control':'no-store'}});
+    return NextResponse.json({ok:true,request:row,calendar,email,warnings:[...(!calendar.created&&status==='confirmed'?[calendar.reason]:[]),...(!calendarRemoval.deleted&&status==='cancelled'&&row.calendar_event_id?[calendarRemoval.reason]:[]),...warnings]},{headers:{'Cache-Control':'no-store'}});
   } catch(e) {
     if(e.code==='23505') return NextResponse.json({error:'That slot is already held by another pending or confirmed request. Choose another slot.'},{status:409});
     console.error('Admin request update failed',e.code||e.message);
