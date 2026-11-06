@@ -51,6 +51,20 @@ export async function PATCH(req) {
   if(!d||typeof d!=='object'||Array.isArray(d)) return NextResponse.json({error:'Request body must be an object'},{status:400});
   try {
     const id=String(d.id||''), status=String(d.status||'');
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({error:'Invalid request ID'},{status:400});
+    // Re-check eligibility at approval time as well as at submission time.
+    // This prevents a pending request from being confirmed after its registration
+    // has been rejected or otherwise changed.
+    if (status === 'confirmed') {
+      const eligibility = await getDatabasePool().query(
+        `SELECT r.id FROM public.inspection_requests i
+         JOIN public.client_registrations r ON lower(r.email)=lower(i.client_email)
+         WHERE i.id=$1 AND r.payment_status='approved'
+         ORDER BY r.updated_at DESC LIMIT 1`,
+        [id]
+      );
+      if (!eligibility.rowCount) return NextResponse.json({error:'This client does not have an approved registration and verified payment. Do not confirm this inspection.'},{status:403});
+    }
     const allowedPrevious={
       confirmed:['pending','contacted'],
       declined:['pending','contacted'],
