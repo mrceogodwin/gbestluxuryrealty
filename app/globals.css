@@ -355,3 +355,9 @@ nav .brand small{color:#8b6b31;font-size:8px;letter-spacing:1.65px}
  .hero-video{opacity:.40}
  .hero-video-shade{background:linear-gradient(90deg,#073c26bd 0%,#073c2690 47%,#073c2645 78%,#073c2620 100%)}
 }
+
+/* G-BEST identity refresh: keep the emblem proportionate and suppress legacy hero seal */
+.brand-building{display:block;width:58px;height:58px;flex:0 0 58px;object-fit:contain}
+.footer-building{width:48px;height:48px;flex-basis:48px}
+.hero-stamp,.hero .hero-stamp{display:none!important}
+@media(max-width:680px){nav .brand-building{width:46px;height:46px;flex-basis:46px}.footer-building{width:42px;height:42px;flex-basis:42px}}
