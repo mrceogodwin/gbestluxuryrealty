@@ -28,3 +28,13 @@ test('media deletion commits gallery state before attempting object cleanup', ()
 test('admin gallery displays storage cleanup warnings', () => {
   assert.match(manager, /data\.warning \? message \+ ' ' \+ data\.warning : message/);
 });
+
+const inspectionAdmin = readFileSync(new URL('../app/api/admin/inspection-requests/route.js', import.meta.url), 'utf8');
+
+test('cancelling an inspection removes its shared Google Calendar event', () => {
+  assert.match(inspectionAdmin, /async function deleteCalendarEvent\(/);
+  assert.match(inspectionAdmin, /method:'DELETE'/);
+  assert.match(inspectionAdmin, /status==='cancelled'&&row\.calendar_event_id/);
+  assert.match(inspectionAdmin, /calendar_event_id=NULL/);
+  assert.match(inspectionAdmin, /calendarRemoval\.reason/);
+});
