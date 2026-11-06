@@ -1,10 +1,10 @@
-import {authorizeStaffOrLegacySuperAdmin} from '../../../../../lib/staff-auth';
+import {authorizeStaff} from '../../../../../lib/staff-auth';
 import {NextResponse} from 'next/server';
 import {randomBytes,createHash} from 'node:crypto';
 import {getDatabasePool} from '../../../../../lib/db';
 import {ensureLegalDocumentTables} from '../../../../../lib/legal-documents';
 export const runtime='nodejs';export const dynamic='force-dynamic';
-async function auth(req, permission='legal.publish') { return authorizeStaffOrLegacySuperAdmin(req, permission); }
+async function auth(req, permission='legal.publish') { return authorizeStaff(req, permission); }
 export async function POST(req){
  if(!await auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
