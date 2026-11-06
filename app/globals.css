@@ -337,3 +337,28 @@ footer .brand{color:var(--ink)}footer .logo{background:var(--ink);color:var(--go
 .homepage-cms-history article p{grid-column:1/-1;margin:0;font-size:13px;color:#28231f}
 .homepage-cms-history article>button{grid-column:1/-1;justify-self:start;background:#25231f;color:#fff;border-color:#25231f}
 @media(max-width:640px){.homepage-cms-history{padding:14px}.homepage-cms-history article{grid-template-columns:1fr}.homepage-cms-history article time{grid-row:2}.homepage-cms-history article p{grid-column:1}.homepage-cms-actions{flex-wrap:wrap}.homepage-cms-actions button,.homepage-cms-actions a{flex:1 1 100%;text-align:center}}
+
+/* Flagship company film, newsletter and expanded footer */
+.company-film{padding:clamp(52px,7vw,100px) 7%;background:#f3f4ee;display:grid;grid-template-columns:minmax(220px,.7fr) minmax(0,1.3fr);gap:clamp(24px,5vw,70px);align-items:center}
+.company-film-copy h2,.newsletter-section h2{font:900 clamp(34px,5vw,62px)/.98 'Barlow Condensed',sans-serif;letter-spacing:-1px;color:#103d29;margin:14px 0}
+.company-film-copy>p:last-child,.newsletter-section>div>p:last-child{max-width:480px;color:#59665d;line-height:1.8;font-size:13px}
+.company-film-frame{min-height:260px;aspect-ratio:16/9;background:#092f20;overflow:hidden;box-shadow:12px 12px 0 #d9bd72}
+.company-film-frame video{display:block;width:100%;height:100%;min-height:260px;object-fit:contain;background:#071d14}
+.company-film-placeholder{height:100%;min-height:260px;padding:clamp(24px,5vw,55px);display:flex;flex-direction:column;justify-content:center;gap:16px;color:#fff}
+.company-film-placeholder span{font:700 9px 'DM Mono',monospace;letter-spacing:.18em;color:#e5c77b}
+.company-film-placeholder b{max-width:520px;font:900 clamp(25px,4vw,48px)/1 'Barlow Condensed',sans-serif}
+.company-film-placeholder small{max-width:450px;color:#d1dbd2;font-size:11px;line-height:1.7}
+.newsletter-section{padding:clamp(48px,7vw,88px) 7%;background:#073c26;color:#fff;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.9fr);gap:clamp(25px,6vw,80px);align-items:center}
+.newsletter-section .eyebrow{color:#e5c77b}.newsletter-section h2{color:#fff;max-width:650px}.newsletter-section>div>p:last-child{color:#d4e0d6}
+.newsletter-form{display:flex;flex-direction:column;gap:12px}.newsletter-form>label:first-child{font:700 9px 'DM Mono',monospace;letter-spacing:.15em;color:#e5c77b}
+.newsletter-input-row{display:flex;min-width:0;border:1px solid #b6c8b9;background:#fff}.newsletter-input-row input{flex:1;min-width:0;border:0;padding:16px;color:#14271b;font:inherit;font-size:13px;outline-offset:-3px}.newsletter-input-row button{border:0;background:#e5c77b;color:#143624;padding:0 20px;font:900 10px 'DM Mono',monospace;letter-spacing:.08em;cursor:pointer}.newsletter-input-row button:disabled{opacity:.6;cursor:wait}
+.newsletter-consent{display:flex;align-items:flex-start;gap:10px;color:#e0e9e1;font-size:10px;line-height:1.6}.newsletter-consent input{margin-top:2px;accent-color:#e5c77b;flex:0 0 auto}.newsletter-form>small{color:#c5d4c8;font-size:9px;line-height:1.6}.newsletter-status{min-height:18px;margin:0;color:#f3d98e;font-size:11px}
+.site-footer{display:block!important;background:#061e15;color:#fff;padding:0 7%;border-top:4px solid #caa95f}
+.footer-main{display:grid;grid-template-columns:1.5fr 1fr 1fr 1.2fr;gap:35px;padding:58px 0 48px}
+.footer-brand>p{max-width:300px;color:#c4d0c7;font-size:11px;line-height:1.8;margin:22px 0}
+.footer-brand .brand{color:#fff;text-decoration:none}.footer-brand .logo{background:#e2c16f;color:#073c26}
+.footer-cta{display:inline-block;color:#e4c77e;font-size:10px;font-weight:900;letter-spacing:.08em;text-decoration:none}
+.footer-column{display:flex;flex-direction:column;align-items:flex-start;gap:13px}.footer-column>b{font:700 9px 'DM Mono',monospace;letter-spacing:.16em;color:#e4c77e;margin-bottom:5px}.footer-column>a{color:#e0e8e1;text-decoration:none;font-size:11px}.footer-column>a:hover,.footer-bottom>a:hover{color:#e4c77e}.footer-contact-note{font-size:9px;line-height:1.7;color:#aebdb1;max-width:220px}
+.footer-bottom{border-top:1px solid #ffffff2a;padding:19px 0;display:flex;justify-content:space-between;gap:18px;color:#aebdb1;font:500 9px 'DM Mono',monospace;letter-spacing:.05em}.footer-bottom>a{color:#e4c77e;text-decoration:none}
+@media(max-width:800px){.company-film,.newsletter-section{grid-template-columns:1fr}.company-film{padding:52px 5%}.newsletter-section{padding:52px 5%}.footer-main{grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 22px}.site-footer{padding:0 5%}}
+@media(max-width:440px){.newsletter-input-row{flex-direction:column}.newsletter-input-row button{min-height:48px}.footer-main{grid-template-columns:1fr 1fr;gap:28px 15px}.footer-brand{grid-column:1/-1}.footer-bottom{font-size:8px;flex-direction:column}.company-film-frame,.company-film-frame video{min-height:210px}}
