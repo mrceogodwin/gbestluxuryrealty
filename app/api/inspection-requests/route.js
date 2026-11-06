@@ -3,7 +3,7 @@ import { getDatabasePool } from '../../../lib/db';
 import { queueInspectionEmails, deliverInspectionEmails } from '../../../lib/inspection-email-outbox';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
-const times=['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00'];
+
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export async function POST(req){
  try{
@@ -12,8 +12,8 @@ export async function POST(req){
   let d;try{d=await req.json()}catch{return NextResponse.json({error:'Invalid request body. Send valid JSON and try again.'},{status:400});}
   if(!d||typeof d!=='object'||Array.isArray(d))return NextResponse.json({error:'Invalid request body.'},{status:400});
   const name=String(d.name||'').trim(),contact=String(d.contact||'').trim(),email=String(d.clientEmail||'').trim(),date=String(d.preferredDate||''),time=String(d.preferredTime||''),pid=String(d.propertyId||'').trim().toUpperCase(),message=String(d.message||'').trim();
-  if(name.length<2||name.length>120||contact.length<5||contact.length>160||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date)||!times.includes(time)||!/^(?:GB-00[1-8]|GB-[A-Z0-9]{6,}|[1-9][0-9]*|[A-Z0-9]+(?:-[A-Z0-9]+)*)$/.test(pid)||message.length>2000)return NextResponse.json({error:'Check your details and choose a valid inspection time.'},{status:400});
-  const when=new Date(date+'T'+time+':00+01:00');const weekday=new Date(date+'T12:00:00Z').getUTCDay();if(Number.isNaN(when.getTime())||when.toISOString().slice(0,10)!==date||when.getTime()<Date.now())return NextResponse.json({error:'Choose a future date and time.'},{status:400});if(weekday===0)return NextResponse.json({error:'G-BEST inspections are available Monday to Saturday only. Please choose another date.'},{status:400});
+  if(name.length<2||name.length>120||contact.length<5||contact.length>160||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date)||!validClock(time)||!/^(?:GB-00[1-8]|GB-[A-Z0-9]{6,}|[1-9][0-9]*|[A-Z0-9]+(?:-[A-Z0-9]+)*)$/.test(pid)||message.length>2000)return NextResponse.json({error:'Check your details and choose a valid inspection time.'},{status:400});
+  const when=new Date(date+'T'+time+':00+01:00');const weekday=new Date(date+'T12:00:00Z').getUTCDay();if(Number.isNaN(when.getTime())||when.toISOString().slice(0,10)!==date||when.getTime()<Date.now())return NextResponse.json({error:'Choose a future date and time.'},{status:400});const schedule=await getSchedule();let slotAvailable=false;try{slotAvailable=await slotIsAvailable(date,time,schedule)}catch(e){return NextResponse.json({error:e.message||'Could not verify G-BEST availability. Please try again later.'},{status:503})}if(!slotAvailable)return NextResponse.json({error:'That date or time is not available in G-BEST’s current schedule. Please choose one of the available slots.'},{status:409});
   // Demo cards are for presentation only and must never create real inspection records.
   if(/^GB-00[1-8]$/.test(pid))return NextResponse.json({error:'This is a sample property, not a live listing. Please choose a published property before requesting an inspection.'},{status:400});
   const pool=getDatabasePool();
