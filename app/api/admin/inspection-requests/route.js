@@ -122,7 +122,7 @@ export async function PATCH(req) {
       if(!calendar.created)return NextResponse.json({error:calendar.reason||'Google Calendar could not confirm this appointment. The request remains unconfirmed.'},{status:503});
       currentRow.calendar_event_id=calendar.eventId||currentRow.calendar_event_id;
     }
-    const q=await pool.query('UPDATE public.inspection_requests SET status=$2,calendar_event_id=COALESCE($4,calendar_event_id),updated_at=now() WHERE id=$1 AND status=$3 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id',[id,status,currentRow.status,currentRow.calendar_event_id||null]);
+    const q=await pool.query('UPDATE public.inspection_requests SET status=$2,calendar_event_id=CASE WHEN $5::boolean THEN NULL ELSE COALESCE($4,calendar_event_id) END,updated_at=now() WHERE id=$1 AND status=$3 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id',[id,status,currentRow.status,currentRow.calendar_event_id||null,(status==='cancelled'||status==='contacted')&&currentRow.status==='confirmed']);
     if(!q.rowCount) {
       if(status==='confirmed'&&calendar.created&&calendar.eventId) {
         // The deterministic event can be recovered safely on the next admin retry.
