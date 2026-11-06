@@ -10,7 +10,7 @@ export async function POST(req){
   if(req.headers.get('origin')&&req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
   const d=await req.json(),email=String(d?.email||'').trim().toLowerCase(),code=String(d?.code||'').trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||! /^\d{6}$/.test(code))return NextResponse.json({error:'Enter your email and six-digit code.'},{status:400});
-  const secret=process.env.STAFF_AUTH_SECRET||process.env.ADMIN_SECRET;
+  const secret=process.env.STAFF_AUTH_SECRET;
   if(!secret)return NextResponse.json({error:'Staff sign-in is not configured.'},{status:503});
   await db.query('BEGIN');
   const q=await db.query("SELECT c.id,c.code_hash,c.expires_at,c.attempts,a.id AS staff_id,a.role FROM public.staff_login_codes c JOIN public.staff_accounts a ON a.id=c.staff_id WHERE a.email_normalized=$1 AND a.status='active' AND c.consumed_at IS NULL ORDER BY c.created_at DESC LIMIT 1 FOR UPDATE OF c",[email]);
