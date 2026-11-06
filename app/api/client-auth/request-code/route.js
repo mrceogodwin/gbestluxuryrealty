@@ -12,6 +12,7 @@ async function send(to,code){
 }
 export async function POST(req){
  try{
+  if(req.headers.get('origin')&&req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
   const d=await req.json(),email=String(d?.email||'').trim().toLowerCase();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return NextResponse.json({error:'Enter a valid email address.'},{status:400});
   const pool=getDatabasePool();
