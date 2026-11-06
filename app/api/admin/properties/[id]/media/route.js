@@ -243,10 +243,6 @@ export async function DELETE(request, { params }) {
         return NextResponse.json({ error: 'Media item not found.' }, { status: 404 });
       }
       const objectKey = found.rows[0].object_key;
-      const { client } = storageClient();
-      const deleted = await client.fetch(objectUrl(objectKey), { method: 'DELETE' });
-      if (!deleted.ok && deleted.status !== 404) throw new Error('Could not delete the file from Neon Object Storage.');
-
       await connection.query('DELETE FROM public.property_media WHERE id=$1 AND property_id=$2', [body.media_id, id]);
       const cover = await connection.query(
         "SELECT id FROM public.property_media WHERE property_id=$1 AND media_type='image' ORDER BY sort_order LIMIT 1",
@@ -268,7 +264,16 @@ export async function DELETE(request, { params }) {
     } finally {
       connection.release();
     }
+    let storageWarning = null;
+    try {
+      const { client } = storageClient();
+      const deleted = await client.fetch(objectUrl(objectKey), { method: 'DELETE' });
+      if (!deleted.ok && deleted.status !== 404) storageWarning = 'The gallery item was removed, but its unused storage object needs cleanup.';
+    } catch (storageError) {
+      console.error('Neon media object cleanup pending:', storageError?.message || storageError);
+      storageWarning = 'The gallery item was removed, but its unused storage object needs cleanup.';
+    }
     await syncLegacy(pool, id);
-    return NextResponse.json({ media: await getMedia(pool, id) });
+    return NextResponse.json({ media: await getMedia(pool, id), warning: storageWarning });
   } catch (error) { return failure(error); }
 }
