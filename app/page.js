@@ -12,7 +12,7 @@ const P=[
 ];
 const propertyCode=id=>{const value=String(id??'');if(/^gb-00[1-8]$/i.test(value))return 'PREVIEW ONLY';if(/^\d+$/.test(value))return 'GB-'+value.padStart(8,'0');const compact=value.replace(/[^a-z0-9]/gi,'').toUpperCase();return 'GB-'+compact.slice(-8).padStart(8,'0');};
 const propertyImages=item=>[...new Set([item?.img,...(Array.isArray(item?.images)?item.images:[])].filter(v=>typeof v==='string'&&v.trim()))];
-const displayPropertyCode=value=>{const raw=String(value??'').trim();if(!raw||raw==='PREVIEW ONLY')return raw||'ID PENDING';if(/^GB-\d{1,8}$/i.test(raw))return raw.toUpperCase();const compact=raw.replace(/[^a-z0-9]/gi,'').toUpperCase();return 'GB-'+compact.slice(-6).padStart(6,'0');};
+const displayPropertyCode=value=>{const raw=String(value??'').trim();if(!raw||raw==='PREVIEW ONLY')return raw||'ID PENDING';if(/^GB-\d{1,8}$/i.test(raw))return raw.toUpperCase();const compact=raw.replace(/[^a-z0-9]/gi,'').toUpperCase();return 'GB-'+compact.slice(-8).padStart(8,'0');};
 
 const TYPES=['All properties','Luxury home','Penthouse','Family home','Investment property','Land'];
 function cmsValue(data,key,field,fallback){const section=data?.[key];if(!section||section.visible===false)return fallback;const value=section[field];return typeof value==='string'&&value.length?value:fallback;}
