@@ -192,10 +192,7 @@ export async function PATCH(request, { params }) {
           'SELECT id FROM public.property_media WHERE property_id=$1 ORDER BY (id=$2) DESC, sort_order',
           [id, body.media_id]
         );
-        await connection.query(
-          'UPDATE public.property_media AS media SET sort_order=ordered.new_order FROM unnest($2::uuid[]) WITH ORDINALITY AS ordered(id, ord) WHERE media.id=ordered.id AND media.property_id=$1',
-          [id, orderedIds.rows.map(row => row.id)]
-        );
+        await resequence(connection, id, orderedIds.rows.map(row => row.id));
         await connection.query('COMMIT');
       } catch (error) {
         await connection.query('ROLLBACK');
@@ -212,10 +209,7 @@ export async function PATCH(request, { params }) {
       try {
         await connection.query('BEGIN');
         await connection.query('SELECT pg_advisory_xact_lock(hashtext($1))', [String(id)]);
-        await connection.query(
-          'UPDATE public.property_media AS media SET sort_order=ordered.new_order FROM unnest($2::uuid[]) WITH ORDINALITY AS ordered(id, ord) WHERE media.id=ordered.id AND media.property_id=$1',
-          [id, body.media_ids]
-        );
+        await resequence(connection, id, body.media_ids);
         await connection.query('COMMIT');
       } catch (error) {
         await connection.query('ROLLBACK');
@@ -250,10 +244,7 @@ export async function DELETE(request, { params }) {
     const connection = await pool.connect();
     try {
       await connection.query('BEGIN');
-      await connection.query(
-        'UPDATE public.property_media AS media SET sort_order=ordered.new_order FROM unnest($2::uuid[]) WITH ORDINALITY AS ordered(id, ord) WHERE media.id=ordered.id AND media.property_id=$1',
-        [id, remaining.rows.map(row => row.id)]
-      );
+      await resequence(connection, id, remaining.rows.map(row => row.id));
       await connection.query('COMMIT');
     } catch (error) {
       await connection.query('ROLLBACK');
