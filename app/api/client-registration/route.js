@@ -19,7 +19,7 @@ function validFile(type,b){
  if(type==='application/pdf')return String.fromCharCode(...b.slice(0,5))==='%PDF-';
  return false;
 }
-const clean=(v,n)=>String(v??'').trim().slice(0,n);
+const clean=(v,n)=>String(v??'').trim().slice(0,n);\nconst safe=s=>String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));
 async function sendEmail(to,subject,html){
  if(!to||!process.env.RESEND_API_KEY||!process.env.RESEND_FROM_EMAIL)return false;
  const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({from:process.env.RESEND_FROM_EMAIL,to:[to],subject,html})});
@@ -46,21 +46,31 @@ export async function POST(req){
   const uploaded=await client.fetch(endpoint+'/payment-receipts/'+key.split('/').map(encodeURIComponent).join('/'),{method:'PUT',headers:{'content-type':mime},body:bytes});
   if(!uploaded.ok)throw new Error('Receipt upload failed: '+uploaded.status);
   const db=await pool.connect();
+  let registrationId;
   try{
    await db.query('BEGIN');
-   const reg=await db.query(`INSERT INTO public.client_registrations(full_name,email,email_normalized,phone,payment_status,client_status) VALUES($1,$2,$3,$4,'submitted','pending') RETURNING id`,[name,email,email,phone]);
-   await db.query(`INSERT INTO public.registration_payment_submissions(registration_id,amount_kobo,bank_reference,transfer_date,receipt_object_key,receipt_mime_type,receipt_size_bytes) VALUES($1,1500000,$2,$3::date,$4,$5,$6)`,[reg.rows[0].id,reference,transferDate,key,mime,file.size]);
-   await db.query(`INSERT INTO public.registration_payment_events(registration_id,event_type,actor,note) VALUES($1,'payment_submitted','client',$2)`,[reg.rows[0].id,'Receipt submitted; awaiting manual verification.']);
+   const existing=await db.query('SELECT id,payment_status,client_status FROM public.client_registrations WHERE email_normalized=$1 FOR UPDATE',[email]);
+   if(existing.rowCount){
+    const prior=existing.rows[0];
+    if(prior.payment_status!=='rejected'&&prior.client_status!=='rejected')throw Object.assign(new Error('A registration already exists for this email. Check your status or contact G-BEST.'),{code:'DUPLICATE_REGISTRATION'});
+    registrationId=prior.id;
+    await db.query(`UPDATE public.client_registrations SET full_name=$2,email=$3,phone=$4,payment_status='submitted',client_status='pending',admin_note=NULL,approved_at=NULL,approved_by=NULL,updated_at=now() WHERE id=$1`,[registrationId,name,email,phone]);
+   }else{
+    const reg=await db.query(`INSERT INTO public.client_registrations(full_name,email,email_normalized,phone,payment_status,client_status) VALUES($1,$2,$3,$4,'submitted','pending') RETURNING id`,[name,email,email,phone]);
+    registrationId=reg.rows[0].id;
+   }
+   await db.query(`INSERT INTO public.registration_payment_submissions(registration_id,amount_kobo,bank_reference,transfer_date,receipt_object_key,receipt_mime_type,receipt_size_bytes) VALUES($1,1500000,$2,$3::date,$4,$5,$6)`,[registrationId,reference,transferDate,key,mime,file.size]);
+   await db.query(`INSERT INTO public.registration_payment_events(registration_id,event_type,actor,note) VALUES($1,'payment_submitted','client',$2)`,[registrationId,'Receipt submitted; awaiting manual verification.']);
    await db.query('COMMIT');
   }catch(e){await db.query('ROLLBACK');throw e;}finally{db.release();}
-  const html='<p>New G-BEST client registration and manual payment receipt submitted.</p><p><b>Client:</b> '+name+'<br/><b>Email:</b> '+email+'<br/><b>Phone:</b> '+phone+'<br/><b>Amount:</b> ₦15,000<br/><b>Transfer reference:</b> '+reference+'<br/><b>Transfer date:</b> '+transferDate+'</p><p>Open the Super Admin dashboard to review the receipt. Payment remains pending until verified.</p>';
+  const html='<p>New G-BEST client registration and manual payment receipt submitted.</p><p><b>Client:</b> '+safe(name)+'<br/><b>Email:</b> '+safe(email)+'<br/><b>Phone:</b> '+safe(phone)+'<br/><b>Amount:</b> ₦15,000<br/><b>Transfer reference:</b> '+safe(reference)+'<br/><b>Transfer date:</b> '+safe(transferDate)+'</p><p>Open the Super Admin dashboard to review the receipt. Payment remains pending until verified.</p>';
   let adminNotified=false,clientNotified=false;
   try{adminNotified=await sendEmail(process.env.ADMIN_EMAIL,'G-BEST: payment receipt awaiting verification',html);}catch(e){console.error('Registration admin email failed',e.message);}
-  try{clientNotified=await sendEmail(email,'G-BEST received your registration submission','<p>Hello '+name+',</p><p>We received your registration and payment receipt. Your status is pending manual verification. Uploading a receipt is not payment approval.</p>');}catch(e){console.error('Registration client email failed',e.message);}
+  try{clientNotified=await sendEmail(email,'G-BEST received your registration submission','<p>Hello '+safe(name)+',</p><p>We received your registration and payment receipt. Your status is pending manual verification. Uploading a receipt is not payment approval.</p>');}catch(e){console.error('Registration client email failed',e.message);}
   return NextResponse.json({ok:true,status:'pending',message:'Registration submitted. Your payment is awaiting manual verification.',adminNotified,clientNotified},{status:201,headers:{'Cache-Control':'no-store'}});
  }catch(e){
   if(key){try{const {client,endpoint}=storage();await client.fetch(endpoint+'/payment-receipts/'+key.split('/').map(encodeURIComponent).join('/'),{method:'DELETE'});}catch{}}
-  if(e.code==='23505')return NextResponse.json({error:'This email or bank transfer reference has already been submitted. Contact G-BEST if you believe this is an error.'},{status:409});
+  if(e.code==='DUPLICATE_REGISTRATION')return NextResponse.json({error:e.message},{status:409});\n  if(e.code==='23505')return NextResponse.json({error:'This bank transfer reference has already been submitted. Contact G-BEST if you believe this is an error.'},{status:409});
   console.error('Client registration submission failed',e.code||e.message);
   return NextResponse.json({error:'We could not submit your registration. Please try again or contact G-BEST.'},{status:500});
  }
