@@ -18,6 +18,8 @@ export async function POST(req){
   const when=new Date(date+'T'+time+':00+01:00');if(Number.isNaN(when.getTime())||when.toISOString().slice(0,10)!==date||when.getTime()<Date.now())return NextResponse.json({error:'Choose a future date and time.'},{status:400});
   // Demo cards are for presentation only and must never create real inspection records.
   if(/^gb-00[1-8]$/.test(pid))return NextResponse.json({error:'This is a sample property, not a live listing. Please choose a published property before requesting an inspection.'},{status:400});
+  const registration=await getDatabasePool().query("SELECT id FROM public.client_registrations WHERE email_normalized=$1 AND payment_status='approved' AND client_status='active' LIMIT 1",[email.toLowerCase()]);
+  if(!registration.rowCount)return NextResponse.json({error:'Client registration and ₦15,000 payment must be approved by G-BEST before you can book an inspection. Please complete client registration and upload your receipt first.'},{status:403});
   const pool=await ensureLegalDocumentTables();
   const accepted=Array.isArray(d.acceptedDocuments)?d.acceptedDocuments:[];
   const requiredDocs=await pool.query("SELECT id,version,title,body,file_url,required FROM public.legal_documents WHERE status='published' AND category IN ('inspection','general')");
