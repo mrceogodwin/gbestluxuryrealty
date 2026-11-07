@@ -3,7 +3,7 @@
 import './clients.css';
 import {useEffect,useState} from 'react';
 export default function ClientRegistrationsAdmin(){
- [items,setItems]=useState([]),[ready,setReady]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notes,setNotes]=useState({});
+ const [items,setItems]=useState([]),[ready,setReady]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notes,setNotes]=useState({});
  async function load(e){e?.preventDefault();setBusy(true);setError('');try{const r=await fetch('/api/admin/client-registrations',{headers:{},cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Access denied');setItems(d.registrations||[]);setReady(true)}catch(e){setError(e.message);setReady(false)}finally{setBusy(false)}}
  async function decide(x,status){setBusy(true);setError('');try{const r=await fetch('/api/admin/client-registrations',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:x.id,payment_status:status,admin_note:notes[x.id]||x.admin_note||''})});const d=await r.json();if(!r.ok)throw Error(d.error||'Update failed');setItems(old=>old.map(v=>v.id===x.id?{...v,...d.registration}:v));if(d.warnings?.length)setError(d.warnings.join(' '))}catch(e){setError(e.message)}finally{setBusy(false)}}
  async function receipt(x){try{const r=await fetch('/api/admin/client-registrations/'+x.id+'/receipt',{headers:{}});if(!r.ok)throw Error('Could not download receipt.');const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=x.receipt_name||'client-payment-receipt';document.body.appendChild(a);a.click();a.remove();window.setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(e){setError(e.message)}}
