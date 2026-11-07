@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useState} from 'react';
-const FIELDS=[['eyebrow','Eyebrow / small label'],['title','Headline / title'],['description','Description'],['buttonText','Button label'],['buttonUrl','Button destination'],['videoUrl','Video URL (HTTPS)'],['extraText','Extra text / supporting content']];
+const FIELDS=[['eyebrow','Eyebrow / small label'],['title','Headline / title'],['description','Description'],['buttonText','Button label'],['buttonUrl','Button destination'],['videoUrl','Video URL (HTTPS)'],['extraText','Extra text / supporting content'],['imageAlt','Image accessibility description']];
 export default function HomepageController(){
  const [sections,setSections]=useState([]),[active,setActive]=useState('hero'),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false),[draft,setDraft]=useState({}),[history,setHistory]=useState([]),[historyOpen,setHistoryOpen]=useState(false),[mediaOpen,setMediaOpen]=useState(false),[mediaAssets,setMediaAssets]=useState([]),[mediaTarget,setMediaTarget]=useState('section'),[mediaBusy,setMediaBusy]=useState(false),[mediaProgress,setMediaProgress]=useState(0);
  async function request(method='GET',body){const r=await fetch('/api/admin/homepage',{method,headers:{'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Request failed');return d;}
@@ -48,6 +48,7 @@ export default function HomepageController(){
 <label>Image position<select value={draft[active]?.imagePosition??'center'} onChange={e=>change('imagePosition',e.target.value)}>{['center','top','bottom','left','right'].map(v=><option key={v}>{v}</option>)}</select></label>
 <label>Content layout<select value={draft[active]?.layout??'default'} onChange={e=>change('layout',e.target.value)}>{['default','split','full-width','image-left','image-right','overlay','cards'].map(v=><option key={v}>{v}</option>)}</select></label>
 <label>Text alignment<select value={draft[active]?.alignment??'left'} onChange={e=>change('alignment',e.target.value)}>{['left','center','right'].map(v=><option key={v}>{v}</option>)}</select></label>
+<label>Section typography<select value={draft[active]?.fontFamily??'inherit'} onChange={e=>change('fontFamily',e.target.value)}>{[['inherit','Site default'],['DM Sans, sans-serif','DM Sans'],['Space Grotesk, sans-serif','Space Grotesk'],['Georgia, serif','Georgia / Serif'],['Arial, sans-serif','Arial']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
 <label>Background colour<input type="color" value={draft[active]?.backgroundColor??'#ffffff'} onChange={e=>change('backgroundColor',e.target.value)}/></label>
 <label>Text colour<input type="color" value={draft[active]?.textColor??'#14271e'} onChange={e=>change('textColor',e.target.value)}/></label>
 <label>Accent colour<input type="color" value={draft[active]?.accentColor??'#b6d879'} onChange={e=>change('accentColor',e.target.value)}/></label>
