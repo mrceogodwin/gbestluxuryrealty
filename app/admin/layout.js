@@ -3,9 +3,9 @@ import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 import {useState} from 'react';
 const groups=[
- {label:'WORKSPACE',items:[['/admin/super','Overview & listings','▦'],['/admin/super/media','Media library','▧'],['/admin/super/homepage','Homepage studio','◫']]},
+ {label:'WORKSPACE',items:[['/admin/control','Control room dashboard','▦'],['/admin/super','Properties & availability','⌂'],['/admin/super/media','Media library','▧'],['/admin/super/homepage','Homepage studio','◫']]},
  {label:'OPERATIONS',items:[['/admin','Inspections & bookings','◷'],['/admin/clients','Clients & registrations','♙']]},
- {label:'SYSTEM',items:[['/admin/super/settings','Website settings','⚙'],['/admin/super/activity','Activity & audit log','≋']]}
+ {label:'SYSTEM',items:[['/admin/super/homepage','Website customization','⚙'],['/admin','System activity','≋']]}
 ];
 export default function SuperAdminLayout({children}){
  const path=usePathname(),[open,setOpen]=useState(false);
@@ -29,7 +29,7 @@ export default function SuperAdminLayout({children}){
  .gb-crumb{font-size:11px;color:#718276;letter-spacing:.08em}.gb-crumb b{color:#234632}.gb-topright{display:flex;align-items:center;gap:10px;color:#6d7d70;font-size:11px}
  .gb-secure{border:1px solid #d8e5d2;background:#eff6e9;border-radius:99px;padding:7px 10px;color:#426b3d;font-weight:700}
  .gb-mobiletoggle{display:none;border:1px solid #d6e1d3;background:#fff;border-radius:9px;padding:8px 10px;color:#21452f;font-weight:800}
- .gb-content{min-width:0}
+ .gb-content{min-width:0}.gb-console .gb-control>.gb-side{display:none!important}.gb-console .gb-control>.gb-main{padding:28px clamp(16px,3vw,38px) 50px!important;width:100%}.gb-console .gb-control{min-height:calc(100vh - 66px)}
  @media(max-width:850px){.gb-shell{grid-template-columns:1fr}.gb-sidebar{position:fixed;left:0;top:0;width:270px;transform:translateX(-105%);transition:transform .22s ease}.gb-sidebar.open{transform:translateX(0);box-shadow:20px 0 60px #07190f80}.gb-mobiletoggle{display:inline-flex}.gb-topbar{height:58px}.gb-navlink{min-height:46px}}
  @media(min-width:851px){.gb-sidebar{transform:none!important}}
  `}</style>
@@ -41,7 +41,7 @@ export default function SuperAdminLayout({children}){
  <div className="gb-sidefoot">G-BEST LUXURY REALTY<br/>Management console · Secure workspace</div>
  </aside>
  <div className="gb-main">
- <header className="gb-topbar"><div style={{display:'flex',alignItems:'center',gap:12}}><button className="gb-mobiletoggle" onClick={()=>setOpen(v=>!v)} aria-label="Toggle navigation">☰</button><div className="gb-crumb">G-BEST <span style={{opacity:.45}}> / </span><b>{path==='/admin/super/homepage'?'HOMEPAGE STUDIO':path==='/admin/super/media'?'MEDIA LIBRARY':path==='/admin/clients'?'CLIENTS':path==='/admin'?'INSPECTIONS':path==='/admin/super'?'PROPERTY OPERATIONS':'SYSTEM SETTINGS'}</b></div></div><div className="gb-topright"><span className="gb-secure">● ADMIN WORKSPACE</span></div></header>
+ <header className="gb-topbar"><div style={{display:'flex',alignItems:'center',gap:12}}><button className="gb-mobiletoggle" onClick={()=>setOpen(v=>!v)} aria-label="Toggle navigation">☰</button><div className="gb-crumb">G-BEST <span style={{opacity:.45}}> / </span><b>{path==='/admin/super/homepage'?'HOMEPAGE STUDIO':path==='/admin/super/media'?'MEDIA LIBRARY':path==='/admin/clients'?'CLIENTS':path==='/admin'?'INSPECTIONS':path==='/admin/super'?'PROPERTY OPERATIONS':path==='/admin/control'?'CONTROL ROOM DASHBOARD':'SYSTEM SETTINGS'}</b></div></div><div className="gb-topright"><span className="gb-secure">● ADMIN WORKSPACE</span></div></header>
  <main className="gb-content">{children}</main>
  </div></div></div>
 }
