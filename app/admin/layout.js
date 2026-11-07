@@ -1,14 +1,19 @@
 'use client';
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
-import {useState} from 'react';
+import {useState,useEffect} from 'react';
+import {useRouter} from 'next/navigation';
 const groups=[
  {label:'WORKSPACE',items:[['/admin/super/overview','Control room dashboard','▦'],['/admin/super','Properties & availability','⌂'],['/admin/super/media','Media library','▧'],['/admin/super/homepage','Homepage studio','◫']]},
  {label:'OPERATIONS',items:[['/admin','Inspections & bookings','◷'],['/admin/clients','Clients & registrations','♙']]},
  {label:'SYSTEM',items:[['/admin/super/homepage','Website customization','⚙'],['/admin','System activity','≋']]}
 ];
 export default function SuperAdminLayout({children}){
- const path=usePathname(),[open,setOpen]=useState(false);
+ const path=usePathname(),router=useRouter(),[open,setOpen]=useState(false),[checking,setChecking]=useState(true),[signedIn,setSignedIn]=useState(false);
+ useEffect(()=>{if(path==='/admin/login'){setChecking(false);return;}let alive=true;fetch('/api/admin/session',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(!alive)return;if(!d.authenticated){router.replace('/admin/login');return;}setSignedIn(true);setChecking(false)}).catch(()=>router.replace('/admin/login'));return()=>{alive=false}},[path,router]);
+ async function signOut(){await fetch('/api/admin/session',{method:'DELETE'});router.replace('/admin/login')}
+ if(path==='/admin/login')return <>{children}</>;
+ if(checking||!signedIn)return <div style={{minHeight:'100vh',display:'grid',placeItems:'center',background:'#edf2eb',color:'#194a32',fontFamily:'system-ui',fontWeight:700}}>SECURING ADMIN WORKSPACE…</div>;
  return <div className="gb-console">
  <style jsx global>{`
  .gb-console{--gc-ink:#eaf2e8;--gc-muted:#9cb2a0;--gc-line:#ffffff14;--gc-lime:#c9eb91;min-height:100vh;background:#edf1eb;color:#183526;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -41,7 +46,7 @@ export default function SuperAdminLayout({children}){
  <div className="gb-sidefoot">G-BEST LUXURY REALTY<br/>Management console · Secure workspace</div>
  </aside>
  <div className="gb-main">
- <header className="gb-topbar"><div style={{display:'flex',alignItems:'center',gap:12}}><button className="gb-mobiletoggle" onClick={()=>setOpen(v=>!v)} aria-label="Toggle navigation">☰</button><div className="gb-crumb">G-BEST <span style={{opacity:.45}}> / </span><b>{path==='/admin/super/homepage'?'HOMEPAGE STUDIO':path==='/admin/super/media'?'MEDIA LIBRARY':path==='/admin/clients'?'CLIENTS':path==='/admin'?'INSPECTIONS':path==='/admin/super'?'PROPERTY OPERATIONS':path==='/admin/super/overview'?'CONTROL ROOM DASHBOARD':path==='/admin/control'?'LEGACY CONTROL ROOM':'SYSTEM SETTINGS'}</b></div></div><div className="gb-topright"><span className="gb-secure">● ADMIN WORKSPACE</span></div></header>
+ <header className="gb-topbar"><div style={{display:'flex',alignItems:'center',gap:12}}><button className="gb-mobiletoggle" onClick={()=>setOpen(v=>!v)} aria-label="Toggle navigation">☰</button><div className="gb-crumb">G-BEST <span style={{opacity:.45}}> / </span><b>{path==='/admin/super/homepage'?'HOMEPAGE STUDIO':path==='/admin/super/media'?'MEDIA LIBRARY':path==='/admin/clients'?'CLIENTS':path==='/admin'?'INSPECTIONS':path==='/admin/super'?'PROPERTY OPERATIONS':path==='/admin/super/overview'?'CONTROL ROOM DASHBOARD':path==='/admin/control'?'LEGACY CONTROL ROOM':'SYSTEM SETTINGS'}</b></div></div><div className="gb-topright"><span className="gb-secure">● ADMIN WORKSPACE</span><button onClick={signOut} style={{border:"1px solid #d8e5d2",background:"#fff",borderRadius:99,padding:"7px 10px",color:"#426b3d",fontWeight:700,fontSize:11}}>SIGN OUT</button></div></header>
  <main className="gb-content">{children}</main>
  </div></div></div>
 }
