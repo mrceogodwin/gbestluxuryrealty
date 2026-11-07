@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDatabasePool } from '../../../../lib/db';
 import { queueInspectionEmails, deliverInspectionEmails } from '../../../../lib/inspection-email-outbox';
-import {isAdminRequest} from '../../../../lib/admin-auth';
+import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -60,7 +60,7 @@ async function deleteCalendarEvent(reqRow) {
   return {deleted:true,eventId};
 }
 export async function GET(req) {
-  if (!await isAdminRequest(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
+  if (!await authorizeAdminRequest(req,'inspections.manage')) return NextResponse.json({error:'Unauthorized'},{status:401});
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
   try {
     const q=await getDatabasePool().query(`SELECT r.id,r.full_name,r.contact,r.client_email,r.preferred_date,r.preferred_time,r.duration_minutes,r.property_id,r.message,r.status,r.calendar_event_id,r.created_at,
@@ -72,7 +72,7 @@ export async function GET(req) {
   } catch(e) { console.error('Admin request list failed',e.code||e.message); return NextResponse.json({error:'Could not load requests'},{status:500}); }
 }
 export async function PATCH(req) {
-  if (!await isAdminRequest(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
+  if (!await authorizeAdminRequest(req,'inspections.manage')) return NextResponse.json({error:'Unauthorized'},{status:401});
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
   let d;
   try { d=await req.json(); } catch { return NextResponse.json({error:'Invalid JSON body'},{status:400}); }
