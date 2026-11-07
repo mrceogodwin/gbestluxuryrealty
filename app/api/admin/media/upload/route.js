@@ -1,11 +1,11 @@
 import {NextResponse} from 'next/server';
-import {createHmac,randomUUID} from 'node:crypto';
+import {createHmac,createHash,randomUUID} from 'node:crypto';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 const bucket='property-media';
 const endpoint=()=>process.env.NEON_STORAGE_ENDPOINT;
 const enc=s=>encodeURIComponent(s).replace(/[!'()*]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase());
-const hmac=(key,data)=>createHmac('sha256',key).update(data).digest();\nconst sha256=data=>require('node:crypto').createHash('sha256').update(data).digest('hex');
+const hmac=(key,data)=>createHmac('sha256',key).update(data).digest();\nconst sha256=data=>createHash('sha256').update(data).digest('hex');
 const hex=b=>Buffer.from(b).toString('hex');
 function credentials(){const access=process.env.NEON_STORAGE_ACCESS_KEY_ID,secret=process.env.NEON_STORAGE_SECRET_ACCESS_KEY;if(!access||!secret||!endpoint())throw new Error('Neon media storage is not configured for this deployment.');return{access,secret};}
 function signingKey(secret,date,region){let k=hmac('AWS4'+secret,date);k=hmac(k,region);k=hmac(k,'s3');return hmac(k,'aws4_request');}
