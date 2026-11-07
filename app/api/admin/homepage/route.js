@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { ensureHomepageTables } from '../../../../lib/homepage-cms';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
-const auth=req=>Boolean(process.env.ADMIN_SECRET)&&req.headers.get('authorization')==='Bearer '+process.env.ADMIN_SECRET;
+import {isAdminRequest} from '../../../../lib/admin-auth';
 const allowed=new Set(['eyebrow','title','description','buttonText','buttonUrl','imageUrl','videoUrl','extraText','visible','imageAlt','mobileImageUrl','imagePosition','layout','alignment','backgroundColor','textColor','accentColor','overlayOpacity','padding','slides','autoplay','autoplayInterval','transition','showArrows','showDots','columns','itemsPerView']);
 function cleanContent(value){
  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Section content must be an object.');
@@ -21,19 +21,19 @@ function cleanContent(value){
  return out;
 }
 export async function GET(req){
- if(!auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});
+ if(!await isAdminRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});
  if(!process.env.DATABASE_URL)return NextResponse.json({error:'Database is not configured'},{status:503});
  try{const pool=await ensureHomepageTables();const url=new URL(req.url);const historyKey=url.searchParams.get('history');if(historyKey){if(!/^[a-z_]{2,60}$/.test(historyKey))return NextResponse.json({error:'Invalid homepage section.'},{status:400});const revisions=await pool.query('SELECT id,section_key,content,action,changed_at FROM public.homepage_section_revisions WHERE section_key=$1 ORDER BY changed_at DESC,id DESC LIMIT 50',[historyKey]);return NextResponse.json({revisions:revisions.rows},{headers:{'Cache-Control':'no-store'}});}const q=await pool.query('SELECT section_key,label,sort_order,draft_content,published_content,updated_at,published_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes FROM public.homepage_sections ORDER BY sort_order');return NextResponse.json({sections:q.rows},{headers:{'Cache-Control':'no-store'}});}
  catch(e){console.error('Homepage CMS admin GET failed',e.code||e.message);return NextResponse.json({error:'Could not load homepage controls.'},{status:500});}
 }
 export async function PATCH(req){
- if(!auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});
+ if(!await isAdminRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});
  if(!process.env.DATABASE_URL)return NextResponse.json({error:'Database is not configured'},{status:503});
  try{const body=await req.json();const key=String(body.sectionKey||'').trim();if(!/^[a-z_]{2,60}$/.test(key))return NextResponse.json({error:'Invalid homepage section.'},{status:400});const content=cleanContent(body.content);const pool=await ensureHomepageTables();const q=await pool.query('UPDATE public.homepage_sections SET draft_content=draft_content || $2::jsonb,updated_at=now() WHERE section_key=$1 RETURNING section_key,label,draft_content,published_content,updated_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[key,JSON.stringify(content)]);if(!q.rowCount)return NextResponse.json({error:'Homepage section not found.'},{status:404});return NextResponse.json({section:q.rows[0],message:'Draft saved. Public homepage is unchanged until you publish.'},{headers:{'Cache-Control':'no-store'}});}
  catch(e){const validation=!e.code;console.error('Homepage CMS draft save failed',e.code||e.message);return NextResponse.json({error:validation?e.message:'Could not save homepage draft.'},{status:validation?400:500});}
 }
 export async function POST(req){
- if(!auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});
+ if(!await isAdminRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});
  if(!process.env.DATABASE_URL)return NextResponse.json({error:'Database is not configured'},{status:503});
  try{
   const body=await req.json();const key=String(body.sectionKey||'').trim();const action=String(body.action||'');
