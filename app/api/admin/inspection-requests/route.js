@@ -72,7 +72,7 @@ export async function GET(req) {
   } catch(e) { console.error('Admin request list failed',e.code||e.message); return NextResponse.json({error:'Could not load requests'},{status:500}); }
 }
 export async function PATCH(req) {
-  if (!auth(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
+  if (!await isAdminRequest(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
   let d;
   try { d=await req.json(); } catch { return NextResponse.json({error:'Invalid JSON body'},{status:400}); }
