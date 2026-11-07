@@ -16,7 +16,7 @@ function signedUpload(key,type){
  const path='/'+BUCKET+'/'+key.split('/').map(enc).join('/');
  const params={'X-Amz-Algorithm':'AWS4-HMAC-SHA256','X-Amz-Credential':id+'/'+scope,'X-Amz-Date':amz,'X-Amz-Expires':'600','X-Amz-SignedHeaders':'content-type;host'};
  const query=Object.keys(params).sort().map(k=>enc(k)+'='+enc(params[k])).join('&');
- const canonical=['PUT',path,query,'content-type:'+type+'\nhost:'+new URL(ENDPOINT).host+'\n','content-type;host','UNSIGNED-PAYLOAD'].join('\n');
+ const canonical=['PUT',path,query,'content-type:'+type+'\nhost:'+new URL(ENDPOINT).host,'content-type;host','UNSIGNED-PAYLOAD'].join('\n');
  const toSign=['AWS4-HMAC-SHA256',amz,scope,hex(createHash('sha256').update(canonical).digest())].join('\n');
  const signature=hex(createHmac('sha256',signingKey(secret,day)).update(toSign).digest());
  return {url:ENDPOINT+path+'?'+query+'&X-Amz-Signature='+signature,method:'PUT',headers:{'Content-Type':type},publicUrl:ENDPOINT+path};
