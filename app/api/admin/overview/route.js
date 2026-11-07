@@ -2,9 +2,9 @@ import {NextResponse} from 'next/server';
 import {getDatabasePool} from '../../../../lib/db';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
-import {isAdminRequest} from '../../../../lib/admin-auth';
+import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
 export async function GET(req){
- if(!await isAdminRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});
+ if(!await authorizeAdminRequest(req,'dashboard.view'))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
   const p=getDatabasePool();
   const exists=async name=>(await p.query('SELECT to_regclass($1) AS t',['public.'+name])).rows[0]?.t;
