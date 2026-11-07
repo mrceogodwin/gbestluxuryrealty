@@ -3,17 +3,19 @@ import { ensureHomepageTables } from '../../../../lib/homepage-cms';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 const auth=req=>Boolean(process.env.ADMIN_SECRET)&&req.headers.get('authorization')==='Bearer '+process.env.ADMIN_SECRET;
-const allowed=new Set(['eyebrow','title','description','buttonText','buttonUrl','imageUrl','videoUrl','extraText','visible']);
+const allowed=new Set(['eyebrow','title','description','buttonText','buttonUrl','imageUrl','videoUrl','extraText','visible','imageAlt','mobileImageUrl','imagePosition','layout','alignment','backgroundColor','textColor','accentColor','overlayOpacity','padding','slides','autoplay','autoplayInterval','transition','showArrows','showDots','columns','itemsPerView']);
 function cleanContent(value){
  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Section content must be an object.');
  const out={};
  for(const [key,val] of Object.entries(value)){
   if(!allowed.has(key))continue;
-  if(key==='visible'){out.visible=Boolean(val);continue;}
+  if(['visible','autoplay','showArrows','showDots'].includes(key)){out[key]=Boolean(val);continue;}
+  if(['overlayOpacity','autoplayInterval','columns','itemsPerView'].includes(key)){const n=Number(val);if(!Number.isFinite(n)||n<0||n>10000)throw new Error('Invalid numeric setting: '+key);out[key]=n;continue;}
+  if(key==='slides'){if(!Array.isArray(val)||val.length>30)throw new Error('Carousel slides must be a list of up to 30 items.');out.slides=val.slice(0,30).map((slide)=>{if(!slide||typeof slide!=='object'||Array.isArray(slide))throw new Error('Each slide must be an object.');const clean={};for(const k of ['title','description','imageUrl','imageAlt','buttonText','buttonUrl'])if(typeof slide[k]==='string')clean[k]=slide[k].trim().slice(0,1200);if(clean.imageUrl&&!/^https:\/\//i.test(clean.imageUrl))throw new Error('Slide images must use HTTPS URLs.');if(clean.buttonUrl&&!/^(https:\/\/|\/|#)/i.test(clean.buttonUrl))throw new Error('Slide buttons must use HTTPS URLs or local paths.');return clean;});continue;}
   if(typeof val!=='string')throw new Error('Content fields must be text.');
-  const max=key==='description'||key==='extraText'?4000:key==='imageUrl'||key==='videoUrl'||key==='buttonUrl'?1200:300;
+  const max=key==='description'||key==='extraText'?4000:['imageUrl','videoUrl','buttonUrl','mobileImageUrl'].includes(key)?1200:500;
   out[key]=val.trim().slice(0,max);
-  if(['imageUrl','videoUrl'].includes(key)&&out[key]&&!/^https:\/\//i.test(out[key]))throw new Error(key+' must use an HTTPS URL.');
+  if(['imageUrl','videoUrl','mobileImageUrl'].includes(key)&&out[key]&&!/^https:\/\//i.test(out[key]))throw new Error(key+' must use an HTTPS URL.');
   if(key==='buttonUrl'&&out[key]&&!/^(https:\/\/|\/|#)/i.test(out[key]))throw new Error('Button links must be HTTPS URLs or local paths.');
  }
  return out;
