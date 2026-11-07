@@ -4,7 +4,7 @@ import {usePathname} from 'next/navigation';
 import {useState,useEffect} from 'react';
 import {useRouter} from 'next/navigation';
 const groups=[
- {label:'WORKSPACE',items:[['/admin/super/overview','Control room dashboard','▦'],['/admin/super','Properties & availability','⌂'],['/admin/super/media','Media library','▧'],['/admin/super/homepage','Homepage studio','◫'],['/admin/super/staff','Staff & permissions','♙']]},
+ {label:'WORKSPACE',items:[['/admin/super/overview','Control room dashboard','▦'],['/admin/super','Properties & availability','⌂'],['/admin/super/media','Media library','▧'],['/admin/super/homepage','Homepage studio','◫'],['/admin/super/staff','Staff & permissions','♙'],['/admin/super/staff#activity','Activity & audit log','≋']]},
  {label:'OPERATIONS',items:[['/admin','Inspections & bookings','◷'],['/admin/clients','Clients & registrations','♙']]},
  {label:'SYSTEM',items:[['/admin/super/homepage','Website customization','⚙'],['/admin/super/activity','Activity & audit log','≋']]}
 ];
@@ -42,7 +42,7 @@ export default function SuperAdminLayout({children}){
  <aside className={'gb-sidebar'+(open?' open':'')}>
  <Link className="gb-brand" href="/admin/super" onClick={()=>setOpen(false)}><span className="gb-mark">G</span><span><strong>G-BEST</strong><small>REALTY CONTROL ROOM</small></span></Link>
  <div className="gb-env"><i/> COMPANY CONTROL CONSOLE <span style={{marginLeft:'auto',color:'#829d89'}}>01</span></div>
- <nav aria-label="Super admin navigation">{groups.map(group=><div className="gb-navgroup" key={group.label}><div className="gb-navlabel">{group.label}</div>{group.items.map(([href,label,icon])=><Link key={href} href={href} onClick={()=>setOpen(false)} className={'gb-navlink'+(path===href?' active':'')}><span className="gb-navicon">{icon}</span>{label}</Link>)}</div>)}</nav>
+ <nav aria-label="Super admin navigation">{groups.map(group=><div className="gb-navgroup" key={group.label}><div className="gb-navlabel">{group.label}</div>{group.items.map(([href,label,icon])=><Link key={href} href={href} onClick={()=>setOpen(false)} className={'gb-navlink'+((path===href||((href==='/admin/super/staff#activity')&&path==='/admin/super/staff')||(href!=='/admin'&&href!=='/admin/super'&&href!=='/admin/clients'&&href!=='/admin/super/homepage'&&href!=='/admin/super/media'&&path.startsWith(href+'/')))?' active':'')}><span className="gb-navicon">{icon}</span>{label}</Link>)}</div>)}</nav>
  <div className="gb-sidefoot">G-BEST LUXURY REALTY<br/>Management console · Secure workspace</div>
  </aside>
  <div className="gb-main">
