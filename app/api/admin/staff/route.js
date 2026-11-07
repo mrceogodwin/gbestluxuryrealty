@@ -4,7 +4,7 @@ import {isAdminRequest} from '../../../../lib/admin-auth';
 import {newOpaqueToken,hashToken} from '../../../../lib/staff-auth';
 import {sendClientRegistrationEmail,escapeHtml} from '../../../../lib/client-registration-email';
 export const runtime='nodejs';export const dynamic='force-dynamic';
-const PERMISSIONS=['dashboard.view','properties.manage','inspections.manage','clients.manage','payments.review','media.manage','homepage.manage','staff.manage','audit.view','settings.manage'];
+const PERMISSIONS=['dashboard.view','properties.manage','inspections.view','inspections.manage','clients.view','clients.manage','payments.review','media.manage','homepage.manage','staff.manage','audit.view','settings.manage'];
 const roles=['administrator','moderator'];
 const clean=(v,n=180)=>String(v??'').trim().slice(0,n);
 async function audit(pool,action,targetType,targetId,details={}){await pool.query("INSERT INTO public.staff_audit_events(actor_type,actor_email,action,target_type,target_id,details) VALUES('super_admin','master-admin',$1,$2,$3,$4::jsonb)",[action,targetType,targetId,JSON.stringify(details)]);}
