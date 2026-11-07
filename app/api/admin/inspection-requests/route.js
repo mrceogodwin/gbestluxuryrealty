@@ -4,7 +4,7 @@ import { queueInspectionEmails, deliverInspectionEmails } from '../../../../lib/
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function auth(req) { const expected = process.env.ADMIN_SECRET; const got = req.headers.get('authorization') || ''; return !!expected && got === 'Bearer ' + expected; }
+
 function calendarEventId(requestId) {
   const hex=String(requestId).replace(/-/g,'').toLowerCase();
   if(!/^[0-9a-f]{32}$/.test(hex)) throw new Error('Invalid inspection request ID');
@@ -59,7 +59,7 @@ async function deleteCalendarEvent(reqRow) {
   return {deleted:true,eventId};
 }
 export async function GET(req) {
-  if (!auth(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
+  if (!await isAdminRequest(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
   try {
     const q=await getDatabasePool().query(`SELECT r.id,r.full_name,r.contact,r.client_email,r.preferred_date,r.preferred_time,r.duration_minutes,r.property_id,r.message,r.status,r.calendar_event_id,r.created_at,
