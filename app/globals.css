@@ -240,6 +240,9 @@ footer .brand{color:var(--ink)}footer .logo{background:var(--ink);color:var(--go
 
 /* Featured carousel: 20-second decorative property video overlay */
 .hero.hero-bold{isolation:isolate;background-color:#073c26}
+.hero-responsive-media{position:absolute;inset:0;z-index:0;display:block;overflow:hidden;pointer-events:none}
+.hero-responsive-media img{width:100%;height:100%;display:block;object-fit:cover;object-position:center}
+@media(max-width:680px){.hero-responsive-media img{object-position:center}}
 .hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:.42;pointer-events:none}
 .hero-video-shade{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,#073c26e8 0%,#073c26b8 48%,#073c2640 100%)}
 .hero.hero-bold .herotext{z-index:2}
