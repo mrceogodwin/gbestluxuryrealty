@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: [main]
+    branches: [main, feature/client-registration-manual-payment]
   pull_request:
     branches: [main]
 jobs:
