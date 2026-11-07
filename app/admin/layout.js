@@ -4,9 +4,9 @@ import {usePathname} from 'next/navigation';
 import {useState,useEffect} from 'react';
 import {useRouter} from 'next/navigation';
 const groups=[
- {label:'WORKSPACE',items:[['/admin/super/overview','Control room dashboard','▦'],['/admin/super','Properties & availability','⌂'],['/admin/super/media','Media library','▧'],['/admin/super/homepage','Homepage studio','◫']]},
+ {label:'WORKSPACE',items:[['/admin/super/overview','Control room dashboard','▦'],['/admin/super','Properties & availability','⌂'],['/admin/super/media','Media library','▧'],['/admin/super/homepage','Homepage studio','◫'],['/admin/super/staff','Staff & permissions','♙']]},
  {label:'OPERATIONS',items:[['/admin','Inspections & bookings','◷'],['/admin/clients','Clients & registrations','♙']]},
- {label:'SYSTEM',items:[['/admin/super/homepage','Website customization','⚙'],['/admin','System activity','≋']]}
+ {label:'SYSTEM',items:[['/admin/super/homepage','Website customization','⚙'],['/admin/super/staff#activity','Activity & audit log','≋']]}
 ];
 export default function SuperAdminLayout({children}){
  const path=usePathname(),router=useRouter(),[open,setOpen]=useState(false),[checking,setChecking]=useState(true),[signedIn,setSignedIn]=useState(false);
