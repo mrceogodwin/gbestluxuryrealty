@@ -29,7 +29,21 @@ export default function HomepageController(){
 <label>Image overlay opacity (0–100)<input type="number" min="0" max="100" value={draft[active]?.overlayOpacity??0} onChange={e=>change('overlayOpacity',Number(e.target.value))}/></label>
 <label>Section padding (px)<input type="number" min="0" max="300" value={draft[active]?.padding??48} onChange={e=>change('padding',Number(e.target.value))}/></label>
 <div className="wide" style={{borderTop:'1px solid #dfe7df',paddingTop:18,marginTop:8}}><b>CAROUSEL / SLIDER CONTROLS</b><p>These settings are saved with this section. They take effect on the public site when its renderer supports the selected carousel configuration.</p></div>
-<label className="wide">Carousel slides (one JSON object per slide)<textarea rows={7} value={JSON.stringify(draft[active]?.slides??[],null,2)} onChange={e=>{try{const v=JSON.parse(e.target.value);if(Array.isArray(v))change('slides',v)}catch{}}} placeholder={'[{"title":"Featured home","imageUrl":"https://…","description":"…"}]'}/></label>
+<div className="wide" style={{display:'grid',gap:12}}>
+<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap'}}><b>SLIDE MANAGER · {((draft[active]?.slides)||[]).length} slides</b><button type="button" onClick={()=>change('slides',[...(draft[active]?.slides||[]),{title:'New slide',description:'',imageUrl:'',imageAlt:'',buttonText:'',buttonUrl:''}])}>＋ ADD SLIDE</button></div>
+{((draft[active]?.slides)||[]).map((slide,index)=><article key={index} style={{border:'1px solid #dce5da',borderRadius:13,padding:14,display:'grid',gridTemplateColumns:'minmax(0,1fr) auto',gap:10,background:'#fbfcfa'}}>
+<div style={{display:'flex',gap:10,alignItems:'center'}}><b style={{background:'#e7efdf',borderRadius:8,padding:'7px 10px'}}>#{index+1}</b><strong>{slide.title||'Untitled slide'}</strong></div>
+<div style={{display:'flex',gap:6,flexWrap:'wrap'}}><button type="button" disabled={index===0} onClick={()=>{const a=[...(draft[active]?.slides||[])];[a[index-1],a[index]]=[a[index],a[index-1]];change('slides',a)}}>↑</button><button type="button" disabled={index===((draft[active]?.slides||[]).length-1)} onClick={()=>{const a=[...(draft[active]?.slides||[])];[a[index+1],a[index]]=[a[index],a[index+1]];change('slides',a)}}>↓</button><button type="button" onClick={()=>change('slides',(draft[active]?.slides||[]).filter((_,i)=>i!==index))}>REMOVE</button></div>
+<label className="wide">Slide headline<input value={slide.title||''} onChange={e=>{const a=[...(draft[active]?.slides||[])];a[index]={...a[index],title:e.target.value};change('slides',a)}}/></label>
+<label className="wide">Description<textarea rows={2} value={slide.description||''} onChange={e=>{const a=[...(draft[active]?.slides||[])];a[index]={...a[index],description:e.target.value};change('slides',a)}}/></label>
+<label className="wide">Image URL (HTTPS)<input value={slide.imageUrl||''} placeholder="Paste uploaded image URL" onChange={e=>{const a=[...(draft[active]?.slides||[])];a[index]={...a[index],imageUrl:e.target.value};change('slides',a)}}/></label>
+<label className="wide">Image accessibility description<input value={slide.imageAlt||''} onChange={e=>{const a=[...(draft[active]?.slides||[])];a[index]={...a[index],imageAlt:e.target.value};change('slides',a)}}/></label>
+<label>Button label<input value={slide.buttonText||''} onChange={e=>{const a=[...(draft[active]?.slides||[])];a[index]={...a[index],buttonText:e.target.value};change('slides',a)}}/></label>
+<label>Button destination<input value={slide.buttonUrl||''} onChange={e=>{const a=[...(draft[active]?.slides||[])];a[index]={...a[index],buttonUrl:e.target.value};change('slides',a)}}/></label>
+{slide.imageUrl&&<img src={slide.imageUrl} alt={slide.imageAlt||''} style={{width:'100%',maxHeight:180,objectFit:'cover',borderRadius:9,gridColumn:'1/-1'}}/>}
+</article>)}
+{!(draft[active]?.slides||[]).length&&<p>No slides yet. Add a slide to start building this carousel.</p>}
+</div>
 <label>Autoplay interval (ms)<input type="number" min="1000" max="30000" value={draft[active]?.autoplayInterval??5000} onChange={e=>change('autoplayInterval',Number(e.target.value))}/></label>
 <label>Transition<select value={draft[active]?.transition??'fade'} onChange={e=>change('transition',e.target.value)}>{['fade','slide','zoom'].map(v=><option key={v}>{v}</option>)}</select></label>
 <label>Columns<input type="number" min="1" max="6" value={draft[active]?.columns??3} onChange={e=>change('columns',Number(e.target.value))}/></label>
