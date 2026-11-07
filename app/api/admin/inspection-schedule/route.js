@@ -3,7 +3,7 @@ import {getDatabasePool} from '../../../../lib/db';
 import {ZONE,getSchedule,validClock} from '../../../../lib/inspection-schedule';
 export const runtime='nodejs';export const dynamic='force-dynamic';
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
-export async function GET(req){if(!await authorizeAdminRequest(req,'inspections.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});try{return NextResponse.json({settings:await getSchedule()},{headers:{'Cache-Control':'no-store'}})}catch(e){return NextResponse.json({error:'Could not load schedule settings.'},{status:500})}}
+export async function GET(req){if(!await authorizeAdminRequest(req,['inspections.view','inspections.manage']))return NextResponse.json({error:'Unauthorized'},{status:401});try{return NextResponse.json({settings:await getSchedule()},{headers:{'Cache-Control':'no-store'}})}catch(e){return NextResponse.json({error:'Could not load schedule settings.'},{status:500})}}
 export async function PUT(req){
  if(!await authorizeAdminRequest(req,'inspections.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
