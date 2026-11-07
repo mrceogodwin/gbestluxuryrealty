@@ -1,0 +1,16 @@
+import {NextResponse} from 'next/server';
+import {createHmac,randomUUID} from 'node:crypto';
+export const runtime='nodejs';
+export const dynamic='force-dynamic';
+const bucket='property-media';
+const endpoint=()=>process.env.NEON_STORAGE_ENDPOINT;
+const enc=s=>encodeURIComponent(s).replace(/[!'()*]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase());
+const hash=s=>createHmac('sha256',s).digest();
+const hex=b=>Buffer.from(b).toString('hex');
+function credentials(){const access=process.env.NEON_STORAGE_ACCESS_KEY_ID,secret=process.env.NEON_STORAGE_SECRET_ACCESS_KEY;if(!access||!secret||!endpoint())throw new Error('Neon media storage is not configured for this deployment.');return{access,secret};}
+function signKey(secret,date,region){const d=hash('AWS4'+secret).toString('hex');return hash(Buffer.from('AWS4'+secret)).length?hash(hash(hash(hash('AWS4'+secret,date).toString('hex'),region).toString('hex'),'s3').toString('hex'),'aws4_request'):null;}
+function signingKey(secret,date,region){let k=hash(Buffer.from('AWS4'+secret),date);k=hash(k,region);k=hash(k,'s3');return hash(k,'aws4_request');}
+function auth(req){return Boolean(process.env.ADMIN_SECRET)&&req.headers.get('authorization')==='Bearer '+process.env.ADMIN_SECRET;}
+function publicUrl(key){return endpoint()+'/'+bucket+'/'+key.split('/').map(enc).join('/');}
+function presign(key,type){const {access,secret}=credentials();const base=new URL(endpoint());const now=new Date(),stamp=now.toISOString().replace(/[:-]|.d{3}/g,''),day=stamp.slice(0,8),region=process.env.NEON_STORAGE_REGION||'eu-central-1',scope=day+'/'+region+'/s3/aws4_request',path='/'+bucket+'/'+key.split('/').map(enc).join('/');const params={'X-Amz-Algorithm':'AWS4-HMAC-SHA256','X-Amz-Credential':access+'/'+scope,'X-Amz-Date':stamp,'X-Amz-Expires':'600','X-Amz-SignedHeaders':'content-type;host'};const query=Object.keys(params).sort().map(k=>enc(k)+'='+enc(params[k])).join('&');const canonical=['PUT',path,query,'content-type:'+type+'\nhost:'+base.host+'\n','content-type;host','UNSIGNED-PAYLOAD'].join('\n');const toSign=['AWS4-HMAC-SHA256',stamp,scope,hex(createHmac('sha256').update(canonical).digest())].join('\n');const sig=createHmac('sha256',signingKey(secret,day,region)).update(toSign).digest('hex');return{url:base.origin+path+'?'+query+'&X-Amz-Signature='+sig,method:'PUT',headers:{'Content-Type':type},publicUrl:publicUrl(key),key};}
+export async function POST(req){if(!auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});try{const body=await req.json(),name=String(body.name||'').split(/[\\/]/).pop().replace(/[^a-zA-Z0-9._-]/g,'-').slice(0,100),type=String(body.contentType||'');if(!name||!/^image\/(jpeg|png|webp|gif|avif)$/.test(type))return NextResponse.json({error:'Choose a supported image (JPG, PNG, WebP, GIF or AVIF).'}, {status:400});if(Number(body.size)>15*1024*1024)return NextResponse.json({error:'Images must be 15 MB or smaller.'},{status:400});const key='homepage/'+Date.now()+'-'+randomUUID()+'-'+name;return NextResponse.json(presign(key,type),{headers:{'Cache-Control':'no-store'}});}catch(e){console.error('Neon media presign failed',e.message);return NextResponse.json({error:'Could not prepare Neon upload. Check media storage configuration.'},{status:503});}}
