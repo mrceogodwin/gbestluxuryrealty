@@ -1,7 +1,7 @@
 'use client';
 import { useEffect,useState } from 'react';
 export default function AdminPage(){
- [requests,setRequests]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false),[outcomes,setOutcomes]=useState({});
+ const [requests,setRequests]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false),[outcomes,setOutcomes]=useState({});
  async function load(e){if(e)e.preventDefault();setBusy(true);setError('');try{const r=await fetch('/api/admin/inspection-requests',{headers:{},cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Access denied');setRequests(d.requests||[]);setReady(true)}catch(e){setError(e.message);setReady(false)}finally{setBusy(false)}}
  async function update(id,status){setBusy(true);setError('');try{const r=await fetch('/api/admin/inspection-requests',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});const d=await r.json();if(!r.ok)throw Error(d.error||'Update failed');setRequests(old=>old.map(x=>x.id===id?{...x,...d.request}:x));setOutcomes(old=>({...old,[id]:d}));}catch(e){setError(e.message)}finally{setBusy(false)}}
  useEffect(()=>{load()},[]);
