@@ -2,10 +2,10 @@ import {NextResponse} from 'next/server';
 import {getDatabasePool} from '../../../../lib/db';
 import {ZONE,getSchedule,validClock} from '../../../../lib/inspection-schedule';
 export const runtime='nodejs';export const dynamic='force-dynamic';
-function auth(req){return !!process.env.ADMIN_SECRET&&req.headers.get('authorization')==='Bearer '+process.env.ADMIN_SECRET}
-export async function GET(req){if(!auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});try{return NextResponse.json({settings:await getSchedule()},{headers:{'Cache-Control':'no-store'}})}catch(e){return NextResponse.json({error:'Could not load schedule settings.'},{status:500})}}
+import {isAdminRequest} from '../../../../lib/admin-auth';
+export async function GET(req){if(!await isAdminRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});try{return NextResponse.json({settings:await getSchedule()},{headers:{'Cache-Control':'no-store'}})}catch(e){return NextResponse.json({error:'Could not load schedule settings.'},{status:500})}}
 export async function PUT(req){
- if(!auth(req))return NextResponse.json({error:'Unauthorized'},{status:401});
+ if(!await isAdminRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
   const d=await req.json(),workingDays=[...new Set((Array.isArray(d.workingDays)?d.workingDays:[]).map(Number))].sort();
   const blockedDates=[...new Set((Array.isArray(d.blockedDates)?d.blockedDates:[]).map(String))];
