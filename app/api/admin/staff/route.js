@@ -13,7 +13,7 @@ export async function POST(req){
  if(!await isAdminRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});
  let d;try{d=await req.json()}catch{return NextResponse.json({error:'Invalid request body.'},{status:400})}
  const full_name=clean(d.full_name,140),email=clean(d.email,254).toLowerCase(),role=clean(d.role,30);
- if(full_name.length<2||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||!roles.includes(role))return NextResponse.json({error:'Enter a valid name, email and staff role.'},{status:400});
+ if(full_name.length<2||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!roles.includes(role))return NextResponse.json({error:'Enter a valid name, email and staff role.'},{status:400});
  const token=newOpaqueToken(),tokenHash=hashToken(token),base=process.env.NEXT_PUBLIC_SITE_URL||req.nextUrl.origin;
  const inviteUrl=new URL('/staff/accept',base);inviteUrl.searchParams.set('token',token);
  try{
