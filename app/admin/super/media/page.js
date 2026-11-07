@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 export default function MediaLibrary(){
- [assets,setAssets]=useState([]),[ready,setReady]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[alt,setAlt]=useState(''),[selected,setSelected]=useState(null),[search,setSearch]=useState(''),[dragging,setDragging]=useState(false),[progress,setProgress]=useState(0);
+ const [assets,setAssets]=useState([]),[ready,setReady]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[alt,setAlt]=useState(''),[selected,setSelected]=useState(null),[search,setSearch]=useState(''),[dragging,setDragging]=useState(false),[progress,setProgress]=useState(0);
  const picker=useRef(null);
  async function api(method='GET',body){const r=await fetch('/api/admin/media',{method,headers:{'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Media request failed');return d;}
  async function load(e){e?.preventDefault();setBusy(true);setError('');try{const d=await api();setAssets(d.assets||[]);setReady(true);setNotice('Media library connected.')}catch(e){setError(e.message);setReady(false)}finally{setBusy(false)}}
