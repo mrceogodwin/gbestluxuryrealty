@@ -7,7 +7,8 @@ export const runtime='nodejs';export const dynamic='force-dynamic';
 const WINDOW_MINUTES=15, LOCK_MINUTES=15, EMAIL_MAX_FAILURES=5, IP_MAX_FAILURES=20;
 function loginAttemptKeys(req,email){
  const forwarded=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||req.headers.get('x-forwarded-for')||'';
- const candidate=forwarded.split(',')[0]?.trim().replace(/^\\[|\\]$/g,'')||'';
+ let candidate=forwarded.split(',')[0]?.trim()||'';
+ if(candidate.startsWith('[')&&candidate.endsWith(']'))candidate=candidate.slice(1,-1);
  // Vercel overwrites its forwarded-IP headers at the edge; validate before hashing.
  const ip=isIP(candidate)?candidate:'unknown';
  const secret=process.env.ADMIN_SECRET||process.env.DATABASE_URL;
