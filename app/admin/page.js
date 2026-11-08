@@ -10,7 +10,8 @@ export default function AdminPage(){
  async function load(e){if(e)e.preventDefault();setBusy(true);setError('');try{const r=await fetch('/api/admin/inspection-requests',{headers:{},cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Access denied');setRequests(d.requests||[]);setReady(true)}catch(e){setError(e.message);setReady(false)}finally{setBusy(false)}}
  async function update(id,status){setBusy(true);setError('');try{const r=await fetch('/api/admin/inspection-requests',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});const d=await r.json();if(!r.ok)throw Error(d.error||'Update failed');setRequests(old=>old.map(x=>x.id===id?{...x,...d.request}:x));setOutcomes(old=>({...old,[id]:d}));}catch(e){setError(e.message)}finally{setBusy(false)}}
  const grouped=useMemo(()=>requests.reduce((a,x)=>{const k=requestDate(x);(a[k]??=[]).push(x);return a},{}),[requests]);
- const dayItems=grouped[selectedDate]||[];\n const filteredRequests=useMemo(()=>requests.filter(x=>{const term=search.trim().toLowerCase();const matches=!term||[x.full_name,x.contact,x.client_email,x.property_id,x.message].some(v=>String(v||'').toLowerCase().includes(term));return matches&&(statusFilter==='all'||x.status===statusFilter)}),[requests,search,statusFilter]);
+ const dayItems=grouped[selectedDate]||[];
+ const filteredRequests=useMemo(()=>requests.filter(x=>{const term=search.trim().toLowerCase();const matches=!term||[x.full_name,x.contact,x.client_email,x.property_id,x.message].some(v=>String(v||'').toLowerCase().includes(term));return matches&&(statusFilter==='all'||x.status===statusFilter)}),[requests,search,statusFilter]);
  const firstWeekday=month.getDay(),daysInMonth=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
  const cells=[...Array(firstWeekday).fill(null),...Array.from({length:daysInMonth},(_,i)=>i+1)];
  while(cells.length%7)cells.push(null);
