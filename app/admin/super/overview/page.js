@@ -6,6 +6,7 @@ import Link from 'next/link';
 const modules=[
  {key:'properties',label:'Properties',description:'Add, edit, publish and archive company listings',href:'/admin/super',icon:'⌂'},
  {key:'clients',label:'Clients & payments',description:'Review registrations, receipts and payment decisions',href:'/admin/clients',icon:'♙'},
+ {key:'finance',label:'Company finance centre',description:'Record income, expenses and review the company ledger',href:'/admin/super/finance',icon:'₦'},
  {key:'inspections',label:'Inspections & calendar',description:'Approve visits and manage the company schedule',href:'/admin',icon:'◷'},
  {key:'staff',label:'People & permissions',description:'Invite staff and control what each person can do',href:'/admin/super/staff',icon:'♧'},
  {key:'media',label:'Media library',description:'Organise property photos and company assets',href:'/admin/super/media',icon:'▧'},
@@ -140,6 +141,7 @@ export default function AdminOverview(){
       <Link className="quick" href="/admin/super"><span>⌂</span><strong>Manage properties</strong><small>INVENTORY</small></Link>
       <Link className="quick" href="/admin"><span>◷</span><strong>Review inspections</strong><small>SCHEDULING</small></Link>
       <Link className="quick" href="/admin/clients"><span>♙</span><strong>Client payments</strong><small>REGISTRATION</small></Link>
+      <Link className="quick" href="/admin/super/finance"><span>₦</span><strong>Company finance</strong><small>INCOME & EXPENSES</small></Link>
       <Link className="quick" href="/admin/super/staff"><span>⚙</span><strong>Staff & permissions</strong><small>ACCESS CONTROL</small></Link>
       <Link className="quick" href="/admin/super/media"><span>▧</span><strong>Media library</strong><small>ASSET MANAGEMENT</small></Link>
       <Link className="quick" href="/admin/super/activity"><span>≋</span><strong>Audit activity</strong><small>GOVERNANCE</small></Link>
