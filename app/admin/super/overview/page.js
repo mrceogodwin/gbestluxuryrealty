@@ -78,6 +78,11 @@ export default function AdminOverview(){
    .metric p{font-size:10px;color:#7a877c;margin:0;min-height:15px}
    .metric a{display:flex;justify-content:space-between;align-items:center;margin-top:15px;padding-top:10px;border-top:1px solid #e7ece4;color:#3e6547;font:800 9px ui-monospace,monospace;letter-spacing:.08em}
    .metric a span{font-size:14px}
+   .actionbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+   .actioncard{display:flex;align-items:center;gap:14px;padding:15px 17px;border:1px solid #d9e4d5;border-radius:12px;background:linear-gradient(145deg,#fff,#f3f7ef);box-shadow:0 9px 20px #102d190d}
+   .actioncount{width:42px;height:42px;display:grid;place-items:center;border-radius:11px;background:#e8f1e2;color:#28583a;font-size:19px;font-weight:850;box-shadow:inset 0 1px #fff,0 3px 7px #163b2410}
+   .actioncard strong{display:block;color:#284332;font-size:12px}.actioncard p{margin:4px 0 0;color:#778579;font-size:10px}
+   .actioncard a{margin-left:auto;white-space:nowrap;color:#315f3d;font:800 9px ui-monospace,monospace;border:1px solid #d8e4d3;border-radius:7px;padding:8px 10px}
    .columns{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.75fr);gap:12px;margin-top:14px}
    .panel{background:linear-gradient(145deg,#fff,#f6f9f4);border:1px solid #d6e1d2;border-radius:13px;overflow:hidden;box-shadow:0 14px 28px #102d1910,0 3px 8px #102d1908,inset 0 1px #fff}
    .panelhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #e6ebe3}
@@ -97,7 +102,7 @@ export default function AdminOverview(){
    .empty{padding:24px 16px;color:#7b887e;font-size:11px}
    .foot{display:flex;justify-content:space-between;gap:12px;margin-top:16px;color:#8a958b;font:9px ui-monospace,monospace;letter-spacing:.04em}
    @media(max-width:950px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.columns{grid-template-columns:1fr}}
-   @media(max-width:520px){.ops{padding-top:17px}.pagehead{align-items:flex-start;flex-direction:column}.headtools{width:100%;justify-content:space-between}.metrics{gap:8px}.metric{padding:12px}.metric strong{font-size:27px}.metric p{font-size:9px}.quickgrid{grid-template-columns:1fr 1fr}.foot{flex-direction:column}}
+   @media(max-width:520px){.actionbar{grid-template-columns:1fr}.actioncard{padding:12px}.actioncard a{font-size:8px;padding:7px}.ops{padding-top:17px}.pagehead{align-items:flex-start;flex-direction:column}.headtools{width:100%;justify-content:space-between}.metrics{gap:8px}.metric{padding:12px}.metric strong{font-size:27px}.metric p{font-size:9px}.quickgrid{grid-template-columns:1fr 1fr}.foot{flex-direction:column}}
   `}</style>
 
   <div className="wrap">
@@ -116,6 +121,7 @@ export default function AdminOverview(){
     <Metric label="MEDIA LIBRARY" value={data.media.total} detail="Images and brand assets stored for the website" href="/admin/super/media"/>
    </div>:<div className="panel empty">{busy?'Connecting to the company database…':'No live metrics are available. Refresh to retry.'}</div>}
 
+   {data&&<><div className="sectionline"><h2>NEEDS YOUR ATTENTION</h2><span>LIVE WORK QUEUE</span></div><div className="actionbar"><article className="actioncard"><span className="actioncount">{Number(data.clients.pending||0).toLocaleString()}</span><div><strong>Client payments awaiting review</strong><p>Check submitted registrations and payment evidence.</p></div><Link href="/admin/clients">REVIEW ↗</Link></article><article className="actioncard"><span className="actioncount">{Number(data.inspections.pending||0).toLocaleString()}</span><div><strong>Inspection requests awaiting action</strong><p>Review requested visits and confirm the schedule.</p></div><Link href="/admin">OPEN DESK ↗</Link></article></div></>}
    <div className="columns">
     <section className="panel">
      <div className="panelhead"><h2>COMPANY WORKSPACE</h2><small>CHOOSE A DEPARTMENT</small></div>
@@ -129,7 +135,7 @@ export default function AdminOverview(){
       <Link className="quick" href="/admin/clients"><span>♙</span><strong>Client payments</strong><small>REGISTRATION</small></Link>
       <Link className="quick" href="/admin/super/staff"><span>⚙</span><strong>Staff & permissions</strong><small>ACCESS CONTROL</small></Link>
       <Link className="quick" href="/admin/super/media"><span>▧</span><strong>Media library</strong><small>ASSET MANAGEMENT</small></Link>
-      <Link className="quick" href="/admin/super/staff#activity"><span>≋</span><strong>Audit activity</strong><small>GOVERNANCE</small></Link>
+      <Link className="quick" href="/admin/super/activity"><span>≋</span><strong>Audit activity</strong><small>GOVERNANCE</small></Link>
      </div>
      <div className="systemrow"><span>Database connection</span><b>{data?'CONNECTED':'NOT CONNECTED'}</b></div>
      <div className="systemrow"><span>Metrics endpoint</span><b>/api/admin/overview</b></div>
