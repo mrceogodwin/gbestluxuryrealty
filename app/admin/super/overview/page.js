@@ -43,8 +43,20 @@ export default function AdminOverview(){
 
  return <main className="ops">
   <style jsx>{`
-   .ops{min-height:calc(100vh - 66px);background:#edf1eb;color:#172b20;padding:25px clamp(16px,2.6vw,34px) 42px}
-   .wrap{max-width:1540px;margin:0 auto}
+   .ops{min-height:calc(100vh - 66px);background:radial-gradient(ellipse at 80% -12%,#d8e7d0 0,transparent 34%),linear-gradient(135deg,#edf2eb 0%,#e8eee6 52%,#f4f6f1 100%);color:#172b20;padding:25px clamp(16px,2.6vw,34px) 42px}
+   .wrap{max-width:1540px;margin:0 auto;perspective:1400px}
+   .pagehead{position:relative}
+   .pagehead:after{content:"";position:absolute;right:0;top:-12px;width:210px;height:90px;pointer-events:none;background:radial-gradient(ellipse,#c9dcbf88,transparent 70%);filter:blur(8px)}
+   .metric{position:relative;transform:perspective(1000px) rotateX(2deg) translateZ(0);transition:transform .22s ease,box-shadow .22s ease}
+   .metric:hover{transform:perspective(1000px) rotateX(0) translateY(-5px) translateZ(5px);box-shadow:0 22px 36px #102d1920,0 5px 10px #102d190b,inset 0 1px #fff}
+   .panel{transform:perspective(1200px) rotateX(.35deg);transition:box-shadow .2s ease}
+   .moduleicon{box-shadow:inset 0 1px #fff,0 3px 8px #183b2410}
+   .quick{transform:perspective(700px) rotateX(1deg);transition:transform .2s,box-shadow .2s}
+   .quick:hover{transform:perspective(700px) rotateX(0) translateY(-4px) translateZ(4px)}
+   .pagehead h1{font-size:clamp(26px,3vw,38px);letter-spacing:-.055em}
+   .sectionline{margin-top:26px}
+   .module a,.metric a{transition:background .18s,color .18s}
+   .module a:hover,.metric a:hover{background:#eaf2e5;color:#1d4e30}
    .pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:2px 0 19px;border-bottom:1px solid #d4ddd2}
    .eyebrow{font:800 9px/1.4 ui-monospace,SFMono-Regular,monospace;letter-spacing:.19em;color:#64806b}
    h1{font-size:clamp(23px,2.5vw,31px);letter-spacing:-.045em;line-height:1.1;margin:8px 0 5px;font-weight:760;color:#14281c}
