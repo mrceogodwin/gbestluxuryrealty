@@ -82,8 +82,8 @@ export async function POST(req) {
         return NextResponse.json({error:'A registration for this email is already awaiting payment verification. Contact G-BEST if you need to update the submitted details.'},{status:409});
       }
       q=await dbClient.query(`INSERT INTO public.client_registrations
-        (surname,other_names,address,email,phone,nationality,state_of_origin,lga,occupation,property_type,price_range,preferred_location,property_description,terms_accepted,payment_reference,receipt_name,receipt_type,receipt_data,payment_status)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true,$14,$15,$16,$17,'pending')
+        (surname,other_names,address,email,phone,nationality,state_of_origin,lga,occupation,property_type,price_range,preferred_location,property_description,terms_accepted,fee_amount,payment_reference,receipt_name,receipt_type,receipt_data,payment_status)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true,15000,$14,$15,$16,$17,'pending')
         RETURNING id,payment_status,created_at`,
         [...Object.values(fields),reference,file.name.slice(0,255),file.type,bytes]);
       await dbClient.query('COMMIT');
