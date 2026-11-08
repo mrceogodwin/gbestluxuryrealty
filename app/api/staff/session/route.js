@@ -1,11 +1,15 @@
 import {NextResponse} from 'next/server';
 import {createHmac} from 'node:crypto';
+import {isIP} from 'node:net';
 import {getDatabasePool} from '../../../../lib/db';
 import {hashToken,verifyPassword,newOpaqueToken,STAFF_COOKIE,STAFF_SESSION_SECONDS,staffCookieOptions,getStaffSession} from '../../../../lib/staff-auth';
 export const runtime='nodejs';export const dynamic='force-dynamic';
 const WINDOW_MINUTES=15, LOCK_MINUTES=15, EMAIL_MAX_FAILURES=5, IP_MAX_FAILURES=20;
 function loginAttemptKeys(req,email){
- const ip=req.headers.get('x-real-ip')||req.headers.get('x-vercel-forwarded-for')||'unknown';
+ const forwarded=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||req.headers.get('x-forwarded-for')||'';
+ const candidate=forwarded.split(',')[0]?.trim().replace(/^\\[|\\]$/g,'')||'';
+ // Vercel overwrites its forwarded-IP headers at the edge; validate before hashing.
+ const ip=isIP(candidate)?candidate:'unknown';
  const secret=process.env.ADMIN_SECRET||process.env.DATABASE_URL;
  if(!secret)throw new Error('Missing server secret for login rate limiting');
  const digest=value=>createHmac('sha256',secret).update(value).digest('hex');
