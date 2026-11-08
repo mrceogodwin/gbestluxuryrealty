@@ -1,23 +1,133 @@
 'use client';
+
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
+
+const modules=[
+ {key:'properties',label:'Property portfolio',description:'Listings, drafts and availability',href:'/admin/super',icon:'⌂'},
+ {key:'clients',label:'Client registrations',description:'Client records and payment review',href:'/admin/clients',icon:'♙'},
+ {key:'inspections',label:'Inspections & bookings',description:'Requests, confirmations and calendar',href:'/admin',icon:'◷'},
+ {key:'media',label:'Media library',description:'Company property and brand assets',href:'/admin/super/media',icon:'▧'}
+];
+
+function Metric({label,value,detail,href,accent='green'}){
+ return <article className="metric">
+  <div className="metric-top"><span>{label}</span><i className={'metric-dot '+accent}/></div>
+  <strong>{Number(value||0).toLocaleString()}</strong>
+  <p>{detail}</p>
+  <Link href={href}>OPEN MODULE <span>↗</span></Link>
+ </article>;
+}
+
 export default function AdminOverview(){
- const [data,setData]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
- async function load(e){e?.preventDefault();setBusy(true);setError('');try{const r=await fetch('/api/admin/overview',{headers:{},cache:'no-store'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not connect');setData(d)}catch(e){setError(e.message)}finally{setBusy(false)}}
- const cards=data?[['PROPERTY PORTFOLIO',data.properties.total,data.properties.published+' published · '+data.properties.drafts+' drafts','/admin/super','⌂'],['CLIENT REGISTRATIONS',data.clients.total,data.clients.pending+' awaiting payment review','/admin/clients','♙'],['INSPECTION REQUESTS',data.inspections.total,data.inspections.pending+' pending · '+data.inspections.confirmed+' confirmed','/admin','◷'],['MEDIA ASSETS',data.media.total,'Images stored in Neon','/admin/super/media','▧']]:[];
- useEffect(()=>{load()},[]);
- return <main className="overview-room"><style jsx>{`
- .overview-room{min-height:calc(100vh - 66px);padding:clamp(16px,3vw,34px);background:radial-gradient(ellipse at 85% 0%,#dcebd4,transparent 38%),#edf2eb;color:#173626}
- .ov-wrap{max-width:1450px;margin:auto}.ov-head{border-radius:22px;padding:clamp(22px,3vw,34px);background:linear-gradient(120deg,#103b28,#1c573b 65%,#376c47);color:white;box-shadow:0 22px 42px #123e2b35,inset 0 1px #ffffff40;transform:perspective(1200px) rotateX(.6deg);position:relative;overflow:hidden}
- .ov-head:after{content:'G';position:absolute;right:5%;top:-90px;font-size:300px;font-weight:950;color:#ffffff0b;pointer-events:none}.ov-kicker{font-size:10px;letter-spacing:.2em;color:#c8dfa9;font-weight:800}.ov-head h1{font-size:clamp(28px,4vw,44px);line-height:1.02;letter-spacing:-.05em;margin:12px 0}.ov-head p{font-size:13px;color:#d6e6d8;max-width:600px;line-height:1.7}
- .ov-connect{display:flex;gap:9px;align-items:end;flex-wrap:wrap;margin:18px 0}.ov-connect label{flex:1;min-width:210px;font-size:11px;font-weight:800;color:#45634c}.ov-connect input{display:block;width:100%;padding:13px;border:1px solid #d3dfd1;border-radius:10px;background:#fff;margin-top:7px}.ov-connect button,.ov-refresh{border:0;border-radius:10px;padding:13px 17px;background:#194a32;color:white;font-weight:800;cursor:pointer;box-shadow:0 7px 14px #123e2b20}.ov-error{background:#fff0ed;color:#a34335;padding:12px;border-radius:10px}
- .ov-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:22px 0}.ov-card{border:1px solid #dce6d9;border-radius:16px;padding:18px;background:linear-gradient(145deg,#fff,#f7faf5);box-shadow:0 15px 28px #153d2812,0 3px 7px #153d2809,inset 0 1px #fff;transform:perspective(900px) rotateY(-.4deg)}.ov-card small{font-size:9px;letter-spacing:.14em;color:#728175;font-weight:900}.ov-number{font-size:34px;font-weight:900;letter-spacing:-.06em;margin:12px 0 5px}.ov-card p{font-size:11px;color:#738076;margin:0}.ov-card a{display:inline-block;margin-top:15px;color:#285c3c;text-decoration:none;font-size:10px;font-weight:900;letter-spacing:.08em}
- .ov-lower{display:grid;grid-template-columns:1.2fr .8fr;gap:15px}.ov-panel{border:1px solid #dce6d9;border-radius:16px;background:linear-gradient(145deg,#fff,#f7faf5);padding:20px;box-shadow:0 12px 25px #153d2810}.ov-panel h2{font-size:15px;margin:0 0 14px}.ov-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.ov-actions a{display:flex;gap:10px;align-items:center;text-decoration:none;color:#244632;background:#f1f6ed;border:1px solid #e0eadc;border-radius:11px;padding:13px;font-size:11px;font-weight:800}.ov-actions a span{font-size:18px}.ov-foot{font-size:10px;color:#7a887c;margin-top:17px}
- @media(max-width:850px){.ov-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ov-lower{grid-template-columns:1fr}}
- @media(max-width:440px){.ov-grid{gap:9px}.ov-card{padding:13px}.ov-number{font-size:28px}.ov-actions{grid-template-columns:1fr}}
- `}</style><div className="ov-wrap"><header className="ov-head"><div className="ov-kicker">G-BEST / MANAGEMENT INTELLIGENCE</div><h1>THE CONTROL<br/>ROOM.</h1><p>One operational view of your property portfolio, client registrations, inspection pipeline and company media library.</p></header>
- <form className="ov-connect" style={{display:"none"}} onSubmit={load}><span>Secure admin session active · Live company data</span><button disabled={busy}>{busy?'LOADING…':data?'REFRESH LIVE DATA ↻':'LOAD COMPANY DATA ↗'}</button></form>
- {error&&<p className="ov-error" role="alert">{error}</p>}
- {data&&<><div className="ov-grid">{cards.map(c=><article className="ov-card" key={c[0]}><small>{c[0]}</small><div className="ov-number">{Number(c[1]||0).toLocaleString()}</div><p>{c[2]}</p><Link href={c[3]}>OPEN MODULE ↗</Link></article>)}</div><div className="ov-lower"><section className="ov-panel"><h2>QUICK OPERATIONS</h2><div className="ov-actions"><Link href="/admin/super"><span>⌂</span>Manage properties</Link><Link href="/admin"><span>◷</span>Inspection schedule</Link><Link href="/admin/clients"><span>♙</span>Verify client payments</Link><Link href="/admin/super/homepage"><span>◫</span>Homepage studio</Link><Link href="/admin/super/media"><span>▧</span>Upload company media</Link><Link href="/admin/super/homepage"><span>◈</span>Carousel & section controls</Link></div></section><section className="ov-panel"><h2>WORKSPACE STATUS</h2><p style={{fontSize:12,lineHeight:1.8,color:'#65766a'}}>Connected to the G-BEST management database. Media uploads are stored in the Neon Object Storage bucket configured for this preview environment.</p><p style={{fontSize:10,color:'#7b8a7e'}}>Last refreshed: {new Date(data.generatedAt).toLocaleString()}</p><button className="ov-refresh" onClick={()=>load()}>REFRESH METRICS ↻</button></section></div></>}
- <p className="ov-foot">G-BEST LUXURY REALTY · INTERNAL MANAGEMENT CONSOLE · {data?'LIVE DATABASE SNAPSHOT':'AWAITING ADMIN CONNECTION'}</p></div></main>
+ const [data,setData]=useState(null);
+ const [busy,setBusy]=useState(false);
+ const [error,setError]=useState('');
+ const [lastUpdated,setLastUpdated]=useState(null);
+
+ async function load(){
+  setBusy(true);setError('');
+  try{
+   const response=await fetch('/api/admin/overview',{cache:'no-store'});
+   const result=await response.json();
+   if(!response.ok)throw new Error(result.error||'Could not load company operations.');
+   setData(result);setLastUpdated(new Date(result.generatedAt||Date.now()));
+  }catch(err){setError(err.message||'Could not connect to the management database.');}
+  finally{setBusy(false);}
+ }
+
+ useEffect(()=>{load();},[]);
+
+ const totals=data?[
+  {label:'PROPERTIES',value:data.properties.total,detail:(data.properties.published||0)+' published · '+(data.properties.drafts||0)+' drafts',href:'/admin/super'},
+  {label:'CLIENTS',value:data.clients.total,detail:(data.clients.pending||0)+' payment reviews pending',href:'/admin/clients'},
+  {label:'INSPECTIONS',value:data.inspections.total,detail:(data.inspections.pending||0)+' pending · '+(data.inspections.confirmed||0)+' confirmed',href:'/admin'},
+  {label:'MEDIA ASSETS',value:data.media.total,detail:'Company library assets',href:'/admin/super/media'}
+ ]:[];
+
+ return <main className="ops">
+  <style jsx>{`
+   .ops{min-height:calc(100vh - 66px);background:#edf1eb;color:#172b20;padding:25px clamp(16px,2.6vw,34px) 42px}
+   .wrap{max-width:1540px;margin:0 auto}
+   .pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:2px 0 19px;border-bottom:1px solid #d4ddd2}
+   .eyebrow{font:800 9px/1.4 ui-monospace,SFMono-Regular,monospace;letter-spacing:.19em;color:#64806b}
+   h1{font-size:clamp(23px,2.5vw,31px);letter-spacing:-.045em;line-height:1.1;margin:8px 0 5px;font-weight:760;color:#14281c}
+   .sub{font-size:11px;color:#6d7b70;margin:0;line-height:1.6}
+   .headtools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+   .live{display:flex;align-items:center;gap:8px;border:1px solid #d5e2d0;background:#f6faf3;color:#416447;border-radius:7px;padding:8px 10px;font-size:9px;font-weight:800;letter-spacing:.08em}
+   .live i{width:6px;height:6px;border-radius:50%;background:#69a65a;box-shadow:0 0 0 3px #69a65a20}
+   button{border:1px solid #cbd7c8;background:#fff;color:#284c34;border-radius:7px;padding:9px 12px;font-size:10px;font-weight:800}
+   button:disabled{opacity:.55;cursor:wait}
+   .sectionline{display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px}
+   .sectionline h2{font-size:10px;letter-spacing:.13em;margin:0;color:#52695a}
+   .sectionline span{font:10px ui-monospace,monospace;color:#829087}
+   .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+   .metric{min-width:0;background:#fbfcfa;border:1px solid #dce4d9;border-radius:9px;padding:15px 16px 13px;box-shadow:0 2px 5px #102d1908}
+   .metric-top{display:flex;justify-content:space-between;align-items:center;color:#6f7f72;font:800 9px ui-monospace,monospace;letter-spacing:.12em}
+   .metric-dot{width:7px;height:7px;border-radius:50%;background:#83a96a}
+   .metric-dot.amber{background:#c49b4e}.metric-dot.blue{background:#7796aa}
+   .metric strong{display:block;font-size:32px;letter-spacing:-.06em;font-weight:750;margin:14px 0 3px;color:#1b3425}
+   .metric p{font-size:10px;color:#7a877c;margin:0;min-height:15px}
+   .metric a{display:flex;justify-content:space-between;align-items:center;margin-top:15px;padding-top:10px;border-top:1px solid #e7ece4;color:#3e6547;font:800 9px ui-monospace,monospace;letter-spacing:.08em}
+   .metric a span{font-size:14px}
+   .columns{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.75fr);gap:12px;margin-top:14px}
+   .panel{background:#fbfcfa;border:1px solid #dce4d9;border-radius:9px;overflow:hidden}
+   .panelhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #e6ebe3}
+   .panelhead h2{margin:0;font-size:10px;letter-spacing:.13em;color:#52695a}
+   .panelhead small{font:9px ui-monospace,monospace;color:#89958b}
+   .module{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:11px;align-items:center;padding:13px 16px;border-bottom:1px solid #edf0eb}
+   .module:last-child{border-bottom:0}
+   .moduleicon{width:31px;height:31px;display:grid;place-items:center;border:1px solid #dfe8da;border-radius:7px;background:#f1f6ed;color:#31583b;font-size:16px}
+   .module strong{display:block;font-size:11px;color:#2a4030}.module p{margin:4px 0 0;font-size:9px;color:#859087}
+   .module a{font:800 9px ui-monospace,monospace;letter-spacing:.05em;color:#4a704f;padding:7px 9px;border:1px solid #dbe5d6;border-radius:6px;white-space:nowrap}
+   .quickgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:13px}
+   .quick{min-height:72px;padding:11px;border:1px solid #e1e8de;border-radius:7px;background:#f7faf5;display:flex;flex-direction:column;justify-content:space-between}
+   .quick span{font-size:17px;color:#507253}.quick strong{font-size:10px;color:#304a36}.quick small{font-size:8px;color:#879287}
+   .systemrow{display:flex;justify-content:space-between;gap:12px;padding:11px 15px;border-top:1px solid #edf0eb;font-size:9px;color:#718074}
+   .systemrow b{font-weight:750;color:#4b6550}
+   .error{margin:14px 0;padding:12px 14px;background:#fff4f1;border:1px solid #efd6ce;border-radius:7px;color:#9b493a;font-size:11px}
+   .empty{padding:24px 16px;color:#7b887e;font-size:11px}
+   .foot{display:flex;justify-content:space-between;gap:12px;margin-top:16px;color:#8a958b;font:9px ui-monospace,monospace;letter-spacing:.04em}
+   @media(max-width:950px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.columns{grid-template-columns:1fr}}
+   @media(max-width:520px){.ops{padding-top:17px}.pagehead{align-items:flex-start;flex-direction:column}.headtools{width:100%;justify-content:space-between}.metrics{gap:8px}.metric{padding:12px}.metric strong{font-size:27px}.metric p{font-size:9px}.quickgrid{grid-template-columns:1fr 1fr}.foot{flex-direction:column}}
+  `}</style>
+
+  <div className="wrap">
+   <header className="pagehead">
+    <div><div className="eyebrow">G-BEST / EXECUTIVE OPERATIONS / 01</div><h1>Operations overview</h1><p className="sub">Company-wide activity, portfolio performance and operational access.</p></div>
+    <div className="headtools"><span className="live"><i/> SECURE ADMIN SESSION</span><button onClick={load} disabled={busy}>{busy?'SYNCING…':'↻  REFRESH DATA'}</button></div>
+   </header>
+
+   {error&&<div className="error" role="alert">{error}</div>}
+
+   <div className="sectionline"><h2>BUSINESS SNAPSHOT</h2><span>{lastUpdated?'UPDATED '+lastUpdated.toLocaleTimeString():'WAITING FOR DATABASE'}</span></div>
+   {data?<div className="metrics">
+    <Metric label="PROPERTY PORTFOLIO" value={data.properties.total} detail={(data.properties.published||0)+' published · '+(data.properties.drafts||0)+' drafts'} href="/admin/super"/>
+    <Metric label="CLIENT RECORDS" value={data.clients.total} detail={(data.clients.pending||0)+' payment reviews pending'} href="/admin/clients" accent="amber"/>
+    <Metric label="INSPECTION PIPELINE" value={data.inspections.total} detail={(data.inspections.pending||0)+' pending · '+(data.inspections.confirmed||0)+' confirmed'} href="/admin" accent="blue"/>
+    <Metric label="MEDIA LIBRARY" value={data.media.total} detail="Company library assets" href="/admin/super/media"/>
+   </div>:<div className="panel empty">{busy?'Connecting to the company database…':'No live metrics are available. Refresh to retry.'}</div>}
+
+   <div className="columns">
+    <section className="panel">
+     <div className="panelhead"><h2>OPERATIONAL MODULES</h2><small>LIVE MODULE ROUTING</small></div>
+     {modules.map(item=><div className="module" key={item.key}><span className="moduleicon">{item.icon}</span><div><strong>{item.label}</strong><p>{item.description}</p></div><Link href={item.href}>OPEN ↗</Link></div>)}
+    </section>
+    <section className="panel">
+     <div className="panelhead"><h2>QUICK OPERATIONS</h2><small>ADMIN SHORTCUTS</small></div>
+     <div className="quickgrid">
+      <Link className="quick" href="/admin/super"><span>⌂</span><strong>Manage properties</strong><small>INVENTORY</small></Link>
+      <Link className="quick" href="/admin"><span>◷</span><strong>Review inspections</strong><small>SCHEDULING</small></Link>
+      <Link className="quick" href="/admin/clients"><span>♙</span><strong>Client payments</strong><small>REGISTRATION</small></Link>
+      <Link className="quick" href="/admin/super/staff"><span>⚙</span><strong>Staff & permissions</strong><small>ACCESS CONTROL</small></Link>
+      <Link className="quick" href="/admin/super/media"><span>▧</span><strong>Media library</strong><small>ASSET MANAGEMENT</small></Link>
+      <Link className="quick" href="/admin/super/activity"><span>≋</span><strong>Audit activity</strong><small>GOVERNANCE</small></Link>
+     </div>
+     <div className="systemrow"><span>Database connection</span><b>{data?'CONNECTED':'NOT CONNECTED'}</b></div>
+     <div className="systemrow"><span>Metrics endpoint</span><b>/api/admin/overview</b></div>
+    </section>
+   </div>
+   <footer className="foot"><span>G-BEST LUXURY REALTY · INTERNAL CONTROL CONSOLE</span><span>{lastUpdated?'LAST SYNC '+lastUpdated.toLocaleString():'NO SYNC RECORDED'}</span></footer>
+  </div>
+ </main>;
 }
