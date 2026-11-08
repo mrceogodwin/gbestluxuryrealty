@@ -32,7 +32,8 @@ async function ensureTable(pool) {
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
   )`);
-  await pool.query(`ALTER TABLE public.client_registrations ADD COLUMN IF NOT EXISTS fee_amount numeric(12,2)`);\n  await pool.query(`CREATE INDEX IF NOT EXISTS client_registrations_status_created_idx ON public.client_registrations(payment_status, created_at DESC)`);
+  await pool.query(`ALTER TABLE public.client_registrations ADD COLUMN IF NOT EXISTS fee_amount numeric(12,2)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS client_registrations_status_created_idx ON public.client_registrations(payment_status, created_at DESC)`);
 }
 
 const clean=(v,n=500)=>String(v??'').trim().slice(0,n);
