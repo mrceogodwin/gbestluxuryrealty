@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
 export default function FinanceCentre(){
- const [data,setData]=useState({entries:[],currencyTotals:[],monthly:[],properties:[]}),[form,setForm]=useState({entry_type:'income',category:'Property sale',description:'',amount:'',currency:'NGN',reference:'',entry_date:new Date().toLocaleDateString('en-CA',{timeZone:'Africa/Lagos'}),property_id:''}),[busy,setBusy]=useState(false),[error,setError]=useState(''),[query,setQuery]=useState(''),[kind,setKind]=useState('all');
+ const [data,setData]=useState({entries:[],currencyTotals:[],monthly:[],properties:[]}),[form,setForm]=useState({entry_type:'income',category:'Other company income',description:'',amount:'',currency:'NGN',reference:'',entry_date:new Date().toLocaleDateString('en-CA',{timeZone:'Africa/Lagos'}),property_id:''}),[busy,setBusy]=useState(false),[error,setError]=useState(''),[query,setQuery]=useState(''),[kind,setKind]=useState('all');
  async function load(){setBusy(true);setError('');try{const r=await fetch('/api/admin/finance-ledger',{cache:'no-store'}),d=await r.json();if(!r.ok)throw Error(d.error||'Could not load finance centre');setData(d)}catch(e){setError(e.message)}finally{setBusy(false)}}
  useEffect(()=>{load()},[]);
  async function save(e){e.preventDefault();setBusy(true);setError('');try{const r=await fetch('/api/admin/finance-ledger',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)}),d=await r.json();if(!r.ok)throw Error(d.error||'Could not save entry');setForm(v=>({...v,description:'',amount:'',reference:'',property_id:''}));await load()}catch(e){setError(e.message)}finally{setBusy(false)}}
