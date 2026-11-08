@@ -38,12 +38,6 @@ export default function AdminOverview(){
 
  useEffect(()=>{load();},[]);
 
- const totals=data?[
-  {label:'PROPERTIES',value:data.properties.total,detail:(data.properties.published||0)+' published · '+(data.properties.drafts||0)+' drafts',href:'/admin/super'},
-  {label:'CLIENTS',value:data.clients.total,detail:(data.clients.pending||0)+' payment reviews pending',href:'/admin/clients'},
-  {label:'INSPECTIONS',value:data.inspections.total,detail:(data.inspections.pending||0)+' pending · '+(data.inspections.confirmed||0)+' confirmed',href:'/admin'},
-  {label:'MEDIA ASSETS',value:data.media.total,detail:'Company library assets',href:'/admin/super/media'}
- ]:[];
 
  return <main className="ops">
   <style jsx>{`
