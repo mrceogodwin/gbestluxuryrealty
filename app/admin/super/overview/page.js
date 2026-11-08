@@ -122,6 +122,13 @@ export default function AdminOverview(){
    </div>:<div className="panel empty">{busy?'Connecting to the company database…':'No live metrics are available. Refresh to retry.'}</div>}
 
    {data&&<><div className="sectionline"><h2>NEEDS YOUR ATTENTION</h2><span>LIVE WORK QUEUE</span></div><div className="actionbar"><article className="actioncard"><span className="actioncount">{Number(data.clients.pending||0).toLocaleString()}</span><div><strong>Client payments awaiting review</strong><p>Check submitted registrations and payment evidence.</p></div><Link href="/admin/clients">REVIEW ↗</Link></article><article className="actioncard"><span className="actioncount">{Number(data.inspections.pending||0).toLocaleString()}</span><div><strong>Inspection requests awaiting action</strong><p>Review requested visits and confirm the schedule.</p></div><Link href="/admin">OPEN DESK ↗</Link></article></div></>}
+   <div className="sectionline"><h2>PAYMENTS & CASH POSITION</h2><span>VERIFIED REGISTRATION RECORDS · NGN</span></div>
+   {data?<div className="metrics">
+    <Metric label="VERIFIED PAYMENTS" value={data.finance?.approved_count||0} detail="Approved client registration payments" href="/admin/clients" accent="green"/>
+    <Metric label="VERIFIED AMOUNT" value={'₦'+Number(data.finance?.approved_amount||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2})} detail="Recorded fees with approved status" href="/admin/clients" accent="green"/>
+    <Metric label="PENDING PAYMENT VALUE" value={'₦'+Number(data.finance?.pending_amount||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2})} detail={(data.finance?.pending_count||0)+' awaiting manual verification'} href="/admin/clients" accent="amber"/>
+    <Metric label="REJECTED PAYMENTS" value={data.finance?.rejected_count||0} detail="Registration payments not approved" href="/admin/clients" accent="blue"/>
+   </div>:<div className="panel empty">Payment totals will appear when live records are available.</div>}
    <div className="columns">
     <section className="panel">
      <div className="panelhead"><h2>COMPANY WORKSPACE</h2><small>CHOOSE A DEPARTMENT</small></div>
