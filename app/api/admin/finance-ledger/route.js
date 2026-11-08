@@ -1,5 +1,5 @@
 import {NextResponse} from 'next/server';
-import {getDatabasePool} from '../../../../../lib/db';
+import {getDatabasePool} from '../../../../lib/db';
 import {authorizeAdminRequest} from '../../../../../lib/admin-permissions';
 export const runtime='nodejs';export const dynamic='force-dynamic';
 async function setup(p){await p.query(`CREATE TABLE IF NOT EXISTS public.finance_ledger(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),entry_type varchar(12) NOT NULL CHECK(entry_type IN ('income','expense')),category varchar(80) NOT NULL,description varchar(500) NOT NULL,amount numeric(14,2) NOT NULL CHECK(amount>0),currency varchar(3) NOT NULL DEFAULT 'NGN',reference varchar(120),entry_date date NOT NULL DEFAULT CURRENT_DATE,recorded_by varchar(254) NOT NULL DEFAULT 'admin',created_at timestamptz NOT NULL DEFAULT now())`);}
