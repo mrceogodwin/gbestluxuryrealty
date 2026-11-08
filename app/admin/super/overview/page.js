@@ -4,10 +4,12 @@ import {useEffect,useState} from 'react';
 import Link from 'next/link';
 
 const modules=[
- {key:'properties',label:'Property portfolio',description:'Listings, drafts and availability',href:'/admin/super',icon:'⌂'},
- {key:'clients',label:'Client registrations',description:'Client records and payment review',href:'/admin/clients',icon:'♙'},
- {key:'inspections',label:'Inspections & bookings',description:'Requests, confirmations and calendar',href:'/admin',icon:'◷'},
- {key:'media',label:'Media library',description:'Company property and brand assets',href:'/admin/super/media',icon:'▧'}
+ {key:'properties',label:'Properties',description:'Add, edit, publish and archive company listings',href:'/admin/super',icon:'⌂'},
+ {key:'clients',label:'Clients & payments',description:'Review registrations, receipts and payment decisions',href:'/admin/clients',icon:'♙'},
+ {key:'inspections',label:'Inspections & calendar',description:'Approve visits and manage the company schedule',href:'/admin',icon:'◷'},
+ {key:'staff',label:'People & permissions',description:'Invite staff and control what each person can do',href:'/admin/super/staff',icon:'♧'},
+ {key:'media',label:'Media library',description:'Organise property photos and company assets',href:'/admin/super/media',icon:'▧'},
+ {key:'homepage',label:'Website content studio',description:'Update homepage sections and public presentation',href:'/admin/super/homepage',icon:'▤'}
 ];
 
 function Metric({label,value,detail,href,accent='green'}){
@@ -56,7 +58,7 @@ export default function AdminOverview(){
    .sectionline h2{font-size:10px;letter-spacing:.13em;margin:0;color:#52695a}
    .sectionline span{font:10px ui-monospace,monospace;color:#829087}
    .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
-   .metric{min-width:0;background:#fbfcfa;border:1px solid #dce4d9;border-radius:9px;padding:15px 16px 13px;box-shadow:0 2px 5px #102d1908}
+   .metric{min-width:0;background:linear-gradient(145deg,#fff 0%,#f5f8f2 72%,#eaf1e6 100%);border:1px solid #d5e0d1;border-radius:13px;padding:17px 17px 14px;box-shadow:0 12px 24px #102d1910,0 3px 7px #102d1908,inset 0 1px #fff;transform:perspective(900px) rotateX(1deg);transition:transform .2s,box-shadow .2s}.metric:hover{transform:perspective(900px) translateY(-4px) rotateX(0);box-shadow:0 20px 32px #102d1920,0 5px 9px #102d190a,inset 0 1px #fff}
    .metric-top{display:flex;justify-content:space-between;align-items:center;color:#6f7f72;font:800 9px ui-monospace,monospace;letter-spacing:.12em}
    .metric-dot{width:7px;height:7px;border-radius:50%;background:#83a96a}
    .metric-dot.amber{background:#c49b4e}.metric-dot.blue{background:#7796aa}
@@ -65,17 +67,17 @@ export default function AdminOverview(){
    .metric a{display:flex;justify-content:space-between;align-items:center;margin-top:15px;padding-top:10px;border-top:1px solid #e7ece4;color:#3e6547;font:800 9px ui-monospace,monospace;letter-spacing:.08em}
    .metric a span{font-size:14px}
    .columns{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.75fr);gap:12px;margin-top:14px}
-   .panel{background:#fbfcfa;border:1px solid #dce4d9;border-radius:9px;overflow:hidden}
+   .panel{background:linear-gradient(145deg,#fff,#f6f9f4);border:1px solid #d6e1d2;border-radius:13px;overflow:hidden;box-shadow:0 14px 28px #102d1910,0 3px 8px #102d1908,inset 0 1px #fff}
    .panelhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #e6ebe3}
    .panelhead h2{margin:0;font-size:10px;letter-spacing:.13em;color:#52695a}
    .panelhead small{font:9px ui-monospace,monospace;color:#89958b}
-   .module{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:11px;align-items:center;padding:13px 16px;border-bottom:1px solid #edf0eb}
+   .module{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:11px;align-items:center;padding:14px 16px;border-bottom:1px solid #edf0eb;transition:background .18s,transform .18s}.module:hover{background:#f2f7ef;transform:translateX(3px)}
    .module:last-child{border-bottom:0}
    .moduleicon{width:31px;height:31px;display:grid;place-items:center;border:1px solid #dfe8da;border-radius:7px;background:#f1f6ed;color:#31583b;font-size:16px}
    .module strong{display:block;font-size:11px;color:#2a4030}.module p{margin:4px 0 0;font-size:9px;color:#859087}
    .module a{font:800 9px ui-monospace,monospace;letter-spacing:.05em;color:#4a704f;padding:7px 9px;border:1px solid #dbe5d6;border-radius:6px;white-space:nowrap}
    .quickgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:13px}
-   .quick{min-height:72px;padding:11px;border:1px solid #e1e8de;border-radius:7px;background:#f7faf5;display:flex;flex-direction:column;justify-content:space-between}
+   .quick{min-height:78px;padding:12px;border:1px solid #dce6d8;border-radius:10px;background:linear-gradient(145deg,#fff,#edf4e9);display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 5px 12px #163c200b,inset 0 1px #fff;transition:transform .18s,box-shadow .18s}.quick:hover{transform:translateY(-3px);box-shadow:0 12px 20px #163c2018}
    .quick span{font-size:17px;color:#507253}.quick strong{font-size:10px;color:#304a36}.quick small{font-size:8px;color:#879287}
    .systemrow{display:flex;justify-content:space-between;gap:12px;padding:11px 15px;border-top:1px solid #edf0eb;font-size:9px;color:#718074}
    .systemrow b{font-weight:750;color:#4b6550}
@@ -88,34 +90,34 @@ export default function AdminOverview(){
 
   <div className="wrap">
    <header className="pagehead">
-    <div><div className="eyebrow">G-BEST / EXECUTIVE OPERATIONS / 01</div><h1>Operations overview</h1><p className="sub">Company-wide activity, portfolio performance and operational access.</p></div>
+    <div><div className="eyebrow">G-BEST / EXECUTIVE OPERATIONS / 01</div><h1>Welcome to your control room</h1><p className="sub">Your central workspace for properties, clients, inspections and the team. Choose a department below to get work done.</p></div>
     <div className="headtools"><span className="live"><i/> SECURE ADMIN SESSION</span><button onClick={load} disabled={busy}>{busy?'SYNCING…':'↻  REFRESH DATA'}</button></div>
    </header>
 
    {error&&<div className="error" role="alert">{error}</div>}
 
-   <div className="sectionline"><h2>BUSINESS SNAPSHOT</h2><span>{lastUpdated?'UPDATED '+lastUpdated.toLocaleTimeString():'WAITING FOR DATABASE'}</span></div>
+   <div className="sectionline"><h2>YOUR BUSINESS AT A GLANCE</h2><span>{lastUpdated?'UPDATED '+lastUpdated.toLocaleTimeString():'WAITING FOR DATABASE'}</span></div>
    {data?<div className="metrics">
     <Metric label="PROPERTY PORTFOLIO" value={data.properties.total} detail={(data.properties.published||0)+' published · '+(data.properties.drafts||0)+' drafts'} href="/admin/super"/>
     <Metric label="CLIENT RECORDS" value={data.clients.total} detail={(data.clients.pending||0)+' payment reviews pending'} href="/admin/clients" accent="amber"/>
     <Metric label="INSPECTION PIPELINE" value={data.inspections.total} detail={(data.inspections.pending||0)+' pending · '+(data.inspections.confirmed||0)+' confirmed'} href="/admin" accent="blue"/>
-    <Metric label="MEDIA LIBRARY" value={data.media.total} detail="Company library assets" href="/admin/super/media"/>
+    <Metric label="MEDIA LIBRARY" value={data.media.total} detail="Images and brand assets stored for the website" href="/admin/super/media"/>
    </div>:<div className="panel empty">{busy?'Connecting to the company database…':'No live metrics are available. Refresh to retry.'}</div>}
 
    <div className="columns">
     <section className="panel">
-     <div className="panelhead"><h2>OPERATIONAL MODULES</h2><small>LIVE MODULE ROUTING</small></div>
+     <div className="panelhead"><h2>COMPANY WORKSPACE</h2><small>CHOOSE A DEPARTMENT</small></div>
      {modules.map(item=><div className="module" key={item.key}><span className="moduleicon">{item.icon}</span><div><strong>{item.label}</strong><p>{item.description}</p></div><Link href={item.href}>OPEN ↗</Link></div>)}
     </section>
     <section className="panel">
-     <div className="panelhead"><h2>QUICK OPERATIONS</h2><small>ADMIN SHORTCUTS</small></div>
+     <div className="panelhead"><h2>QUICK OPERATIONS</h2><small>COMMON TASKS</small></div>
      <div className="quickgrid">
       <Link className="quick" href="/admin/super"><span>⌂</span><strong>Manage properties</strong><small>INVENTORY</small></Link>
       <Link className="quick" href="/admin"><span>◷</span><strong>Review inspections</strong><small>SCHEDULING</small></Link>
       <Link className="quick" href="/admin/clients"><span>♙</span><strong>Client payments</strong><small>REGISTRATION</small></Link>
       <Link className="quick" href="/admin/super/staff"><span>⚙</span><strong>Staff & permissions</strong><small>ACCESS CONTROL</small></Link>
       <Link className="quick" href="/admin/super/media"><span>▧</span><strong>Media library</strong><small>ASSET MANAGEMENT</small></Link>
-      <Link className="quick" href="/admin/super/activity"><span>≋</span><strong>Audit activity</strong><small>GOVERNANCE</small></Link>
+      <Link className="quick" href="/admin/super/staff#activity"><span>≋</span><strong>Audit activity</strong><small>GOVERNANCE</small></Link>
      </div>
      <div className="systemrow"><span>Database connection</span><b>{data?'CONNECTED':'NOT CONNECTED'}</b></div>
      <div className="systemrow"><span>Metrics endpoint</span><b>/api/admin/overview</b></div>
