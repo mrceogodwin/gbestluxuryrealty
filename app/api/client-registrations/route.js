@@ -81,11 +81,17 @@ export async function POST(req) {
         await dbClient.query('ROLLBACK');
         return NextResponse.json({error:'A registration for this email is already awaiting payment verification. Contact G-BEST if you need to update the submitted details.'},{status:409});
       }
+      const fullName = fields.surname + ' ' + fields.other_names;
       q=await dbClient.query(`INSERT INTO public.client_registrations
-        (surname,other_names,address,email,phone,nationality,state_of_origin,lga,occupation,property_type,price_range,preferred_location,property_description,terms_accepted,fee_amount,payment_reference,receipt_name,receipt_type,receipt_data,payment_status)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true,15000,$14,$15,$16,$17,'pending')
-        RETURNING id,payment_status,created_at`,
-        [...Object.values(fields),reference,file.name.slice(0,255),file.type,bytes]);
+        (full_name,email,email_normalized,phone,registration_fee_kobo,payment_status,client_status,
+         surname,other_names,address,nationality,state_of_origin,lga,occupation,property_type,price_range,
+         preferred_location,property_description,terms_accepted,fee_amount,payment_reference,receipt_name,receipt_type,receipt_data)
+        VALUES ($1,$2,lower($2),$3,1500000,'pending','pending',
+         $4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,true,15000,$15,$16,$17,$18)
+        RETURNING id,client_id,payment_status,created_at`,
+        [fullName,fields.email,fields.phone,fields.surname,fields.other_names,fields.address,fields.nationality,
+         fields.state_of_origin,fields.lga,fields.occupation,fields.property_type,fields.price_range,
+         fields.preferred_location,fields.property_description,reference,file.name.slice(0,255),file.type,bytes]);
       await dbClient.query('COMMIT');
     } catch(registrationError) {
       await dbClient.query('ROLLBACK').catch(()=>{});
