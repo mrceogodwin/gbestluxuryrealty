@@ -96,7 +96,7 @@ export async function POST(req) {
       await dbClient.query('ROLLBACK').catch(()=>{});
       throw registrationError;
     } finally { dbClient.release(); }
-    return NextResponse.json({ok:true,registration:q.rows[0],message:'Registration received. Your payment is awaiting manual verification. Check your email address and registration reference when contacting G-BEST.'},{status:201,headers:{'Cache-Control':'no-store'}});
+    return NextResponse.json({ok:true,registration:q.rows[0],message:'Registration received. Your payment is awaiting manual verification. Keep your registration reference when contacting G-BEST.'},{status:201,headers:{'Cache-Control':'no-store'}});
   } catch(e) {
     console.error('Client registration failed',e.code||e.message);
     return NextResponse.json({error:'Could not submit registration. Please try again.'},{status:500});
