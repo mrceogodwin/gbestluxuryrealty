@@ -123,14 +123,7 @@ export async function PATCH(req) {
       if(!existing.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
       const prior=existing.rows[0];
       if(prior.status!==status) return NextResponse.json({error:'This status change is not allowed from '+prior.status+'. Refresh the request and choose a valid next action.',currentStatus:prior.status},{status:409});
-      let retryCalendar={created:false,reason:'No status change; calendar was not changed.'};
-      if(status==='confirmed'&&!prior.calendar_event_id) {
-        try { retryCalendar=await createCalendarEvent(prior); }
-        catch(e) { console.error('Calendar retry failed',e.message); retryCalendar={created:false,reason:'Google Calendar could not be reached.'}; }
-      }
-      if(status==='confirmed'&&!prior.calendar_event_id&&!retryCalendar.created) {
-        return NextResponse.json({ok:false,unchanged:true,request:prior,calendar:retryCalendar,error:retryCalendar.reason||'Calendar confirmation is still pending. No confirmation emails were sent.'},{status:503,headers:{'Cache-Control':'no-store'}});
-      }
+      const retryCalendar={created:false,reason:'Managed directly in the Super Admin dashboard.'};
       const retried=await deliverInspectionEmails(id);
       const counts=await getDatabasePool().query(`SELECT count(*) FILTER (WHERE status='sent')::int AS emails_sent,count(*) FILTER (WHERE status='failed')::int AS emails_failed,count(*) FILTER (WHERE status='pending')::int AS emails_pending FROM public.inspection_email_outbox WHERE inspection_request_id=$1`,[id]);
       Object.assign(prior,counts.rows[0]||{});
