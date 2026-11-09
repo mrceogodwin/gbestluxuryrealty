@@ -75,10 +75,14 @@ export async function POST(req) {
     try {
       await dbClient.query('BEGIN');
       await dbClient.query("SELECT pg_advisory_xact_lock(hashtext(lower($1)),hashtext('client-registration'))",[fields.email]);
-      const duplicate=await dbClient.query("SELECT id FROM public.client_registrations WHERE lower(email)=lower($1) AND payment_status='pending' ORDER BY created_at DESC LIMIT 1",[fields.email]);
+      const duplicate=await dbClient.query("SELECT id,payment_status FROM public.client_registrations WHERE email_normalized=lower($1) LIMIT 1",[fields.email]);
       if(duplicate.rowCount) {
         await dbClient.query('ROLLBACK');
-        return NextResponse.json({error:'A registration for this email is already awaiting payment verification. Contact G-BEST if you need to update the submitted details.'},{status:409});
+        const state=duplicate.rows[0].payment_status;
+        const message=state==='pending'
+          ? 'A registration for this email is already awaiting payment verification. Contact G-BEST if you need to update the submitted details.'
+          : 'A registration already exists for this email and has been reviewed. Please contact G-BEST for assistance.';
+        return NextResponse.json({error:message},{status:409});
       }
       const fullName = fields.surname + ' ' + fields.other_names;
       q=await dbClient.query(`INSERT INTO public.client_registrations
