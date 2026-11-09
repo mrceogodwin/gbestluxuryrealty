@@ -6,7 +6,7 @@ import {useRouter} from 'next/navigation';
 const groups=[
  {label:'OVERVIEW',items:[['/admin/super/overview','Executive overview','▦']]},
  {label:'PROPERTY OPERATIONS',items:[['/admin/super','Property portfolio','⌂'],['/admin/super/media','Media library','▧']]},
- {label:'CLIENT OPERATIONS',items:[['/admin/clients','Clients & payments','♙'],['/admin','Inspections & calendar','◷']]},
+ {label:'CLIENT OPERATIONS',items:[['/admin/clients','Clients & payments','♙'],['/admin','Inspection bookings','◷']]},
  {label:'FINANCE',items:[['/admin/super/finance','Company finance centre','₦']]},
  {label:'PEOPLE & GOVERNANCE',items:[['/admin/super/staff','Staff & permissions','♧'],['/admin/super/activity','Activity & audit trail','≋']]},
  {label:'WEBSITE MANAGEMENT',items:[['/admin/super/homepage','Website studio','◫']]}
