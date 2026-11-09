@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getDatabasePool } from '../../../lib/db';
-import { queueInspectionEmails, deliverInspectionEmails } from '../../../lib/inspection-email-outbox';
 import {getSchedule,slotIsAvailable,validClock} from '../../../lib/inspection-schedule';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 
-const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export async function POST(req){
  try{
   if(!process.env.DATABASE_URL)return NextResponse.json({error:'Booking is temporarily unavailable.'},{status:503});
@@ -57,19 +55,6 @@ export async function POST(req){
    await client.query('ROLLBACK').catch(()=>{});
    throw insertError;
   } finally { client.release(); }
-  const warnings=[];
-  let emailResult={sent:0,failed:0,skipped:0};
-  try {
-   await queueInspectionEmails([
-    {requestId:q.rows[0].id,type:'admin',to:process.env.ADMIN_EMAIL,subject:'New inspection request — '+name,html:'<p>New physical inspection request from '+safe(name)+' ('+safe(contact)+').</p><p>Property: '+safe(propertyLabel)+'<br/>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p><p>Status: pending admin approval.</p>'},
-    {requestId:q.rows[0].id,type:'client',to:email,subject:'We received your G-BEST inspection request',html:'<p>Hello '+safe(name)+',</p><p>We received your physical inspection request for '+safe(propertyLabel)+' on '+safe(date)+' at '+safe(time)+' WAT.</p><p>This is a request only and is not yet confirmed. Our team will contact you after review.</p>'}
-   ]);
-   emailResult=await deliverInspectionEmails(q.rows[0].id);
-   if(emailResult.failed||emailResult.skipped)warnings.push('One or more emails are queued for retry.');
-  } catch(notificationError) {
-   console.error('Inspection request saved but email queueing failed',notificationError.code||notificationError.message);
-   warnings.push('Your inspection request was saved, but email notifications could not be queued. Please contact our team if you do not hear back.');
-  }
-  return NextResponse.json({ok:true,requestId:q.rows[0].id,status:'pending',email:emailResult,warnings},{status:201,headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({ok:true,requestId:q.rows[0].id,status:'pending',message:'Inspection request received. It is now in the Super Admin booking inbox and is awaiting review.'},{status:201,headers:{'Cache-Control':'no-store'}});
  }catch(e){console.error('inspection API failure',e.code||e.message);if(e.code==='23505')return NextResponse.json({error:'That slot is already held by another request. Please choose another.'},{status:409});return NextResponse.json({error:'Unable to submit right now. Please try again.'},{status:500});}
 }
