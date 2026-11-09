@@ -110,20 +110,9 @@ export async function PATCH(req) {
       return NextResponse.json({error:'This status change is not allowed from '+currentRow.status+'. Refresh the request and choose a valid next action.',currentStatus:currentRow.status},{status:409});
     // Remove the calendar event before cancelling or moving a confirmed request
     // back to contacted. If Google cannot remove it, leave the database unchanged.
-    let calendar={created:false,reason:'Calendar event only applies to confirmed requests.'};
-    if((status==='cancelled'||status==='contacted')&&currentRow.status==='confirmed') {
-      let removal;
-      try { removal=await deleteCalendarEvent(currentRow); }
-      catch(e) { console.error('Calendar cancellation failed',e.message); removal={deleted:false,reason:'Google Calendar could not be reached.'}; }
-      if(!removal.deleted)return NextResponse.json({error:removal.reason||'Could not cancel the calendar event. The request status was not changed.'},{status:503});
-      calendar={created:false,deleted:true,eventId:removal.eventId};
-    }
-    if(status==='confirmed') {
-      try { calendar=await createCalendarEvent(currentRow); }
-      catch(e) { console.error('Calendar integration failed',e.message); calendar={created:false,reason:'Google Calendar could not be reached.'}; }
-      if(!calendar.created)return NextResponse.json({error:calendar.reason||'Google Calendar could not confirm this appointment. The request remains unconfirmed.'},{status:503});
-      currentRow.calendar_event_id=calendar.eventId||currentRow.calendar_event_id;
-    }
+    let calendar={created:false,reason:'Managed directly in the Super Admin dashboard.'};
+    // Inspection approvals are managed entirely in the Super Admin dashboard.
+    // No Google Calendar event is created or required.
     const q=await pool.query('UPDATE public.inspection_requests SET status=$2,calendar_event_id=CASE WHEN $5::boolean THEN NULL ELSE COALESCE($4,calendar_event_id) END,updated_at=now() WHERE id=$1 AND status=$3 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id',[id,status,currentRow.status,currentRow.calendar_event_id||null,(status==='cancelled'||status==='contacted')&&currentRow.status==='confirmed']);
     if(!q.rowCount) {
       if(status==='confirmed'&&calendar.created&&calendar.eventId) {
@@ -166,7 +155,7 @@ export async function PATCH(req) {
     }
     const counts=await getDatabasePool().query(`SELECT count(*) FILTER (WHERE status='sent')::int AS emails_sent,count(*) FILTER (WHERE status='failed')::int AS emails_failed,count(*) FILTER (WHERE status='pending')::int AS emails_pending FROM public.inspection_email_outbox WHERE inspection_request_id=$1`,[row.id]);
     Object.assign(row,counts.rows[0]||{});
-    return NextResponse.json({ok:true,request:row,calendar,email,warnings:[...(!calendar.created&&status==='confirmed'?[calendar.reason]:[]),...warnings]},{headers:{'Cache-Control':'no-store'}});
+    return NextResponse.json({ok:true,request:row,calendar,email,warnings:[...warnings]},{headers:{'Cache-Control':'no-store'}});
   } catch(e) {
     if(e.code==='23505') return NextResponse.json({error:'That slot is already held by another pending or confirmed request. Choose another slot.'},{status:409});
     console.error('Admin request update failed',e.code||e.message);
