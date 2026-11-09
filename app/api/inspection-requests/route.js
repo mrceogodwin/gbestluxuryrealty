@@ -20,7 +20,7 @@ export async function POST(req){
   // by G-BEST staff may request an inspection.
   const registrationTable=await pool.query("SELECT to_regclass('public.client_registrations') AS table_name");
   if(!registrationTable.rows[0]?.table_name)return NextResponse.json({error:'Complete client registration and payment verification before requesting an inspection.'},{status:403});
-  const registration=await pool.query("SELECT id,payment_status FROM public.client_registrations WHERE lower(email)=lower($1) ORDER BY updated_at DESC,created_at DESC LIMIT 1",[email]);
+  const registration=await pool.query("SELECT id,payment_status FROM public.client_registrations WHERE email_normalized=lower($1) ORDER BY updated_at DESC,created_at DESC LIMIT 1",[email]);
   if(!registration.rowCount||registration.rows[0].payment_status!=='approved')return NextResponse.json({error:'Your client registration or payment is not yet approved. Please complete registration and wait for G-BEST to verify your bank transfer before booking an inspection.'},{status:403});
   let propertyLabel=pid;
   const listing=await pool.query(`SELECT id,title FROM public.properties
@@ -49,7 +49,7 @@ export async function POST(req){
     await client.query('ROLLBACK');
     return NextResponse.json({error:'That inspection slot has just been taken. Please choose another available time.'},{status:409});
    }
-   q=await client.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',$6,$7,$8,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,duration,String(listing.rows[0].id),message]);
+   q=await client.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,client_registration_id,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4,$5::date,$6::time,'physical_inspection',$7,$8,$9,'pending','Africa/Lagos') RETURNING id",[name,contact,email,registration.rows[0].id,date,time,duration,String(listing.rows[0].id),message]);
    await client.query('COMMIT');
   } catch(insertError) {
    await client.query('ROLLBACK').catch(()=>{});
