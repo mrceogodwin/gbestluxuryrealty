@@ -6,59 +6,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-function calendarEventId(requestId) {
-  const hex=String(requestId).replace(/-/g,'').toLowerCase();
-  if(!/^[0-9a-f]{32}$/.test(hex)) throw new Error('Invalid inspection request ID');
-  return 'gbest'+BigInt('0x'+hex).toString(32);
-}
-async function createCalendarEvent(reqRow) {
-  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN, GOOGLE_CALENDAR_ID } = process.env;
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN || !GOOGLE_CALENDAR_ID) return { created:false, reason:'Google Calendar credentials are not configured.' };
-  const tokenRes = await fetch('https://oauth2.googleapis.com/token', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams({client_id:GOOGLE_CLIENT_ID,client_secret:GOOGLE_CLIENT_SECRET,refresh_token:GOOGLE_REFRESH_TOKEN,grant_type:'refresh_token'}) });
-  if (!tokenRes.ok) { console.error('Google OAuth token refresh failed',tokenRes.status); return {created:false,reason:'Google authorization failed.'}; }
-  const token = await tokenRes.json();
-  const start = new Date(String(reqRow.preferred_date).slice(0,10)+'T'+String(reqRow.preferred_time).slice(0,8)+'+01:00');
-  const durationMinutes=Number(reqRow.duration_minutes||30);
-  const end = new Date(start.getTime()+durationMinutes*60*1000);
-  const eventId=calendarEventId(reqRow.id);
-  const event = { id:eventId, summary:'G-BEST property inspection — '+reqRow.full_name, description:'Approved physical property inspection. Property reference: '+(reqRow.property_id||'Not specified')+'. Client contact: '+reqRow.contact+'. Request ID: '+reqRow.id, start:{dateTime:start.toISOString(),timeZone:'Africa/Lagos'}, end:{dateTime:end.toISOString(),timeZone:'Africa/Lagos'}, attendees:reqRow.client_email?[{email:reqRow.client_email}]:[], guestsCanModify:false };
-  const base='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(GOOGLE_CALENDAR_ID)+'/events';
-  const headers={Authorization:'Bearer '+token.access_token,'Content-Type':'application/json'};
-  // Idempotency: recover this request's event before checking availability.
-  // Otherwise a retry would see its own existing event as a conflict.
-  let existingRes=await fetch(base+'/'+encodeURIComponent(eventId),{headers});
-  if(existingRes.ok) {
-    const existing=await existingRes.json().catch(()=>({}));
-    await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1',[reqRow.id,eventId]);
-    return {created:true,eventId,htmlLink:existing.htmlLink,recovered:true};
-  }
-  if(existingRes.status!==404){console.error('Google Calendar event lookup failed',existingRes.status);return {created:false,reason:'Could not verify whether this inspection is already on Google Calendar.'};}
-  // Ask Google Calendar FreeBusy for the exact 30-minute window before creating.
-  const freeBusyRes=await fetch('https://www.googleapis.com/calendar/v3/freeBusy',{method:'POST',headers,body:JSON.stringify({timeMin:start.toISOString(),timeMax:end.toISOString(),timeZone:'Africa/Lagos',items:[{id:GOOGLE_CALENDAR_ID}]})});
-  const freeBusy=await freeBusyRes.json().catch(()=>({}));
-  if(!freeBusyRes.ok){console.error('Google Calendar availability check failed',freeBusyRes.status);return {created:false,reason:'Could not verify calendar availability. The inspection was not added to the calendar.'};}
-  const busy=freeBusy.calendars?.[GOOGLE_CALENDAR_ID]?.busy||[];
-  if(busy.length)return {created:false,reason:'The requested time conflicts with an existing calendar event. Choose another inspection slot.'};
-  const evRes=await fetch(base+'?sendUpdates=all',{method:'POST',headers,body:JSON.stringify(event)});
-  const ev=await evRes.json().catch(()=>({}));
-  if(!evRes.ok){console.error('Google Calendar event creation failed',evRes.status);return {created:false,reason:'Google Calendar rejected event creation.'};}
-  await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1',[reqRow.id,eventId]);
-  return {created:true,eventId,htmlLink:ev.htmlLink};
-}
-async function deleteCalendarEvent(reqRow) {
-  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN, GOOGLE_CALENDAR_ID } = process.env;
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN || !GOOGLE_CALENDAR_ID)
-    return { deleted:false, reason:'Google Calendar credentials are not configured.' };
-  const tokenRes=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:GOOGLE_CLIENT_ID,client_secret:GOOGLE_CLIENT_SECRET,refresh_token:GOOGLE_REFRESH_TOKEN,grant_type:'refresh_token'})});
-  if(!tokenRes.ok)return {deleted:false,reason:'Google authorization failed.'};
-  const token=await tokenRes.json();
-  const eventId=reqRow.calendar_event_id||calendarEventId(reqRow.id);
-  const url='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(GOOGLE_CALENDAR_ID)+'/events/'+encodeURIComponent(eventId);
-  const res=await fetch(url,{method:'DELETE',headers:{Authorization:'Bearer '+token.access_token}});
-  if(res.status===404||res.status===410)return {deleted:true,eventId,alreadyAbsent:true};
-  if(!res.ok){console.error('Google Calendar event deletion failed',res.status);return {deleted:false,reason:'Could not remove the inspection from Google Calendar.'};}
-  return {deleted:true,eventId};
-}
 export async function GET(req) {
   if (!await authorizeAdminRequest(req,['inspections.view','inspections.manage'])) return NextResponse.json({error:'Unauthorized'},{status:401});
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
@@ -108,17 +55,11 @@ export async function PATCH(req) {
     const currentRow=current.rows[0];
     if(!allowedPrevious[status].includes(currentRow.status) && currentRow.status!==status)
       return NextResponse.json({error:'This status change is not allowed from '+currentRow.status+'. Refresh the request and choose a valid next action.',currentStatus:currentRow.status},{status:409});
-    // Remove the calendar event before cancelling or moving a confirmed request
-    // back to contacted. If Google cannot remove it, leave the database unchanged.
-    let calendar={created:false,reason:'Managed directly in the Super Admin dashboard.'};
     // Inspection approvals are managed entirely in the Super Admin dashboard.
-    // No Google Calendar event is created or required.
+    // Neon is the only source of truth; no external calendar is required.
+    const calendar={created:false,reason:'Managed directly in the Super Admin dashboard.'};
     const q=await pool.query('UPDATE public.inspection_requests SET status=$2,calendar_event_id=CASE WHEN $5::boolean THEN NULL ELSE COALESCE($4,calendar_event_id) END,updated_at=now() WHERE id=$1 AND status=$3 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id',[id,status,currentRow.status,currentRow.calendar_event_id||null,(status==='cancelled'||status==='contacted')&&currentRow.status==='confirmed']);
     if(!q.rowCount) {
-      if(status==='confirmed'&&calendar.created&&calendar.eventId) {
-        // The deterministic event can be recovered safely on the next admin retry.
-        console.error('Calendar event exists but request status changed concurrently',id);
-      }
       const existing=await getDatabasePool().query('SELECT id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1',[id]);
       if(!existing.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
       const prior=existing.rows[0];
