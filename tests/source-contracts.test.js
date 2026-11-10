@@ -225,8 +225,8 @@ test('media library prevents deleting images still referenced by properties or h
   const api = await source('app/api/admin/media/route.js');
   const page = await source('app/admin/super/media/page.js');
   assert.match(api, /to_jsonb\(p\)::text LIKE '%' \|\| \$1 \|\| '%'/);
-  assert.match(api, /draft_content,'\{\}'::jsonb\)\)::text LIKE/);
-  assert.match(api, /published_content,'\{\}'::jsonb\)\)::text LIKE/);
+  assert.match(api, /draft_content,'\{\}'::jsonb\)::text LIKE/);
+  assert.match(api, /published_content,'\{\}'::jsonb\)::text LIKE/);
   assert.match(api, /status:409/);
   assert.match(api, /Replace or remove that reference before deleting the file/);
   assert.match(page, /Images still referenced by property listings or homepage content will be protected/);
