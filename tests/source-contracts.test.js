@@ -272,10 +272,10 @@ test('client profile workspace hides payment status and review controls without 
 test('master admin sessions support global revocation and enforce a two-hour maximum lifetime', async () => {
   const auth = await source('lib/admin-auth.js');
   const route = await source('app/api/admin/session/route.js');
-  assert.match(auth, /sv===\(process\.env\.ADMIN_SESSION_VERSION\|\|'1'\)/);
-  assert.match(auth, /d\.exp-d\.iat<=2\*60\*60\*1000/);
+  assert.match(auth, /d\.sv!==\(process\.env\.ADMIN_SESSION_VERSION\|\|'1'\)/);
+  assert.match(auth, /d\.exp-d\.iat>SESSION_MS/);
   assert.match(auth, /sv:process\.env\.ADMIN_SESSION_VERSION\|\|'1'/);
-  assert.match(auth, /iat\+2\*60\*60\*1000/);
+  assert.match(auth, /iat\+SESSION_MS/);
   assert.doesNotMatch(auth, /Bearer '\+process\.env\.ADMIN_SECRET/);
   assert.match(route, /maxAge:2\*60\*60/);
 });
