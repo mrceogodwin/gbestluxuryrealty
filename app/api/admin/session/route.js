@@ -46,6 +46,7 @@ export async function POST(req){
  }catch(e){console.error('Admin login',e.code||e.message);return NextResponse.json({error:'Admin sign-in is temporarily unavailable.'},{status:500});}
 }
 export async function DELETE(req){
+ if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
  const token=req.cookies.get(ADMIN_COOKIE)?.value;
  try{await revokeAdminSession(token);await getDatabasePool().query("INSERT INTO public.staff_audit_events(actor_type,actor_email,action,target_type,target_id,details) VALUES('super_admin','master-admin','admin.logout','session',NULL,'{}'::jsonb)");}catch(e){console.error('Admin logout',e.code||e.message)}
  const response=NextResponse.json({ok:true});response.cookies.set(ADMIN_COOKIE,'',{...options,maxAge:0});return response;
