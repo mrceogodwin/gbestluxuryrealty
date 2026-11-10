@@ -26,7 +26,7 @@ export default function AdminOverview(){
  const [data,setData]=useState(null);
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
- const [lastUpdated,setLastUpdated]=useState(null); const [staffAccess,setStaffAccess]=useState(null);
+ const [lastUpdated,setLastUpdated]=useState(null); const [staffAccess,setStaffAccess]=useState(null); const [accessReady,setAccessReady]=useState(false);
 
  async function load(){
   setBusy(true);setError('');
@@ -39,7 +39,7 @@ export default function AdminOverview(){
   finally{setBusy(false);}
  }
 
- useEffect(()=>{load();(async()=>{try{const r=await fetch('/api/staff/session',{cache:'no-store'});const d=await r.json();if(d.authenticated)setStaffAccess(new Set(d.staff?.permissions||[]));}catch{}})();},[]); const can=key=>staffAccess===null||staffAccess.has(key); const visibleModules=modules.filter(item=>({properties:can('properties.manage'),clients:can('clients.view')||can('payments.review'),finance:can('payments.review'),inspections:can('inspections.view')||can('inspections.manage'),staff:can('staff.manage'),media:can('media.manage'),homepage:can('homepage.manage')}[item.key]));
+ useEffect(()=>{let live=true;(async()=>{try{const r=await fetch('/api/staff/session',{cache:'no-store'});const d=await r.json();if(!live)return;if(d.authenticated){setStaffAccess(new Set(d.staff?.permissions||[]));setAccessReady(true);load();return;}const a=await fetch('/api/admin/session',{cache:'no-store'}).then(x=>x.json());if(!live)return;if(a.authenticated){setStaffAccess(null);setAccessReady(true);load();return;}setStaffAccess(new Set());setAccessReady(true);}catch{if(live){setStaffAccess(new Set());setAccessReady(true);}}})();return()=>{live=false};},[]); const can=key=>staffAccess===null?true:staffAccess.has(key); const visibleModules=accessReady?modules.filter(item=>({properties:can('properties.manage'),clients:can('clients.view')||can('payments.review'),finance:can('payments.review'),inspections:can('inspections.view')||can('inspections.manage'),staff:can('staff.manage'),media:can('media.manage'),homepage:can('homepage.manage')}[item.key])):[]; const visibleMetrics=accessReady?([{key:'properties',label:'PROPERTY PORTFOLIO',value:data?.properties.total,detail:(data?.properties.published||0)+' published · '+(data?.properties.drafts||0)+' drafts',href:'/admin/super',permission:'properties.manage'},{key:'clients',label:'CLIENT RECORDS',value:data?.clients.total,detail:(data?.clients.pending||0)+' payment reviews pending',href:'/admin/clients',permission:'clients.view'},{key:'inspections',label:'INSPECTION PIPELINE',value:data?.inspections.total,detail:(data?.inspections.pending||0)+' pending · '+(data?.inspections.confirmed||0)+' confirmed',href:'/admin',permission:'inspections.view'},{key:'media',label:'MEDIA LIBRARY',value:data?.media.total,detail:'Images and brand assets stored for the website',href:'/admin/super/media',permission:'media.manage'}].filter(x=>can(x.permission))):[];
 
 
  return <main className="ops">
@@ -115,14 +115,9 @@ export default function AdminOverview(){
    {error&&<div className="error" role="alert">{error}</div>}
 
    <div className="sectionline"><h2>YOUR BUSINESS AT A GLANCE</h2><span>{lastUpdated?'UPDATED '+lastUpdated.toLocaleTimeString():'WAITING FOR DATABASE'}</span></div>
-   {data?<div className="metrics">
-    <Metric label="PROPERTY PORTFOLIO" value={data.properties.total} detail={(data.properties.published||0)+' published · '+(data.properties.drafts||0)+' drafts'} href="/admin/super"/>
-    <Metric label="CLIENT RECORDS" value={data.clients.total} detail={(data.clients.pending||0)+' payment reviews pending'} href="/admin/clients" accent="amber"/>
-    <Metric label="INSPECTION PIPELINE" value={data.inspections.total} detail={(data.inspections.pending||0)+' pending · '+(data.inspections.confirmed||0)+' confirmed'} href="/admin" accent="blue"/>
-    <Metric label="MEDIA LIBRARY" value={data.media.total} detail="Images and brand assets stored for the website" href="/admin/super/media"/>
-   </div>:<div className="panel empty">{busy?'Connecting to the company database…':'No live metrics are available. Refresh to retry.'}</div>}
+   {!accessReady?<div className="panel empty">Checking your authorised departments…</div>:data&&visibleMetrics.length?<div className="metrics">{visibleMetrics.map(x=><Metric key={x.key} label={x.label} value={x.value} detail={x.detail} href={x.href} accent={x.key==='clients'?'amber':x.key==='inspections'?'blue':'green'}/>)}</div>:<div className="panel empty">{busy?'Connecting to the company database…':'No live metrics are available for your assigned departments.'}</div>}
 
-   {data&&<><div className="sectionline"><h2>NEEDS YOUR ATTENTION</h2><span>LIVE WORK QUEUE</span></div><div className="actionbar"><article className="actioncard"><span className="actioncount">{Number(data.clients.pending||0).toLocaleString()}</span><div><strong>Client payments awaiting review</strong><p>Check submitted registrations and payment evidence.</p></div><Link href="/admin/clients">REVIEW ↗</Link></article><article className="actioncard"><span className="actioncount">{Number(data.inspections.pending||0).toLocaleString()}</span><div><strong>Inspection requests awaiting action</strong><p>Review requested visits and confirm the schedule.</p></div><Link href="/admin">OPEN DESK ↗</Link></article></div></>}
+   {data&&accessReady&&staffAccess===null&&<><div className="sectionline"><h2>NEEDS YOUR ATTENTION</h2><span>LIVE WORK QUEUE</span></div><div className="actionbar"><article className="actioncard"><span className="actioncount">{Number(data.clients.pending||0).toLocaleString()}</span><div><strong>Client payments awaiting review</strong><p>Check submitted registrations and payment evidence.</p></div><Link href="/admin/clients">REVIEW ↗</Link></article><article className="actioncard"><span className="actioncount">{Number(data.inspections.pending||0).toLocaleString()}</span><div><strong>Inspection requests awaiting action</strong><p>Review requested visits and confirm the schedule.</p></div><Link href="/admin">OPEN DESK ↗</Link></article></div></>}
    <div className="sectionline"><h2>PAYMENTS & CASH POSITION</h2><span>VERIFIED REGISTRATION RECORDS · NGN</span></div>
    {data?<div className="metrics">
     <Metric label="VERIFIED PAYMENTS" value={data.finance?.approved_count||0} detail="Approved client registration payments" href="/admin/clients" accent="green"/>
@@ -132,7 +127,7 @@ export default function AdminOverview(){
    </div>:<div className="panel empty">Payment totals will appear when live records are available.</div>}
    <div className="columns">
     <section className="panel">
-     <div className="panelhead"><h2>COMPANY WORKSPACE</h2><small>{staffAccess===null?'COMPANY DEPARTMENTS':'YOUR AUTHORISED DEPARTMENTS'}</small></div>
+     <div className="panelhead"><h2>COMPANY WORKSPACE</h2><small>{!accessReady?'CHECKING ACCESS':staffAccess===null?'COMPANY DEPARTMENTS':'YOUR AUTHORISED DEPARTMENTS'}</small></div>
      {visibleModules.map(item=><div className="module" key={item.key}><span className="moduleicon">{item.icon}</span><div><strong>{item.label}</strong><p>{item.description}</p></div><Link href={item.href}>OPEN ↗</Link></div>)}
     </section>
     <section className="panel">
