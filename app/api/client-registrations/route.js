@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { createHmac } from 'node:crypto';
+import { isIP } from 'node:net';
 import { getDatabasePool } from '../../../lib/db';
 import { sendClientRegistrationEmail, escapeHtml } from '../../../lib/client-registration-email';
 
@@ -49,9 +51,27 @@ async function ensureTable(pool) {
     ADD COLUMN IF NOT EXISTS receipt_data bytea,
     ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now()`);
   await pool.query(`CREATE INDEX IF NOT EXISTS client_registrations_status_created_idx ON public.client_registrations(payment_status, created_at DESC)`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS public.client_registration_rate_limits (rate_key varchar(64) PRIMARY KEY, attempts integer NOT NULL DEFAULT 0, window_started_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())`);
 }
 
+
 const clean=(v,n=500)=>String(v??'').trim().slice(0,n);
+function registrationRateKey(type,value){
+  const secret=process.env.ADMIN_SECRET||process.env.DATABASE_URL;
+  if(!secret)throw new Error('Missing server secret for registration rate limiting');
+  return createHmac('sha256',secret).update(type+':'+value).digest('hex');
+}
+async function consumeRegistrationRateLimit(pool,key,limit){
+  const q=await pool.query(`INSERT INTO public.client_registration_rate_limits(rate_key,attempts,window_started_at,updated_at)
+    VALUES($1,1,now(),now())
+    ON CONFLICT(rate_key) DO UPDATE SET
+      attempts=CASE WHEN public.client_registration_rate_limits.window_started_at<now()-interval '1 hour' THEN 1 ELSE public.client_registration_rate_limits.attempts+1 END,
+      window_started_at=CASE WHEN public.client_registration_rate_limits.window_started_at<now()-interval '1 hour' THEN now() ELSE public.client_registration_rate_limits.window_started_at END,
+      updated_at=now()
+    RETURNING attempts`,[key]);
+  return Number(q.rows[0]?.attempts||0)>limit;
+}
+
 export async function POST(req) {
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Registration is temporarily unavailable.'},{status:503});
   if (req.headers.get('origin') && req.headers.get('origin') !== req.nextUrl.origin) return NextResponse.json({error:'Invalid request origin.'},{status:403});
@@ -78,6 +98,17 @@ export async function POST(req) {
     const reference=clean(form.get('payment_reference'),120);
     if(!reference) return NextResponse.json({error:'Enter your transfer reference.'},{status:400});
     const pool=getDatabasePool(); await ensureTable(pool);
+    const emailRateKey=registrationRateKey('email',fields.email.toLowerCase());
+    if(await consumeRegistrationRateLimit(pool,emailRateKey,5))
+      return NextResponse.json({error:'Too many registration attempts for this email. Please try again later or contact G-BEST.'},{status:429});
+    const forwarded=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||'';
+    let ip=forwarded.split(',')[0]?.trim()||'';
+    if(ip.startsWith('[')&&ip.endsWith(']'))ip=ip.slice(1,-1);
+    if(isIP(ip)){
+      const ipRateKey=registrationRateKey('ip',ip);
+      if(await consumeRegistrationRateLimit(pool,ipRateKey,20))
+        return NextResponse.json({error:'Too many registration attempts from this network. Please try again later.'},{status:429});
+    }
     const bytes=Buffer.from(await file.arrayBuffer());
     const signatures={
       'image/jpeg':bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff,
