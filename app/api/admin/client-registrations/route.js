@@ -26,8 +26,11 @@ export async function GET(req){
   if(!isSuperAdmin&&!canReviewPayments&&!canViewClientProfiles)return NextResponse.json({error:'Unauthorized'},{status:401});
   const pool=getDatabasePool();await ready(pool);
   const auditSelect=`COALESCE((SELECT json_agg(json_build_object('old_status',a.old_status,'new_status',a.new_status,'admin_note',a.admin_note,'actor_type',a.actor_type,'actor_email',a.actor_email,'changed_at',a.changed_at) ORDER BY a.changed_at DESC) FROM public.client_registration_audit a WHERE a.registration_id=public.client_registrations.id),'[]'::json) AS audit_history`;
+  const canViewPaymentDetails=isSuperAdmin||canReviewPayments;
   const fields=canViewClientProfiles
-   ? `id,surname,other_names,address,email,phone,nationality,state_of_origin,lga,occupation,property_type,price_range,preferred_location,property_description,terms_accepted,fee_amount,payment_reference,receipt_name,receipt_type,payment_status,admin_note,approved_by,approved_at,created_at,${auditSelect}`
+   ? canViewPaymentDetails
+     ? `id,surname,other_names,address,email,phone,nationality,state_of_origin,lga,occupation,property_type,price_range,preferred_location,property_description,terms_accepted,fee_amount,payment_reference,receipt_name,receipt_type,payment_status,admin_note,approved_by,approved_at,created_at,${auditSelect}`
+     : `id,surname,other_names,address,email,phone,nationality,state_of_origin,lga,occupation,property_type,price_range,preferred_location,property_description,terms_accepted,created_at`
    : `id,COALESCE(full_name,concat_ws(' ',surname,other_names)) AS full_name,surname,other_names,email,fee_amount,payment_reference,receipt_name,receipt_type,payment_status,admin_note,approved_by,approved_at,created_at,${auditSelect}`;
   const q=await pool.query(`SELECT ${fields} FROM public.client_registrations ORDER BY created_at DESC LIMIT 200`);
   return NextResponse.json({registrations:q.rows},{headers:{'Cache-Control':'no-store'}});
