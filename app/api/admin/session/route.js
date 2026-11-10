@@ -38,7 +38,8 @@ export async function POST(req){
    return NextResponse.json({error:after.rowCount?'Too many unsuccessful sign-in attempts. Try again in 15 minutes.':'The admin access key is incorrect.'},{status:after.rowCount?429:401});
   }
   await pool.query('DELETE FROM public.staff_login_attempts WHERE attempt_key=ANY($1::text[])',[keys]);
-  const rawIp=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||'';const ip=rawIp.split(',')[0]?.trim()||'unknown';const ipHash=createHmac('sha256',process.env.ADMIN_SECRET).update('session-ip:'+ip).digest('hex');\n  const token=await createAdminSessionToken({userAgent:req.headers.get('user-agent'),ipHash});
+  const rawIp=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||'';const ip=rawIp.split(',')[0]?.trim()||'unknown';const ipHash=createHmac('sha256',process.env.ADMIN_SECRET).update('session-ip:'+ip).digest('hex');
+  const token=await createAdminSessionToken({userAgent:req.headers.get('user-agent'),ipHash});
   await pool.query("INSERT INTO public.staff_audit_events(actor_type,actor_email,action,target_type,target_id,details) VALUES('super_admin','master-admin','admin.login','session',NULL,'{}'::jsonb)");
   const response=NextResponse.json({ok:true,expiresIn:options.maxAge});
   response.cookies.set(ADMIN_COOKIE,token,options);return response;
