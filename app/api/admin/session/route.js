@@ -20,7 +20,7 @@ async function recordFailures(pool,keys){
  ON CONFLICT(attempt_key) DO UPDATE SET
  failed_attempts=CASE WHEN staff_login_attempts.window_started_at<now()-interval '15 minutes' THEN 1 ELSE staff_login_attempts.failed_attempts+1 END,
  window_started_at=CASE WHEN staff_login_attempts.window_started_at<now()-interval '15 minutes' THEN now() ELSE staff_login_attempts.window_started_at END,
- locked_until=CASE WHEN (CASE WHEN staff_login_attempts.window_started_at<now()-interval '15 minutes' THEN 1 ELSE staff_login_attempts.failed_attempts+1 END)>=CASE WHEN staff_login_attempts.attempt_key=$1 THEN 5 ELSE 20 END THEN now()+interval '15 minutes' ELSE NULL END,
+ locked_until=CASE WHEN (CASE WHEN staff_login_attempts.window_started_at<now()-interval '15 minutes' THEN 1 ELSE staff_login_attempts.failed_attempts+1 END)>=5 THEN now()+interval '15 minutes' ELSE NULL END,
  updated_at=now()`,keys);
 }
 export async function GET(req){const token=req.cookies.get(ADMIN_COOKIE)?.value;return NextResponse.json({authenticated:await validSessionToken(token)},{headers:{'Cache-Control':'no-store'}});}
