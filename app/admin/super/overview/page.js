@@ -8,6 +8,7 @@ const catalog=[
  {key:'media',permission:'media',title:'Media library',description:'Manage property photos and company assets',href:'/admin/super/media',icon:'▧'},
  {key:'finance',permission:'finance',title:'Company finance',description:'Review income, expenses and ledger',href:'/admin/super/finance',icon:'₦'},
  {key:'staff',permission:'staff',title:'Staff & permissions',description:'Invite employees and assign access',href:'/admin/super/staff',icon:'♧'},
+ {key:'security',permission:'security',title:'Security centre',description:'Manage admin sessions and sign-in activity',href:'/admin/super/security',icon:'◈'},
  {key:'homepage',permission:'homepage',title:'Website content',description:'Update the public website',href:'/admin/super/homepage',icon:'▤'},
  {key:'activity',permission:'audit',title:'Activity & audit',description:'Review changes made across the system',href:'/admin/super/activity',icon:'≋'}
 ];
