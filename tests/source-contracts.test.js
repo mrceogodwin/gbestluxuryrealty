@@ -304,3 +304,29 @@ test('master admin login uses persistent database throttling and writes login au
   assert.match(route, /admin\.logout/);
   assert.match(route, /revokeAdminSession\(token\)/);
 });
+
+test('Super Admin security centre only exposes hashed session and sign-in metadata', async () => {
+  const api = await source('app/api/admin/security/route.js');
+  const page = await source('app/admin/super/security/page.js');
+  assert.match(api, /isAdminRequest\(req\)/);
+  assert.match(api, /public\.super_admin_sessions/);
+  assert.match(api, /public\.staff_login_attempts/);
+  assert.match(api, /public\.staff_audit_events/);
+  assert.match(api, /right\(attempt_key,6\)/);
+  assert.doesNotMatch(api, /SELECT .*email_normalized.*staff_login_attempts/s);
+  assert.match(page, /Active sessions/);
+  assert.match(page, /Sign-in attempts/);
+  assert.match(page, /Recent admin activity/);
+});
+
+test('Super Admin security centre supports single-session and global revocation', async () => {
+  const api = await source('app/api/admin/security/route.js');
+  const auth = await source('lib/admin-auth.js');
+  const overview = await source('app/admin/super/overview/page.js');
+  assert.match(api, /admin\.session_revoked/);
+  assert.match(api, /admin\.sessions_revoked_all/);
+  assert.match(api, /UPDATE public\.super_admin_sessions SET revoked_at=now\(\) WHERE id=\$1/);
+  assert.match(api, /UPDATE public\.super_admin_sessions SET revoked_at=now\(\) WHERE revoked_at IS NULL/);
+  assert.match(auth, /last_seen_at=now\(\)/);
+  assert.match(overview, /href:'\/admin\/super\/security'/);
+});
