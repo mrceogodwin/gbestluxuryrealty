@@ -610,3 +610,13 @@ footer>span,footer>a:last-child{display:block;text-align:center}
 .nav-register{display:inline-flex;align-items:center;justify-content:center;padding:14px 16px;border:1px solid var(--g);color:var(--g);font-size:11px;font-weight:900;white-space:nowrap}
 .nav-register:hover{background:#edf4ed}
 @media(max-width:680px){nav>div{gap:7px}.nav-register{padding:10px 9px;font-size:9px}.navbtn{padding:10px 9px;font-size:9px}}
+
+/* Keep both customer journeys visible in the public header on mobile */
+nav>div>a.nav-register{display:inline-flex;align-items:center;justify-content:center;padding:14px 16px;border:1px solid var(--g);background:#fff;color:var(--g);font-size:11px;font-weight:900;white-space:nowrap}
+nav>div>a.nav-register:hover{background:#edf4ed}
+@media(max-width:680px){
+ nav>div{gap:7px}
+ nav>div>a:not(.navbtn):not(.nav-register){display:none}
+ nav>div>a.nav-register{display:inline-flex;padding:10px 9px;font-size:9px}
+ nav>div>a.navbtn{padding:10px 9px;font-size:9px}
+}
