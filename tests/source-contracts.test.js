@@ -74,3 +74,30 @@ test('public client registration rate limits are hashed and applied after receip
   assert.ok(code.indexOf("The uploaded receipt content does not match its file type") < code.indexOf("consumeRegistrationRateLimit(pool,emailRateKey,5)"));
   assert.doesNotMatch(code, /INSERT INTO public\.client_registration_rate_limits[^\n]*ip_address/);
 });
+
+test('finance ledger API remains Super Admin-only for every method', async () => {
+  const code = await source('app/api/admin/finance-ledger/route.js');
+  for (const method of ['GET','POST','PATCH']) {
+    const match = code.match(new RegExp('export async function ' + method + '[\\s\\S]*?(?=export async function |$)'));
+    assert.ok(match, method + ' handler exists');
+    assert.match(match[0], /isAdminRequest\(req\)/);
+    assert.match(match[0], /Only the Super Admin can access the company finance centre/);
+  }
+  assert.doesNotMatch(code, /authorizeAdminRequest/);
+});
+
+test('registration rate-limit upsert uses its PostgreSQL target alias consistently', async () => {
+  const code = await source('app/api/client-registrations/route.js');
+  const upsert = code.slice(code.indexOf('INSERT INTO public.client_registration_rate_limits'), code.indexOf('RETURNING attempts'));
+  assert.match(upsert, /AS rate_limit/);
+  assert.match(upsert, /rate_limit\.window_started_at/);
+  assert.match(upsert, /rate_limit\.attempts/);
+  assert.doesNotMatch(upsert, /public\.client_registration_rate_limits\./);
+});
+
+test('payment receipt retrieval requires the payment-review permission', async () => {
+  const code = await source('app/api/admin/client-registrations/[id]/receipt/route.js');
+  assert.match(code, /authorizeAdminRequest\(req,'payments\.review'\)/);
+  assert.match(code, /Cache-Control.*no-store/);
+  assert.match(code, /X-Content-Type-Options.*nosniff/);
+});
