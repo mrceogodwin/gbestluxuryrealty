@@ -175,3 +175,19 @@ test('Super Admin can manage separate header and footer image logos', async () =
   assert.match(home, /header-brand-logo/);
   assert.match(home, /footer-brand-logo/);
 });
+
+test('property card thumbnails open a full-screen detail viewer with the complete gallery', async () => {
+  const home = await source('app/page.js');
+  const api = await source('app/api/properties/route.js');
+  const styles = await source('app/globals.css');
+  assert.match(home, /className="property-image-open" onClick=\{\(\)=>SD\(x\)\}/);
+  assert.match(home, /property-modal-thumbnails/);
+  assert.match(home, /property-modal-image-controls/);
+  assert.match(home, /property-modal-facts/);
+  assert.match(home, /property-full-description/);
+  assert.match(home, /ArrowRight/);
+  assert.match(api, /images,/);
+  assert.match(api, /status,/);
+  assert.match(styles, /width:100vw!important;.*height:100dvh!important/s);
+  assert.match(styles, /\.property-modal-thumbnails/);
+});
