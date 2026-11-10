@@ -36,9 +36,12 @@ async function ensureTable(pool) {
   // existing admin review screens available on fresh and upgraded Neon databases.
   await pool.query(`ALTER TABLE public.client_registrations
     ADD COLUMN IF NOT EXISTS full_name varchar(260),
+    ADD COLUMN IF NOT EXISTS client_id varchar(40),
     ADD COLUMN IF NOT EXISTS email_normalized varchar(254),
     ADD COLUMN IF NOT EXISTS registration_fee_kobo bigint,
     ADD COLUMN IF NOT EXISTS client_status varchar(24) NOT NULL DEFAULT 'pending',
+    ADD COLUMN IF NOT EXISTS approved_at timestamptz,
+    ADD COLUMN IF NOT EXISTS approved_by varchar(120),
     ADD COLUMN IF NOT EXISTS fee_amount numeric(12,2),
     ADD COLUMN IF NOT EXISTS payment_reference varchar(120),
     ADD COLUMN IF NOT EXISTS receipt_name varchar(255),
