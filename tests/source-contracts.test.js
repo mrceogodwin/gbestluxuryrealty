@@ -288,7 +288,7 @@ test('master admin login rejects missing or cross-origin Origin headers', async 
 
 test('master admin sessions are persisted as hashed tokens and can be revoked individually', async () => {
   const auth = await source('lib/admin-auth.js');
-  assert.match(auth, /INSERT INTO public\.super_admin_sessions\(token_hash,expires_at\)/);
+  assert.match(auth, /INSERT INTO public\.super_admin_sessions\(token_hash,expires_at,user_agent,ip_hash\)/);
   assert.match(auth, /SELECT 1 FROM public\.super_admin_sessions WHERE token_hash=\$1 AND revoked_at IS NULL AND expires_at>now\(\)/);
   assert.match(auth, /UPDATE public\.super_admin_sessions SET revoked_at=now\(\)/);
   assert.match(auth, /createHash\('sha256'\)/);
