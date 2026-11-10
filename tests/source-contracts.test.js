@@ -140,3 +140,22 @@ test('registration throttling does not trust client-supplied X-Forwarded-For', a
   assert.match(code, /x-real-ip/);
   assert.doesNotMatch(code, /get\('x-forwarded-for'\)/i);
 });
+
+test('homepage footer social profiles are validated as HTTPS URLs', async () => {
+  const code = await source('app/api/admin/homepage/route.js');
+  assert.match(code, /'socialLinks'/);
+  assert.match(code, /const platforms=\['instagram','facebook','x','linkedin','youtube','tiktok','whatsapp'\]/);
+  assert.match(code, /Each social profile must be a valid HTTPS URL/);
+});
+
+test('public property cards and detail pages expose working share destinations', async () => {
+  const home = await source('app/page.js');
+  const detail = await source('app/property/[slug]/page.js');
+  const share = await source('app/property/[slug]/SharePropertyButton.js');
+  assert.match(home, /className="share-property"/);
+  assert.match(home, /className="footer-socials"/);
+  assert.match(home, /shareProperty\(detail\)/);
+  assert.match(detail, /status IN \('published','available'\)/);
+  assert.match(share, /navigator\.share/);
+  assert.match(share, /clipboard/);
+});
