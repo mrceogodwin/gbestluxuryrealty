@@ -235,10 +235,10 @@ test('media library prevents deleting images still referenced by properties or h
 test('client profile viewers do not receive payment or receipt details without payments.review', async () => {
   const code = await source('app/api/admin/client-registrations/route.js');
   assert.match(code, /const canViewPaymentDetails=isSuperAdmin\|\|canReviewPayments/);
-  const profileOnly = code.match(/: \x60id,surname,other_names,address[\s\S]*?\x60\s*:\s*\x60id,COALESCE/);
+  const profileOnly = code.match(/: \x60(id,surname,other_names,address,email,phone,nationality,state_of_origin,lga,occupation,property_type,price_range,preferred_location,property_description,terms_accepted,created_at)\x60\s*:/);
   assert.ok(profileOnly, 'profile-only projection exists');
   for (const restrictedField of ['fee_amount','payment_reference','receipt_name','receipt_type','payment_status','admin_note','approved_by','approved_at','auditSelect']) {
-    assert.doesNotMatch(profileOnly[0], new RegExp('\\b' + restrictedField + '\\b'));
+    assert.doesNotMatch(profileOnly[1], new RegExp('\\b' + restrictedField + '\\b'));
   }
 });
 
