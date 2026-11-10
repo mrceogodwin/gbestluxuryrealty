@@ -121,3 +121,22 @@ test('staff dashboard cannot receive company finance metrics, even with payment-
   assert.match(code, /clients:admin\|\|granted\.has\('clients\.view'\)\|\|granted\.has\('payments\.review'\)/);
   assert.match(code, /staff:admin,homepage:admin,audit:admin/);
 });
+
+test('payment-only reviewers receive a reduced registration projection', async () => {
+  const code = await source('app/api/admin/client-registrations/route.js');
+  const paymentProjection = code.match(/: `id,COALESCE\(full_name[\s\S]*?`;/);
+  assert.ok(paymentProjection, 'payment-only projection exists');
+  for (const restrictedField of ['address','phone','nationality','state_of_origin','lga','occupation','preferred_location','property_description']) {
+    assert.doesNotMatch(paymentProjection[0], new RegExp('\\b' + restrictedField + '\\b'));
+  }
+  assert.match(paymentProjection[0], /payment_reference/);
+  assert.match(paymentProjection[0], /receipt_name/);
+  assert.match(paymentProjection[0], /payment_status/);
+});
+
+test('registration throttling does not trust client-supplied X-Forwarded-For', async () => {
+  const code = await source('app/api/client-registrations/route.js');
+  assert.match(code, /x-vercel-forwarded-for/);
+  assert.match(code, /x-real-ip/);
+  assert.doesNotMatch(code, /get\('x-forwarded-for'\)/i);
+});
