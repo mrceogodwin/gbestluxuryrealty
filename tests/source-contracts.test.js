@@ -198,3 +198,14 @@ test('mobile full-screen property viewer locks and restores background page scro
   assert.match(home, /body\.style\.overflow='hidden'/);
   assert.match(home, /window\.scrollTo\(0,y\)/);
 });
+
+test('property cards avoid floating image arrows and keep save/share/view actions separated', async () => {
+  const home = await source('app/page.js');
+  const styles = await source('app/globals.css');
+  assert.doesNotMatch(home, /className="photo-open-hint"/);
+  assert.doesNotMatch(home, /className="share-property"/);
+  assert.match(home, /className="property-card-share"/);
+  assert.match(home, /className="save-property"/);
+  assert.match(styles, /\.property-card-actions\{display:flex/);
+  assert.match(styles, /\.property-card \.save-property\{left:10px;bottom:10px/);
+});
