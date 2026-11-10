@@ -101,3 +101,15 @@ test('payment receipt retrieval requires the payment-review permission', async (
   assert.match(code, /Cache-Control.*no-store/);
   assert.match(code, /X-Content-Type-Options.*nosniff/);
 });
+
+test('only the authenticated Super Admin can invite staff or change staff permissions', async () => {
+  const code = await source('app/api/admin/staff/route.js');
+  for (const method of ['GET','POST','PATCH']) {
+    const match = code.match(new RegExp('export async function ' + method + '[\\s\\S]*?(?=export async function |$)'));
+    assert.ok(match, method + ' handler exists');
+    assert.match(match[0], /isAdminRequest\(req\)/);
+  }
+  assert.doesNotMatch(code, /getStaffSession/);
+  assert.match(code, /staff_account_permissions/);
+  assert.match(code, /target\.rows\[0\]\.role==='super_admin'/);
+});
