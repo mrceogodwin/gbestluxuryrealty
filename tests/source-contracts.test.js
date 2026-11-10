@@ -159,3 +159,19 @@ test('public property cards and detail pages expose working share destinations',
   assert.match(share, /navigator\.share/);
   assert.match(share, /clipboard/);
 });
+
+test('Super Admin can manage separate header and footer image logos', async () => {
+  const editor = await source('app/admin/super/homepage/page.js');
+  const api = await source('app/api/admin/homepage/route.js');
+  const home = await source('app/page.js');
+  assert.match(editor, /HEADER BRAND LOGO/);
+  assert.match(editor, /FOOTER BRAND LOGO/);
+  assert.match(editor, /headerLogoUrl/);
+  assert.match(editor, /footerLogoUrl/);
+  assert.match(api, /'headerLogoUrl','footerLogoUrl'/);
+  assert.match(api, /Brand logo must be a valid HTTPS media URL/);
+  assert.match(home, /homepage\.navigation\?\.headerLogoUrl/);
+  assert.match(home, /homepage\.footer\?\.footerLogoUrl/);
+  assert.match(home, /header-brand-logo/);
+  assert.match(home, /footer-brand-logo/);
+});
