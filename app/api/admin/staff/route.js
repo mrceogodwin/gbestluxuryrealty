@@ -11,6 +11,26 @@ export async function GET(req){if(!await isAdminRequest(req))return NextResponse
 export async function POST(req){
  if(!await isAdminRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});
  let d;try{d=await req.json()}catch{return NextResponse.json({error:'Invalid request body.'},{status:400})}
+ if(d.action==='resend'){
+  const id=clean(d.id,50);
+  if(!/^[0-9a-f-]{36}$/i.test(id))return NextResponse.json({error:'Invalid staff ID.'},{status:400});
+  const token=newOpaqueToken(),tokenHash=hashToken(token),base=process.env.NEXT_PUBLIC_SITE_URL||req.nextUrl.origin;
+  const inviteUrl=new URL('/staff/accept',base);inviteUrl.searchParams.set('token',token);
+  try{
+   const p=getDatabasePool(),client=await p.connect();
+   try{
+    await client.query('BEGIN');
+    const prior=await client.query("SELECT id,full_name,email,role,status,password_hash FROM public.staff_accounts WHERE id=$1 FOR UPDATE",[id]);
+    if(!prior.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Staff account not found.'},{status:404});}
+    const staff=prior.rows[0];
+    if(staff.role==='super_admin'||staff.status!=='invited'||staff.password_hash){await client.query('ROLLBACK');return NextResponse.json({error:'Only an unaccepted staff invitation can receive a replacement link.'},{status:409});}
+    const updated=await client.query("UPDATE public.staff_accounts SET invitation_token_hash=$2,invitation_expires_at=now()+interval '48 hours',updated_at=now() WHERE id=$1 RETURNING id,full_name,email,role,status,invitation_expires_at",[id,tokenHash]);
+    await client.query("INSERT INTO public.staff_audit_events(actor_type,actor_email,action,target_type,target_id,details) VALUES('super_admin','master-admin','staff.invitation_resent','staff',$1,$2::jsonb)",[id,JSON.stringify({email:staff.email,expiresAt:updated.rows[0].invitation_expires_at})]);
+    await client.query('COMMIT');
+    return NextResponse.json({staff:updated.rows[0],emailSent:false,message:'A fresh one-time invitation link is ready to share. The previous link is now invalid.',invitationUrl:inviteUrl.toString()});
+   }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e;}finally{client.release();}
+  }catch(e){console.error('Staff invitation resend',e.code||e.message);return NextResponse.json({error:'Could not create a replacement invitation.'},{status:500});}
+ }
  const full_name=clean(d.full_name,140),email=clean(d.email,254).toLowerCase(),role=clean(d.role,30);
  if(full_name.length<2||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!roles.includes(role))return NextResponse.json({error:'Enter a valid name, email and staff role.'},{status:400});
  const token=newOpaqueToken(),tokenHash=hashToken(token),base=process.env.NEXT_PUBLIC_SITE_URL||req.nextUrl.origin;
