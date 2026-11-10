@@ -605,3 +605,8 @@ footer>span,footer>a:last-child{display:block;text-align:center}
 .cms-ad-copy p{font-size:clamp(13px,1.5vw,17px);line-height:1.5;max-width:650px;margin:8px 0}
 .cms-ad-copy a{display:inline-block;margin-top:9px;padding:12px 16px;background:#caff28;color:#101510;text-decoration:none;font-weight:900;border:1px solid #101510;box-shadow:4px 4px 0 #101510}
 @media(max-width:680px){.cms-ad-slot{padding:0 16px 36px}.cms-ad-frame{box-shadow:5px 5px 0 #baff27}.cms-ad-frame img{height:210px}.cms-ad-copy{padding:16px}.cms-ad-copy h2{font-size:25px}}
+
+/* Public client registration entry beside the inspection action */
+.nav-register{display:inline-flex;align-items:center;justify-content:center;padding:14px 16px;border:1px solid var(--g);color:var(--g);font-size:11px;font-weight:900;white-space:nowrap}
+.nav-register:hover{background:#edf4ed}
+@media(max-width:680px){nav>div{gap:7px}.nav-register{padding:10px 9px;font-size:9px}.navbtn{padding:10px 9px;font-size:9px}}
