@@ -220,3 +220,14 @@ test('property management workspace loads when optional inspection and media per
   assert.match(page, /\{canManageMedia&&<section className="super-editor company-video-editor"/);
   assert.match(page, /Image uploads require Media Management permission/);
 });
+
+test('media library prevents deleting images still referenced by properties or homepage content', async () => {
+  const api = await source('app/api/admin/media/route.js');
+  const page = await source('app/admin/super/media/page.js');
+  assert.match(api, /to_jsonb\(p\)::text LIKE '%' \|\| \$1 \|\| '%'/);
+  assert.match(api, /draft_content,'\{\}'::jsonb\)\)::text LIKE/);
+  assert.match(api, /published_content,'\{\}'::jsonb\)\)::text LIKE/);
+  assert.match(api, /status:409/);
+  assert.match(api, /Replace or remove that reference before deleting the file/);
+  assert.match(page, /Images still referenced by property listings or homepage content will be protected/);
+});
