@@ -364,6 +364,6 @@ test('privileged logout and staff mutations reject missing or cross-origin Origi
 
 test('public client registration rejects missing as well as cross-origin Origin headers', async () => {
   const route = await source('app/api/client-registrations/route.js');
-  assert.match(route, /req\.headers\.get\('origin'\)!==req\.nextUrl\.origin/);
+  assert.match(route, /req\.headers\.get\('origin'\)\s*!==\s*req\.nextUrl\.origin/);
   assert.match(route, /Invalid request origin/);
 });
