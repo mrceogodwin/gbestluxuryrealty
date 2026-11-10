@@ -8,22 +8,35 @@ export async function GET(req){
  try{
   const admin=await isAdminRequest(req);
   const staff=admin?null:await getStaffSession(req);
-  if(!admin&&!staff)return NextResponse.json({error:'Unauthorized'},{status:401});
+  if(!admin&&!staff)return NextResponse.json({error:'Your staff session has expired. Please sign in again.'},{status:401});
   const allowed=async key=>admin||await hasStaffPermission(staff,key);
-  if(!await allowed('dashboard.view'))return NextResponse.json({error:'Unauthorized'},{status:401});
-  const can={properties:await allowed('properties.manage'),clients:await allowed('clients.view')||await allowed('payments.review'),inspections:await allowed('inspections.view')||await allowed('inspections.manage'),media:await allowed('media.manage'),finance:admin};
+  if(!await allowed('dashboard.view'))return NextResponse.json({error:'Your Super Admin has not assigned dashboard access to this account.'},{status:403});
+  const can={
+   properties:await allowed('properties.manage'),
+   clients:await allowed('clients.view')||await allowed('payments.review'),
+   inspections:await allowed('inspections.view')||await allowed('inspections.manage'),
+   media:await allowed('media.manage'),
+   finance:admin,
+   staff:admin,
+   homepage:admin,
+   audit:admin
+  };
   const p=getDatabasePool();
-  const exists=async name=>(await p.query('SELECT to_regclass($1) AS t',['public.'+name])).rows[0]?.t;
-  const names=[];if(can.properties)names.push('properties');if(can.clients)names.push('client_registrations');if(can.inspections)names.push('inspection_requests');if(can.media)names.push('admin_media_assets');
-  const found={};for(const name of names)found[name]=await exists(name);
-  const query=async(name,sql,fallback)=>found[name]?(await p.query(sql)).rows[0]:fallback;
+  const safeQuery=async(sql,fallback,key)=>{
+   try{return (await p.query(sql)).rows[0]||fallback;}
+   catch(e){console.error('Overview metric '+key+' failed',e.code||e.message);return fallback;}
+  };
   const [properties,clients,inspections,media,finance]=await Promise.all([
-   can.properties?query('properties',"SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE status='published')::int AS published,COUNT(*) FILTER(WHERE status='draft')::int AS drafts",{total:0,published:0,drafts:0}):null,
-   can.clients?query('client_registrations',"SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE payment_status='pending')::int AS pending,COUNT(*) FILTER(WHERE payment_status='approved')::int AS approved",{total:0,pending:0,approved:0}):null,
-   can.inspections?query('inspection_requests',"SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE status='pending')::int AS pending,COUNT(*) FILTER(WHERE status='confirmed')::int AS confirmed",{total:0,pending:0,confirmed:0}):null,
-   can.media?query('admin_media_assets',"SELECT COUNT(*)::int AS total",{total:0}):null,
-   can.finance?query('client_registrations',"SELECT COUNT(*) FILTER(WHERE payment_status='pending')::int AS pending_count,COUNT(*) FILTER(WHERE payment_status='approved')::int AS approved_count,COALESCE(SUM(fee_amount) FILTER(WHERE payment_status='approved'),0)::numeric(14,2)::text AS approved_amount,COALESCE(SUM(fee_amount) FILTER(WHERE payment_status='pending'),0)::numeric(14,2)::text AS pending_amount,COUNT(*) FILTER(WHERE payment_status='rejected')::int AS rejected_count FROM public.client_registrations",{pending_count:0,approved_count:0,approved_amount:'0.00',pending_amount:'0.00',rejected_count:0}):null
+   can.properties?safeQuery("SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE status='published')::int AS published,COUNT(*) FILTER(WHERE status='draft')::int AS drafts",{total:0,published:0,drafts:0},'properties'):null,
+   can.clients?safeQuery("SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE payment_status='pending')::int AS pending,COUNT(*) FILTER(WHERE payment_status='approved')::int AS approved FROM public.client_registrations",{total:0,pending:0,approved:0},'clients'):null,
+   can.inspections?safeQuery("SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE status='pending')::int AS pending,COUNT(*) FILTER(WHERE status='confirmed')::int AS confirmed FROM public.inspection_requests",{total:0,pending:0,confirmed:0},'inspections'):null,
+   can.media?safeQuery("SELECT COUNT(*)::int AS total FROM public.admin_media_assets",{total:0},'media'):null,
+   can.finance?safeQuery("SELECT COUNT(*) FILTER(WHERE payment_status='pending')::int AS pending_count,COUNT(*) FILTER(WHERE payment_status='approved')::int AS approved_count,COALESCE(SUM(fee_amount) FILTER(WHERE payment_status='approved'),0)::numeric(14,2)::text AS approved_amount,COALESCE(SUM(fee_amount) FILTER(WHERE payment_status='pending'),0)::numeric(14,2)::text AS pending_amount,COUNT(*) FILTER(WHERE payment_status='rejected')::int AS rejected_count FROM public.client_registrations",{pending_count:0,approved_count:0,approved_amount:'0.00',pending_amount:'0.00',rejected_count:0},'finance'):null
   ]);
-  return NextResponse.json({isSuperAdmin:admin,permissions:Object.entries(can).filter(([,v])=>v).map(([k])=>k),properties,clients,inspections,media,finance,generatedAt:new Date().toISOString()},{headers:{'Cache-Control':'no-store'}});
- }catch(e){console.error('Admin overview failed',e.code||e.message);return NextResponse.json({error:'Could not load company dashboard data.'},{status:500});}
+  const permissions=Object.entries(can).filter(([,v])=>v).map(([k])=>k);
+  return NextResponse.json({isSuperAdmin:admin,permissions,properties,clients,inspections,media,finance,generatedAt:new Date().toISOString()},{headers:{'Cache-Control':'no-store'}});
+ }catch(e){
+  console.error('Admin overview failed',e.code||e.message);
+  return NextResponse.json({error:'Dashboard data could not be loaded. Please refresh; if it continues, contact your Super Admin.'},{status:500});
+ }
 }
