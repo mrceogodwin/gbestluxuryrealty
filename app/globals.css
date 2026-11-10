@@ -635,3 +635,49 @@ nav>div>a.nav-register:hover{background:#edf4ed}
  nav>div>a.nav-register{max-width:68px;font-size:7px}
  nav>div>a.navbtn{max-width:78px;font-size:7px}
 }
+
+
+/* Mobile header actions: both labels must remain legible against the black masthead. */
+@media(max-width:680px){
+ nav>div>a.nav-register{
+  display:inline-flex!important;align-items:center;justify-content:center;
+  min-height:42px;max-width:92px;padding:8px 9px!important;
+  background:transparent!important;color:#d7ff32!important;
+  border:1px solid #d7ff32!important;box-shadow:none!important;
+  font-size:9px!important;font-weight:900;line-height:1.15;
+  text-align:center;white-space:normal;
+ }
+ nav>div>a.navbtn{
+  display:inline-flex!important;align-items:center;justify-content:center;
+  min-height:42px;max-width:112px;padding:8px 10px!important;
+  background:#d7ff32!important;color:#07140b!important;
+  border:1px solid #d7ff32!important;box-shadow:3px 3px 0 #fff!important;
+  font-size:9px!important;font-weight:900;line-height:1.15;
+  text-align:center;white-space:normal;
+ }
+}
+@media(max-width:390px){
+ nav>div>a.nav-register{max-width:82px;font-size:8px!important}
+ nav>div>a.navbtn{max-width:96px;font-size:8px!important}
+}
+
+/* The registration page owns its canvas; the public site's black mobile masthead
+   must not leak through and turn the onboarding form into a dark page. */
+.client-registration-shell{
+ min-height:100vh;
+ background:#f5f5ef;
+ color:#18251d;
+ box-shadow:0 0 0 100vmax #f5f5ef;
+ clip-path:inset(0 -100vmax);
+}
+.client-registration-shell .registration-topbar{border-color:#dce3d9}
+.client-registration-shell .registration-stage-heading h2{color:#173b28}
+.client-registration-shell .registration-stage-heading p{color:#59685c}
+.client-registration-shell .registration-stage-count{color:#657267}
+.client-registration-shell .registration-progress>div{color:#59685c}
+.client-registration-shell .registration-progress>div.active{color:#174b32}
+.client-registration-shell .registration-progress>i{background:#cbd6c9}
+.client-registration-shell .registration-progress>i.active{background:#174b32}
+@media(max-width:640px){
+ .client-registration-shell{padding:15px 14px 22px}
+}
