@@ -50,6 +50,7 @@ export async function POST(req){
  }catch(e){console.error('Staff login',e.code||e.message);return NextResponse.json({error:'Staff sign-in is temporarily unavailable.'},{status:500});}
 }
 export async function DELETE(req){
+ if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
  const token=req.cookies.get(STAFF_COOKIE)?.value;
  if(token){try{await getDatabasePool().query('UPDATE public.staff_sessions SET revoked_at=now() WHERE token_hash=$1 AND revoked_at IS NULL',[hashToken(token)]);}catch(e){console.error('Staff logout',e.code||e.message)}}
  const response=NextResponse.json({ok:true});response.cookies.set(STAFF_COOKIE,'',{...staffCookieOptions,maxAge:0});return response;
