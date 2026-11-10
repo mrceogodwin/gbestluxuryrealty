@@ -152,7 +152,7 @@ test('public property cards and detail pages expose working share destinations',
   const home = await source('app/page.js');
   const detail = await source('app/property/[slug]/page.js');
   const share = await source('app/property/[slug]/SharePropertyButton.js');
-  assert.match(home, /className="share-property"/);
+  assert.match(home, /className="property-card-share"/);
   assert.match(home, /className="footer-socials"/);
   assert.match(home, /shareProperty\(detail\)/);
   assert.match(detail, /status IN \('published','available'\)/);
