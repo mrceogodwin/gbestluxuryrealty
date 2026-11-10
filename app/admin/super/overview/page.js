@@ -14,9 +14,10 @@ const modules=[
 ];
 
 function Metric({label,value,detail,href,accent='green'}){
+ const displayValue=typeof value==='string'?value:Number(value??0).toLocaleString();
  return <article className="metric">
   <div className="metric-top"><span>{label}</span><i className={'metric-dot '+accent}/></div>
-  <strong>{Number(value||0).toLocaleString()}</strong>
+  <strong>{displayValue}</strong>
   <p>{detail}</p>
   <Link href={href}>OPEN MODULE <span>↗</span></Link>
  </article>;
@@ -75,7 +76,7 @@ export default function AdminOverview(){
    .metric-top{display:flex;justify-content:space-between;align-items:center;color:#6f7f72;font:800 9px ui-monospace,monospace;letter-spacing:.12em}
    .metric-dot{width:7px;height:7px;border-radius:50%;background:#83a96a}
    .metric-dot.amber{background:#c49b4e}.metric-dot.blue{background:#7796aa}
-   .metric strong{display:block;font-size:32px;letter-spacing:-.06em;font-weight:750;margin:14px 0 3px;color:#1b3425}
+   .metric strong{display:block;font-size:clamp(20px,2vw,30px);letter-spacing:-.045em;font-weight:750;margin:12px 0 3px;color:#1b3425;overflow-wrap:anywhere;line-height:1.15}
    .metric p{font-size:10px;color:#7a877c;margin:0;min-height:15px}
    .metric a{display:flex;justify-content:space-between;align-items:center;margin-top:15px;padding-top:10px;border-top:1px solid #e7ece4;color:#3e6547;font:800 9px ui-monospace,monospace;letter-spacing:.08em}
    .metric a span{font-size:14px}
@@ -94,7 +95,7 @@ export default function AdminOverview(){
    .moduleicon{width:31px;height:31px;display:grid;place-items:center;border:1px solid #dfe8da;border-radius:7px;background:#f1f6ed;color:#31583b;font-size:16px}
    .module strong{display:block;font-size:11px;color:#2a4030}.module p{margin:4px 0 0;font-size:9px;color:#859087}
    .module a{font:800 9px ui-monospace,monospace;letter-spacing:.05em;color:#4a704f;padding:7px 9px;border:1px solid #dbe5d6;border-radius:6px;white-space:nowrap}
-   .quickgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:13px}
+   .quickgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:13px}.quick{min-width:0;overflow:hidden}.quick strong,.quick small{overflow-wrap:anywhere;line-height:1.35}
    .quick{min-height:78px;padding:12px;border:1px solid #dce6d8;border-radius:10px;background:linear-gradient(145deg,#fff,#edf4e9);display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 5px 12px #163c200b,inset 0 1px #fff;transition:transform .18s,box-shadow .18s}.quick:hover{transform:translateY(-3px);box-shadow:0 12px 20px #163c2018}
    .quick span{font-size:17px;color:#507253}.quick strong{font-size:10px;color:#304a36}.quick small{font-size:8px;color:#879287}
    .systemrow{display:flex;justify-content:space-between;gap:12px;padding:11px 15px;border-top:1px solid #edf0eb;font-size:9px;color:#718074}
@@ -103,7 +104,7 @@ export default function AdminOverview(){
    .empty{padding:24px 16px;color:#7b887e;font-size:11px}
    .foot{display:flex;justify-content:space-between;gap:12px;margin-top:16px;color:#8a958b;font:9px ui-monospace,monospace;letter-spacing:.04em}
    @media(max-width:950px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.columns{grid-template-columns:1fr}}
-   @media(max-width:520px){.actionbar{grid-template-columns:1fr}.actioncard{padding:12px}.actioncard a{font-size:8px;padding:7px}.ops{padding-top:17px}.pagehead{align-items:flex-start;flex-direction:column}.headtools{width:100%;justify-content:space-between}.metrics{gap:8px}.metric{padding:12px}.metric strong{font-size:27px}.metric p{font-size:9px}.quickgrid{grid-template-columns:1fr 1fr}.foot{flex-direction:column}}
+   @media(max-width:600px){.ops{padding:14px 12px 28px}.pagehead{align-items:flex-start;flex-direction:column;gap:12px;padding-bottom:14px}.pagehead h1{font-size:25px;line-height:1.12}.pagehead .sub{font-size:11px;max-width:34em}.headtools{width:100%;justify-content:space-between}.live{font-size:8px;padding:7px 8px}.sectionline{margin:18px 0 9px;align-items:center}.sectionline h2{font-size:9px;letter-spacing:.08em}.sectionline span{font-size:8px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.metric{padding:11px;border-radius:10px}.metric strong{font-size:clamp(17px,5vw,23px);margin:10px 0 3px}.metric p{font-size:9px;line-height:1.35;min-height:0}.metric a{font-size:8px;margin-top:10px;padding-top:8px}.columns{grid-template-columns:minmax(0,1fr);gap:10px;margin-top:10px}.panel{border-radius:11px}.panelhead{padding:12px}.module{grid-template-columns:30px minmax(0,1fr) auto;gap:8px;padding:12px}.moduleicon{width:28px;height:28px}.module strong{font-size:10px}.module p{font-size:9px;line-height:1.35}.module a{font-size:8px;padding:6px}.quickgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:10px}.quick{min-height:70px;padding:10px}.quick strong{font-size:9px}.quick small{font-size:8px}.actionbar{grid-template-columns:1fr}.actioncard{padding:11px;gap:10px}.actioncard a{font-size:8px;padding:7px}.foot{flex-direction:column;gap:5px;font-size:8px}}
   `}</style>
 
   <div className="wrap">
