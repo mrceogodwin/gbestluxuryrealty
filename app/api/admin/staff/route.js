@@ -2,7 +2,6 @@ import {NextResponse} from 'next/server';
 import {getDatabasePool} from '../../../../lib/db';
 import {isAdminRequest} from '../../../../lib/admin-auth';
 import {newOpaqueToken,hashToken} from '../../../../lib/staff-auth';
-import {sendClientRegistrationEmail,escapeHtml} from '../../../../lib/client-registration-email';
 export const runtime='nodejs';export const dynamic='force-dynamic';
 const PERMISSIONS=['dashboard.view','properties.manage','inspections.view','inspections.manage','clients.view','clients.manage','payments.review','media.manage','homepage.manage','staff.manage','audit.view','settings.manage'];
 const roles=['administrator','moderator'];
@@ -20,9 +19,7 @@ export async function POST(req){
   const p=getDatabasePool();
   const r=await p.query("INSERT INTO public.staff_accounts(full_name,email,email_normalized,role,status,invited_by,invitation_token_hash,invitation_expires_at) VALUES($1,$2,$2,$3,'invited','master-admin',$4,now()+interval '48 hours') RETURNING id,full_name,email,role,status,created_at,invitation_expires_at",[full_name,email,role,tokenHash]);
   await audit(p,'staff.invited','staff',r.rows[0].id,{email,role,expiresAt:r.rows[0].invitation_expires_at});
-  const html='<p>Hello '+escapeHtml(full_name)+',</p><p>You have been invited to access G-BEST Luxury Realty operations as '+escapeHtml(role)+'.</p><p><a href="'+escapeHtml(inviteUrl.toString())+'">Accept your invitation and set your password</a></p><p>This secure invitation expires in 48 hours and can only be used once.</p>';
-  const delivery=await sendClientRegistrationEmail({to:email,subject:'Your G-BEST staff invitation',html});
-  return NextResponse.json({staff:r.rows[0],emailSent:delivery.sent,message:delivery.sent?'Invitation created and email sent.':'Invitation created, but email delivery is not configured or failed. Share this one-time link securely with the invited person.',invitationUrl:inviteUrl.toString()},{status:201});
+  return NextResponse.json({staff:r.rows[0],emailSent:false,message:'Staff invitation created. Copy the secure invitation link or share it through WhatsApp, email or another channel.',invitationUrl:inviteUrl.toString()},{status:201});
  }catch(e){if(e.code==='23505')return NextResponse.json({error:'A staff account with that email already exists.'},{status:409});console.error('Staff admin POST',e.code||e.message);return NextResponse.json({error:'Could not create staff invitation.'},{status:500});}
 }
 export async function PATCH(req){
