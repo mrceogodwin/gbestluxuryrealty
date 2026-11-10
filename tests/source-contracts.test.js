@@ -63,3 +63,14 @@ test('client payment decisions record the authenticated reviewer, not a fixed ad
   assert.match(code, /actor_type,actor_email,actor_staff_id/);
   assert.match(code, /a\.actor_email/);
 });
+
+test('public client registration rate limits are hashed and applied after receipt validation', async () => {
+  const code = await source('app/api/client-registrations/route.js');
+  assert.match(code, /createHmac/);
+  assert.match(code, /createHmac\('sha256'/);
+  assert.match(code, /client_registration_rate_limits/);
+  assert.match(code, /consumeRegistrationRateLimit\(pool,emailRateKey,5\)/);
+  assert.match(code, /consumeRegistrationRateLimit\(pool,ipRateKey,20\)/);
+  assert.ok(code.indexOf("The uploaded receipt content does not match its file type") < code.indexOf("consumeRegistrationRateLimit(pool,emailRateKey,5)"));
+  assert.doesNotMatch(code, /INSERT INTO public\.client_registration_rate_limits[^\n]*ip_address/);
+});
