@@ -43,6 +43,49 @@ export default function SuperAdminLayout({children}){
  .gb-content{min-width:0}.gb-console .gb-control>.gb-side{display:none!important}.gb-console .gb-control>.gb-main{padding:28px clamp(16px,3vw,38px) 50px!important;width:100%}.gb-console .gb-control{min-height:calc(100vh - 66px)}
  @media(max-width:850px){.gb-shell{grid-template-columns:1fr}.gb-sidebar{position:fixed;left:0;top:0;width:270px;transform:translateX(-105%);transition:transform .22s ease}.gb-sidebar.open{transform:translateX(0);box-shadow:20px 0 60px #07190f80}.gb-mobiletoggle{display:inline-flex}.gb-topbar{height:58px}.gb-navlink{min-height:46px}}
  @media(min-width:851px){.gb-sidebar{transform:none!important}}
+
+ /* Flagship charcoal control room + explicit reset of the global public-site nav rules. */
+ .gb-console{--gc-ink:#f4f5f2;--gc-muted:#9da5a1;--gc-line:#ffffff17;--gc-lime:#caff35;background:#111312;color:#f4f5f2}
+ .gb-shell{background:radial-gradient(ellipse at 70% -10%,#303b34 0,transparent 42%),#111312}
+ .gb-sidebar{background:linear-gradient(155deg,#202522 0%,#151917 48%,#0b0e0c 100%);border-right:1px solid #ffffff18;box-shadow:18px 0 44px #0008,inset -1px 0 #ffffff0c}
+ .gb-brand{border-bottom:1px solid #ffffff18}
+ .gb-mark{background:linear-gradient(145deg,#e7ff9a 0%,#b7e72b 48%,#799f17 100%);box-shadow:0 8px 20px #0008,inset 0 2px 2px #fff}
+ .gb-env{background:linear-gradient(145deg,#ffffff12,#ffffff04);border-color:#ffffff20;color:#d5ded7;box-shadow:inset 0 1px #ffffff12,0 8px 20px #0004}
+ .gb-navlabel{color:#818c85}
+ .gb-console .gb-sidebar nav{display:block!important;position:static!important;height:auto!important;min-height:0!important;width:100%!important;padding:0!important;margin:0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+ .gb-console .gb-sidebar nav .gb-navgroup{display:block!important;width:100%!important;margin-top:19px}
+ .gb-navlink{display:flex!important;width:100%!important;min-height:44px!important;margin:3px 0!important;padding:0 12px!important;background:transparent!important;border:1px solid transparent!important;border-radius:10px!important;color:#c5cec8!important;font-size:12px!important;font-weight:600!important;box-shadow:none!important}
+ .gb-navlink:hover{background:linear-gradient(100deg,#ffffff12,#ffffff05)!important;color:#fff!important;transform:translateX(2px)}
+ .gb-navlink.active{background:linear-gradient(115deg,#d9ff70,#a9d82a)!important;border:1px solid #edffb8!important;color:#18200e!important;box-shadow:0 9px 20px #0008,inset 0 2px 2px #fff9,inset 0 -2px 4px #587b1b55!important}
+ .gb-navicon{width:22px;flex:0 0 22px;text-align:center;font-size:16px;color:#d1f27a}
+ .gb-navlink.active .gb-navicon{color:#1a270e}
+ .gb-sidefoot{border-top:1px solid #ffffff18;color:#87928a}
+ .gb-main{background:#111312}
+ .gb-topbar{background:linear-gradient(180deg,#252a27,#1a1e1b)!important;border-bottom:1px solid #ffffff18!important;box-shadow:0 8px 24px #0005!important;color:#f2f4f0}
+ .gb-crumb{color:#aab4ad}.gb-crumb b{color:#f2f4ed}.gb-topright{color:#aab4ad}
+ .gb-secure{background:linear-gradient(145deg,#303a32,#202722)!important;border:1px solid #58664f!important;color:#d9f79b!important;box-shadow:inset 0 1px #ffffff20,0 4px 12px #0005}
+ .gb-mobiletoggle{display:none;border:1px solid #59645c!important;background:linear-gradient(145deg,#3a423d,#202622)!important;border-radius:9px!important;padding:9px 12px!important;color:#e8f2df!important;box-shadow:0 5px 12px #0008,inset 0 1px #ffffff30!important}
+ .gb-topright button{background:linear-gradient(145deg,#3a423d,#202622)!important;border:1px solid #59645c!important;color:#f0f4ed!important;box-shadow:0 5px 12px #0007,inset 0 1px #ffffff25!important}
+ .gb-content{background:#111312;min-height:calc(100vh - 66px)}
+ .gb-content>main{background:radial-gradient(ellipse at 80% 0%,#252d28 0%,transparent 42%),#111312!important;color:#edf2ed!important}
+ .gb-content .panel,.gb-content .metric,.gb-content .stat,.gb-content .super-editor,.gb-content .calendar-panel,.gb-content .day-panel{background:linear-gradient(145deg,#272d29,#1b201d)!important;border:1px solid #ffffff19!important;color:#edf2ed!important;box-shadow:0 18px 36px #0007,inset 0 1px #ffffff12!important}
+ .gb-content input,.gb-content select,.gb-content textarea{background:#111613!important;color:#f1f4ef!important;border:1px solid #47534a!important}
+ .gb-content label,.gb-content p,.gb-content small,.gb-content .muted{color:#aab5ad}
+ .gb-content button{box-shadow:0 7px 16px #0006,inset 0 1px #ffffff20}
+ @media(max-width:850px){
+  .gb-shell{grid-template-columns:minmax(0,1fr)}
+  .gb-sidebar{position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:min(310px,86vw)!important;height:100dvh!important;max-height:100dvh!important;overflow-y:auto!important;overscroll-behavior:contain;transform:translateX(-110%)!important;transition:transform .25s cubic-bezier(.2,.8,.2,1)!important;z-index:100!important;padding:18px 14px calc(28px + env(safe-area-inset-bottom))!important;box-shadow:22px 0 70px #000b!important}
+  .gb-sidebar.open{transform:translateX(0)!important}
+  .gb-console .gb-sidebar nav{display:block!important;height:auto!important;overflow:visible!important}
+  .gb-console .gb-sidebar nav .gb-navgroup{display:block!important}
+  .gb-mobiletoggle{display:inline-flex!important;align-items:center;justify-content:center;min-width:42px;min-height:40px}
+  .gb-topbar{height:60px!important;padding:0 12px!important}
+  .gb-crumb{font-size:9px;letter-spacing:.04em}.gb-topright{gap:6px;font-size:9px}
+  .gb-secure{padding:6px 7px;font-size:8px}
+  .gb-topright button{padding:7px 8px!important;font-size:9px!important}
+  .gb-content>main{min-height:calc(100dvh - 60px)!important}
+ }
+
  `}</style>
  <div className="gb-shell">
  <aside className={'gb-sidebar'+(open?' open':'')}>
