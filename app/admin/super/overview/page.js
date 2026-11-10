@@ -30,7 +30,7 @@ export default function AdminOverview(){
   {data&&stats.length>0&&<section className="stats" aria-label="Workspace summary">{stats.map(x=><Stat key={x.label} {...x}/>)}</section>}
   {data?.isSuperAdmin&&data.finance&&<section className="finance"><div><span>PAYMENTS VERIFIED</span><strong>{data.finance.approved_count||0}</strong></div><div><span>VERIFIED VALUE</span><strong>₦{Number(data.finance.approved_amount||0).toLocaleString('en-NG',{maximumFractionDigits:2})}</strong></div><div><span>AWAITING REVIEW</span><strong>{data.finance.pending_count||0}</strong></div></section>}
   <section className="section"><div className="sectionhead"><div><span className="eyebrow">{data?.isSuperAdmin?'COMPANY OPERATIONS':'YOUR ACCESS'}</span><h2>Departments</h2></div><small>{cards.length} available</small></div>
-   {data&&cards.length?<div className="departments">{cards.map(x=><Link href={x.href} className="department" key={x.key}><span className="ico">{x.icon}</span><span className="copy"><strong>{x.title}</strong><small>{x.description}</small></span><span className="arrow">↗</span></Link>)}</div>:data?<p className="empty">No departments have been assigned to this account yet. Contact your Super Admin.</p>:null}
+   {data&&cards.length?<div className="departments">{cards.map(x=><Link href={x.href} className="department" key={x.key}><span className="ico">{x.icon}</span><span className="copy"><strong>{x.title}</strong><small>{x.description}</small></span><span className="arrow">↗</span></Link>)}</div>:data?<p className="empty">No departments are assigned to this account yet. Your Super Admin controls access.</p>:null}
   </section>
   <footer>G-BEST LUXURY REALTY <span>·</span> SECURE WORKSPACE {data?.generatedAt?'· UPDATED '+new Date(data.generatedAt).toLocaleTimeString():''}</footer>
  </div>
@@ -50,7 +50,7 @@ export default function AdminOverview(){
  .stat small{font-size:10px;color:#9ba89e;line-height:1.35}
  .finance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 22px;padding:13px;border:1px solid #ffffff16;border-radius:12px;background:#191f1b}
  .finance div{display:flex;flex-direction:column;gap:7px;min-width:0}.finance strong{font-size:17px;overflow-wrap:anywhere;color:#d7f49b}
- .section{margin-top:24px}.sectionhead{display:flex;align-items:end;justify-content:space-between;margin-bottom:10px}
+ .section{margin-top:24px;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}.sectionhead{background:transparent!important}.sectionhead{display:flex;align-items:end;justify-content:space-between;margin-bottom:10px}
  h2{font-size:21px;letter-spacing:-.03em;margin:4px 0 0}.sectionhead small{font-size:10px;color:#8f9d92}
  .departments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
  .department{display:flex;align-items:center;gap:12px;min-width:0;padding:14px;border:1px solid #ffffff18;border-radius:12px;background:linear-gradient(140deg,#222a24,#191f1b);color:#f2f5ef;text-decoration:none;transition:border-color .15s,background .15s}
@@ -58,7 +58,7 @@ export default function AdminOverview(){
  .ico{width:36px;height:36px;flex:0 0 36px;border-radius:10px;display:grid;place-items:center;background:#d7f29a;color:#192516;font-size:19px}
  .copy{display:flex;flex-direction:column;gap:4px;min-width:0}.copy strong{font-size:13px}.copy small{font-size:10px;color:#9eaaa1;line-height:1.35}
  .arrow{margin-left:auto;color:#c9ed70;font-size:17px}
- .loading,.empty{padding:18px;border:1px solid #ffffff18;border-radius:11px;color:#aab5ad;font-size:12px;background:#1a201c}
+ .loading,.empty{padding:16px;background:#1a201c!important;border:1px solid #ffffff18!important;border-radius:11px;color:#aab5ad;font-size:12px;}border:1px solid #ffffff18;border-radius:11px;color:#aab5ad;font-size:12px;background:#1a201c}
  .error{margin:14px 0;padding:11px;border-radius:9px;background:#40231e;color:#ffd3c8;font-size:12px}
  footer{margin-top:28px;padding-top:13px;border-top:1px solid #ffffff16;color:#819087;font:9px ui-monospace,monospace;letter-spacing:.06em}footer span{color:#c9ed70}
  @media(max-width:720px){.dash{padding:16px 13px 26px}.head{align-items:flex-start;padding-bottom:16px}.head p{font-size:11px;max-width:260px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}.stat{padding:11px;border-radius:10px}.stat strong{font-size:23px}.finance{gap:6px;padding:10px}.finance strong{font-size:14px}.finance span{font-size:8px}.section{margin-top:20px}.departments{grid-template-columns:1fr;gap:7px}.department{padding:12px}.copy strong{font-size:12px}.copy small{font-size:10px}}
