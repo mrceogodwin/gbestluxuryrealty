@@ -12,11 +12,11 @@ function attemptKeys(req){
  let ip=raw.split(',')[0]?.trim()||'unknown';if(ip.startsWith('[')&&ip.endsWith(']'))ip=ip.slice(1,-1);
  if(!isIP(ip))ip='unknown';
  const key=value=>createHmac('sha256',process.env.ADMIN_SECRET).update(value).digest('hex');
- return [key('super-admin:global'),key('super-admin:ip:'+ip)];
+ return [key('super-admin:ip:'+ip)];
 }
 async function recordFailures(pool,keys){
  await pool.query(`INSERT INTO public.staff_login_attempts(attempt_key,failed_attempts,window_started_at,locked_until,updated_at)
- VALUES($1,1,now(),NULL,now()),($2,1,now(),NULL,now())
+ VALUES($1,1,now(),NULL,now())
  ON CONFLICT(attempt_key) DO UPDATE SET
  failed_attempts=CASE WHEN staff_login_attempts.window_started_at<now()-interval '15 minutes' THEN 1 ELSE staff_login_attempts.failed_attempts+1 END,
  window_started_at=CASE WHEN staff_login_attempts.window_started_at<now()-interval '15 minutes' THEN now() ELSE staff_login_attempts.window_started_at END,
