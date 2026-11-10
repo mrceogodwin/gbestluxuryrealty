@@ -18,6 +18,7 @@ export async function GET() {
         id::text AS id,
         CASE WHEN id::text ~ '^[0-9]+$' THEN 'GB-' || lpad(id::text, 8, '0') ELSE 'GB-' || right(upper(replace(id::text, '-', '')), 8) END AS property_code,
         slug,
+        status,
         title,
         location,
         state,
@@ -27,6 +28,7 @@ export async function GET() {
         COALESCE(NULLIF(baths, 0), bathrooms, 0) AS baths,
         COALESCE(NULLIF(size, ''), size_label, '') AS size,
         COALESCE(NULLIF(image_url, ''), images[1], '') AS image_url,
+        images,
         description,
         video_url
       FROM public.properties
@@ -39,6 +41,7 @@ export async function GET() {
       id: String(x.id),
       name: x.title || 'Property listing',
       loc: (x.location || '') + (x.state ? ', ' + x.state : ''),
+      images: Array.isArray(x.images) ? x.images.filter((url) => typeof url === 'string' && url.trim()) : [],
       type: x.property_type || 'Other',
       img: x.image_url || '',
       desc: x.description || '',
