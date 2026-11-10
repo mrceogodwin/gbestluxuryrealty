@@ -111,5 +111,5 @@ test('only the authenticated Super Admin can invite staff or change staff permis
   }
   assert.doesNotMatch(code, /getStaffSession/);
   assert.match(code, /staff_account_permissions/);
-  assert.match(code, /target\.rows\[0\]\.role==='super_admin'/);
+  assert.match(code, /current\.role==='super_admin'/);
 });
