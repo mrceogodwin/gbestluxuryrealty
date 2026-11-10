@@ -22,7 +22,7 @@ export async function POST(req){
   await audit(p,'staff.invited','staff',r.rows[0].id,{email,role,expiresAt:r.rows[0].invitation_expires_at});
   const html='<p>Hello '+escapeHtml(full_name)+',</p><p>You have been invited to access G-BEST Luxury Realty operations as '+escapeHtml(role)+'.</p><p><a href="'+escapeHtml(inviteUrl.toString())+'">Accept your invitation and set your password</a></p><p>This secure invitation expires in 48 hours and can only be used once.</p>';
   const delivery=await sendClientRegistrationEmail({to:email,subject:'Your G-BEST staff invitation',html});
-  return NextResponse.json({staff:r.rows[0],emailSent:delivery.sent,message:delivery.sent?'Invitation created and email sent.':'Invitation created, but email delivery is not configured or failed. Share this one-time link securely with the invited person.',...(!delivery.sent?{invitationUrl:inviteUrl.toString()}:{} )},{status:201});
+  return NextResponse.json({staff:r.rows[0],emailSent:delivery.sent,message:delivery.sent?'Invitation created and email sent.':'Invitation created, but email delivery is not configured or failed. Share this one-time link securely with the invited person.',invitationUrl:inviteUrl.toString()},{status:201});
  }catch(e){if(e.code==='23505')return NextResponse.json({error:'A staff account with that email already exists.'},{status:409});console.error('Staff admin POST',e.code||e.message);return NextResponse.json({error:'Could not create staff invitation.'},{status:500});}
 }
 export async function PATCH(req){
