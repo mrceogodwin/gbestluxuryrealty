@@ -209,3 +209,14 @@ test('property cards avoid floating image arrows and keep save/share/view action
   assert.match(styles, /\.property-card-actions\{display:flex/);
   assert.match(styles, /\.property-card \.save-property\{left:10px;bottom:10px/);
 });
+
+test('property management workspace loads when optional inspection and media permissions are absent', async () => {
+  const page = await source('app/admin/super/page.js');
+  assert.match(page, /async function optionalRequest/);
+  assert.match(page, /r\.status===401\|\|r\.status===403/);
+  assert.match(page, /setCanManageSchedule\(Boolean\(sd\)\)/);
+  assert.match(page, /setCanManageMedia\(Boolean\(cv\)\)/);
+  assert.match(page, /\{canManageSchedule&&<section className="super-editor schedule-editor"/);
+  assert.match(page, /\{canManageMedia&&<section className="super-editor company-video-editor"/);
+  assert.match(page, /Image uploads require Media Management permission/);
+});
