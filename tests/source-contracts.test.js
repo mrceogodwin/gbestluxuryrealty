@@ -282,7 +282,7 @@ test('master admin sessions support global revocation and enforce a two-hour max
 
 test('master admin login rejects missing or cross-origin Origin headers', async () => {
   const route = await source('app/api/admin/session/route.js');
-  assert.match(route, /req\.headers\.get\('origin'\)!==req\.nextUrl\.origin/);
+  assert.match(route, /req\.headers\.get\('origin'\)\s*!==\s*req\.nextUrl\.origin/);
   assert.match(route, /Invalid request origin/);
 });
 
