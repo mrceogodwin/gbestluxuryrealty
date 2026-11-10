@@ -113,3 +113,11 @@ test('only the authenticated Super Admin can invite staff or change staff permis
   assert.match(code, /staff_account_permissions/);
   assert.match(code, /current\.role==='super_admin'/);
 });
+
+test('staff dashboard cannot receive company finance metrics, even with payment-review access', async () => {
+  const code = await source('app/api/admin/overview/route.js');
+  assert.match(code, /finance:admin/);
+  assert.match(code, /can\.finance\?safeQuery/);
+  assert.match(code, /clients:admin\|\|granted\.has\('clients\.view'\)\|\|granted\.has\('payments\.review'\)/);
+  assert.match(code, /staff:admin,homepage:admin,audit:admin/);
+});
