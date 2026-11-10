@@ -11,14 +11,15 @@ export async function GET(req){
  try{
   const p=getDatabasePool(),token=req.cookies.get(ADMIN_COOKIE)?.value||'';
   const [sessions,attempts,events]=await Promise.all([
-   p.query(`SELECT id,created_at,expires_at,last_seen_at,(token_hash=$1) AS is_current
+   p.query(`SELECT id,created_at,expires_at,last_seen_at,user_agent,ip_hash,revoked_at,
+   (token_hash=$1) AS is_current,(revoked_at IS NULL AND expires_at>now()) AS active
    FROM public.super_admin_sessions WHERE revoked_at IS NULL AND expires_at>now()
    ORDER BY is_current DESC,last_seen_at DESC LIMIT 100`,[hash(token)]),
    p.query(`SELECT right(attempt_key,6) AS reference,failed_attempts,window_started_at,locked_until,updated_at,
    (locked_until>now()) AS is_locked FROM public.staff_login_attempts
    WHERE updated_at>now()-interval '7 days' ORDER BY updated_at DESC LIMIT 50`),
    p.query(`SELECT id,actor_type,actor_email,action,created_at,details FROM public.staff_audit_events
-   WHERE action IN ('admin.login','admin.logout','staff.login','staff.logout')
+   WHERE action LIKE 'admin.%' OR action IN ('staff.login','staff.logout')
    ORDER BY created_at DESC LIMIT 50`)
   ]);
   return noStore({sessions:sessions.rows,attempts:attempts.rows,events:events.rows,generatedAt:new Date().toISOString()});
