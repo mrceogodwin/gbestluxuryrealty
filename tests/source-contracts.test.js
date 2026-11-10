@@ -191,3 +191,10 @@ test('property card thumbnails open a full-screen detail viewer with the complet
   assert.match(styles, /width:100vw!important;.*height:100dvh!important/s);
   assert.match(styles, /\.property-modal-thumbnails/);
 });
+
+test('mobile full-screen property viewer locks and restores background page scrolling', async () => {
+  const home = await source('app/page.js');
+  assert.match(home, /body\.style\.position='fixed'/);
+  assert.match(home, /body\.style\.overflow='hidden'/);
+  assert.match(home, /window\.scrollTo\(0,y\)/);
+});
