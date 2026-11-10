@@ -21,7 +21,7 @@ test('admin property API uses the shared pool and archives instead of deleting',
 test('inspection requests reject presentation-only sample property IDs', async () => {
   const code = await source('app/api/inspection-requests/route.js');
   assert.match(code, /Demo cards are for presentation only/);
-  assert.match(code, /gb-00\[1-8\]/);
+  assert.match(code, /GB-00\[1-8\]/);
   assert.match(code, /status IN \(\'published\',\'available\'\)/);
 });
 
