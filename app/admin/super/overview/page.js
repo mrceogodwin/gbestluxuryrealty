@@ -1,144 +1,67 @@
 'use client';
-
-import {useEffect,useState} from 'react';
+import {useCallback,useEffect,useState} from 'react';
 import Link from 'next/link';
-
-const modules=[
- {key:'properties',label:'Properties',description:'Add, edit, publish and archive company listings',href:'/admin/super',icon:'⌂'},
- {key:'clients',label:'Clients & payments',description:'Review registrations, receipts and payment decisions',href:'/admin/clients',icon:'♙'},
- {key:'finance',label:'Company finance centre',description:'Record income, expenses and review the company ledger',href:'/admin/super/finance',icon:'₦'},
- {key:'inspections',label:'Inspections & calendar',description:'Approve visits and manage the company schedule',href:'/admin',icon:'◷'},
- {key:'staff',label:'People & permissions',description:'Invite staff and control what each person can do',href:'/admin/super/staff',icon:'♧'},
- {key:'media',label:'Media library',description:'Organise property photos and company assets',href:'/admin/super/media',icon:'▧'},
- {key:'homepage',label:'Website content studio',description:'Update homepage sections and public presentation',href:'/admin/super/homepage',icon:'▤'}
+const catalog=[
+ {key:'properties',permission:'properties',title:'Properties',description:'Manage listings and availability',href:'/admin/super',icon:'⌂'},
+ {key:'clients',permission:'clients',title:'Clients & payments',description:'Review client registrations and receipts',href:'/admin/clients',icon:'♙'},
+ {key:'inspections',permission:'inspections',title:'Inspections',description:'Review requests and manage appointments',href:'/admin',icon:'◷'},
+ {key:'media',permission:'media',title:'Media library',description:'Manage property photos and company assets',href:'/admin/super/media',icon:'▧'},
+ {key:'finance',permission:'finance',title:'Company finance',description:'Review income, expenses and ledger',href:'/admin/super/finance',icon:'₦'},
+ {key:'staff',permission:'staff',title:'Staff & permissions',description:'Invite employees and assign access',href:'/admin/super/staff',icon:'♧'},
+ {key:'homepage',permission:'homepage',title:'Website content',description:'Update the public website',href:'/admin/super/homepage',icon:'▤'},
+ {key:'activity',permission:'audit',title:'Activity & audit',description:'Review changes made across the system',href:'/admin/super/activity',icon:'≋'}
 ];
-
-function Metric({label,value,detail,href,accent='green'}){
- const displayValue=typeof value==='string'?value:Number(value??0).toLocaleString();
- return <article className="metric">
-  <div className="metric-top"><span>{label}</span><i className={'metric-dot '+accent}/></div>
-  <strong>{displayValue}</strong>
-  <p>{detail}</p>
-  <Link href={href}>OPEN MODULE <span>↗</span></Link>
- </article>;
-}
-
+function Stat({label,value,detail,href}){return <Link href={href} className="stat"><span>{label}</span><strong>{value??0}</strong><small>{detail}</small></Link>}
 export default function AdminOverview(){
- const [data,setData]=useState(null);
- const [busy,setBusy]=useState(false);
- const [error,setError]=useState('');
- const [lastUpdated,setLastUpdated]=useState(null); const [staffAccess,setStaffAccess]=useState(null); const [accessReady,setAccessReady]=useState(false);
-
- async function load(){
-  setBusy(true);setError('');
-  try{
-   const response=await fetch('/api/admin/overview',{cache:'no-store'});
-   const result=await response.json();
-   if(!response.ok)throw new Error(result.error||'Could not load company operations.');
-   setData(result);setLastUpdated(new Date(result.generatedAt||Date.now()));
-  }catch(err){setError(err.message||'Could not connect to the management database.');}
-  finally{setBusy(false);}
- }
-
- useEffect(()=>{let live=true;(async()=>{try{const r=await fetch('/api/staff/session',{cache:'no-store'});const d=await r.json();if(!live)return;if(d.authenticated){setStaffAccess(new Set(d.staff?.permissions||[]));setAccessReady(true);load();return;}const a=await fetch('/api/admin/session',{cache:'no-store'}).then(x=>x.json());if(!live)return;if(a.authenticated){setStaffAccess(null);setAccessReady(true);load();return;}setStaffAccess(new Set());setAccessReady(true);}catch{if(live){setStaffAccess(new Set());setAccessReady(true);}}})();return()=>{live=false};},[]); const can=key=>staffAccess===null?true:staffAccess.has(key); const visibleModules=accessReady?modules.filter(item=>({properties:can('properties.manage'),clients:can('clients.view')||can('payments.review'),finance:can('payments.review'),inspections:can('inspections.view')||can('inspections.manage'),staff:can('staff.manage'),media:can('media.manage'),homepage:can('homepage.manage')}[item.key])):[]; const visibleMetrics=accessReady?([{key:'properties',label:'PROPERTY PORTFOLIO',value:data?.properties.total,detail:(data?.properties.published||0)+' published · '+(data?.properties.drafts||0)+' drafts',href:'/admin/super',permission:'properties.manage'},{key:'clients',label:'CLIENT RECORDS',value:data?.clients.total,detail:(data?.clients.pending||0)+' payment reviews pending',href:'/admin/clients',permission:'clients.view'},{key:'inspections',label:'INSPECTION PIPELINE',value:data?.inspections.total,detail:(data?.inspections.pending||0)+' pending · '+(data?.inspections.confirmed||0)+' confirmed',href:'/admin',permission:'inspections.view'},{key:'media',label:'MEDIA LIBRARY',value:data?.media.total,detail:'Images and brand assets stored for the website',href:'/admin/super/media',permission:'media.manage'}].filter(x=>can(x.permission))):[];
-
-
- return <main className="ops">
-  <style jsx>{`
-   .ops{min-height:calc(100vh - 66px);background:radial-gradient(ellipse at 80% -12%,#d8e7d0 0,transparent 34%),linear-gradient(135deg,#edf2eb 0%,#e8eee6 52%,#f4f6f1 100%);color:#172b20;padding:25px clamp(16px,2.6vw,34px) 42px}
-   .wrap{max-width:1540px;margin:0 auto;perspective:1400px}
-   .pagehead{position:relative}
-   .pagehead:after{content:"";position:absolute;right:0;top:-12px;width:210px;height:90px;pointer-events:none;background:radial-gradient(ellipse,#c9dcbf88,transparent 70%);filter:blur(8px)}
-   .metric{position:relative;transform:perspective(1000px) rotateX(2deg) translateZ(0);transition:transform .22s ease,box-shadow .22s ease}
-   .metric:hover{transform:perspective(1000px) rotateX(0) translateY(-5px) translateZ(5px);box-shadow:0 22px 36px #102d1920,0 5px 10px #102d190b,inset 0 1px #fff}
-   .panel{transform:perspective(1200px) rotateX(.35deg);transition:box-shadow .2s ease}
-   .moduleicon{box-shadow:inset 0 1px #fff,0 3px 8px #183b2410}
-   .quick{transform:perspective(700px) rotateX(1deg);transition:transform .2s,box-shadow .2s}
-   .quick:hover{transform:perspective(700px) rotateX(0) translateY(-4px) translateZ(4px)}
-   .pagehead h1{font-size:clamp(26px,3vw,38px);letter-spacing:-.055em}
-   .sectionline{margin-top:26px}
-   .module a,.metric a{transition:background .18s,color .18s}
-   .module a:hover,.metric a:hover{background:#eaf2e5;color:#1d4e30}
-   .pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:2px 0 19px;border-bottom:1px solid #d4ddd2}
-   .eyebrow{font:800 9px/1.4 ui-monospace,SFMono-Regular,monospace;letter-spacing:.19em;color:#64806b}
-   h1{font-size:clamp(23px,2.5vw,31px);letter-spacing:-.045em;line-height:1.1;margin:8px 0 5px;font-weight:760;color:#14281c}
-   .sub{font-size:11px;color:#6d7b70;margin:0;line-height:1.6}
-   .headtools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-   .live{display:flex;align-items:center;gap:8px;border:1px solid #d5e2d0;background:#f6faf3;color:#416447;border-radius:7px;padding:8px 10px;font-size:9px;font-weight:800;letter-spacing:.08em}
-   .live i{width:6px;height:6px;border-radius:50%;background:#69a65a;box-shadow:0 0 0 3px #69a65a20}
-   button{border:1px solid #cbd7c8;background:#fff;color:#284c34;border-radius:7px;padding:9px 12px;font-size:10px;font-weight:800}
-   button:disabled{opacity:.55;cursor:wait}
-   .sectionline{display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px}
-   .sectionline h2{font-size:10px;letter-spacing:.13em;margin:0;color:#52695a}
-   .sectionline span{font:10px ui-monospace,monospace;color:#829087}
-   .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
-   .metric{min-width:0;background:linear-gradient(145deg,#fff 0%,#f5f8f2 72%,#eaf1e6 100%);border:1px solid #d5e0d1;border-radius:13px;padding:17px 17px 14px;box-shadow:0 12px 24px #102d1910,0 3px 7px #102d1908,inset 0 1px #fff;transform:perspective(900px) rotateX(1deg);transition:transform .2s,box-shadow .2s}.metric:hover{transform:perspective(900px) translateY(-4px) rotateX(0);box-shadow:0 20px 32px #102d1920,0 5px 9px #102d190a,inset 0 1px #fff}
-   .metric-top{display:flex;justify-content:space-between;align-items:center;color:#6f7f72;font:800 9px ui-monospace,monospace;letter-spacing:.12em}
-   .metric-dot{width:7px;height:7px;border-radius:50%;background:#83a96a}
-   .metric-dot.amber{background:#c49b4e}.metric-dot.blue{background:#7796aa}
-   .metric strong{display:block;font-size:clamp(20px,2vw,30px);letter-spacing:-.045em;font-weight:750;margin:12px 0 3px;color:#1b3425;overflow-wrap:anywhere;line-height:1.15}
-   .metric p{font-size:10px;color:#7a877c;margin:0;min-height:15px}
-   .metric a{display:flex;justify-content:space-between;align-items:center;margin-top:15px;padding-top:10px;border-top:1px solid #e7ece4;color:#3e6547;font:800 9px ui-monospace,monospace;letter-spacing:.08em}
-   .metric a span{font-size:14px}
-   .actionbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
-   .actioncard{display:flex;align-items:center;gap:14px;padding:15px 17px;border:1px solid #d9e4d5;border-radius:12px;background:linear-gradient(145deg,#fff,#f3f7ef);box-shadow:0 9px 20px #102d190d}
-   .actioncount{width:42px;height:42px;display:grid;place-items:center;border-radius:11px;background:#e8f1e2;color:#28583a;font-size:19px;font-weight:850;box-shadow:inset 0 1px #fff,0 3px 7px #163b2410}
-   .actioncard strong{display:block;color:#284332;font-size:12px}.actioncard p{margin:4px 0 0;color:#778579;font-size:10px}
-   .actioncard a{margin-left:auto;white-space:nowrap;color:#315f3d;font:800 9px ui-monospace,monospace;border:1px solid #d8e4d3;border-radius:7px;padding:8px 10px}
-   .columns{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.75fr);gap:12px;margin-top:14px}
-   .panel{background:linear-gradient(145deg,#fff,#f6f9f4);border:1px solid #d6e1d2;border-radius:13px;overflow:hidden;box-shadow:0 14px 28px #102d1910,0 3px 8px #102d1908,inset 0 1px #fff}
-   .panelhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #e6ebe3}
-   .panelhead h2{margin:0;font-size:10px;letter-spacing:.13em;color:#52695a}
-   .panelhead small{font:9px ui-monospace,monospace;color:#89958b}
-   .module{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:11px;align-items:center;padding:14px 16px;border-bottom:1px solid #edf0eb;transition:background .18s,transform .18s}.module:hover{background:#f2f7ef;transform:translateX(3px)}
-   .module:last-child{border-bottom:0}
-   .moduleicon{width:31px;height:31px;display:grid;place-items:center;border:1px solid #dfe8da;border-radius:7px;background:#f1f6ed;color:#31583b;font-size:16px}
-   .module strong{display:block;font-size:11px;color:#2a4030}.module p{margin:4px 0 0;font-size:9px;color:#859087}
-   .module a{font:800 9px ui-monospace,monospace;letter-spacing:.05em;color:#4a704f;padding:7px 9px;border:1px solid #dbe5d6;border-radius:6px;white-space:nowrap}
-   .quickgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:13px}.quick{min-width:0;overflow:hidden}.quick strong,.quick small{overflow-wrap:anywhere;line-height:1.35}
-   .quick{min-height:78px;padding:12px;border:1px solid #dce6d8;border-radius:10px;background:linear-gradient(145deg,#fff,#edf4e9);display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 5px 12px #163c200b,inset 0 1px #fff;transition:transform .18s,box-shadow .18s}.quick:hover{transform:translateY(-3px);box-shadow:0 12px 20px #163c2018}
-   .quick span{font-size:17px;color:#507253}.quick strong{font-size:10px;color:#304a36}.quick small{font-size:8px;color:#879287}
-   .systemrow{display:flex;justify-content:space-between;gap:12px;padding:11px 15px;border-top:1px solid #edf0eb;font-size:9px;color:#718074}
-   .systemrow b{font-weight:750;color:#4b6550}
-   .error{margin:14px 0;padding:12px 14px;background:#fff4f1;border:1px solid #efd6ce;border-radius:7px;color:#9b493a;font-size:11px}
-   .empty{padding:24px 16px;color:#7b887e;font-size:11px}
-   .foot{display:flex;justify-content:space-between;gap:12px;margin-top:16px;color:#8a958b;font:9px ui-monospace,monospace;letter-spacing:.04em}
-   @media(max-width:950px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.columns{grid-template-columns:1fr}}
-   @media(max-width:600px){.ops{padding:14px 12px 28px}.pagehead{align-items:flex-start;flex-direction:column;gap:12px;padding-bottom:14px}.pagehead h1{font-size:25px;line-height:1.12}.pagehead .sub{font-size:11px;max-width:34em}.headtools{width:100%;justify-content:space-between}.live{font-size:8px;padding:7px 8px}.sectionline{margin:18px 0 9px;align-items:center}.sectionline h2{font-size:9px;letter-spacing:.08em}.sectionline span{font-size:8px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.metric{padding:11px;border-radius:10px}.metric strong{font-size:clamp(17px,5vw,23px);margin:10px 0 3px}.metric p{font-size:9px;line-height:1.35;min-height:0}.metric a{font-size:8px;margin-top:10px;padding-top:8px}.columns{grid-template-columns:minmax(0,1fr);gap:10px;margin-top:10px}.panel{border-radius:11px}.panelhead{padding:12px}.module{grid-template-columns:30px minmax(0,1fr) auto;gap:8px;padding:12px}.moduleicon{width:28px;height:28px}.module strong{font-size:10px}.module p{font-size:9px;line-height:1.35}.module a{font-size:8px;padding:6px}.quickgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:10px}.quick{min-height:70px;padding:10px}.quick strong{font-size:9px}.quick small{font-size:8px}.actionbar{grid-template-columns:1fr}.actioncard{padding:11px;gap:10px}.actioncard a{font-size:8px;padding:7px}.foot{flex-direction:column;gap:5px;font-size:8px}}
-  `}</style>
-
-  <div className="wrap">
-   <header className="pagehead">
-    <div><div className="eyebrow">G-BEST / EXECUTIVE OPERATIONS / 01</div><h1>Welcome to your control room</h1><p className="sub">Your central workspace for properties, clients, inspections and the team. Choose a department below to get work done.</p></div>
-    <div className="headtools"><span className="live"><i/> SECURE ADMIN SESSION</span><button onClick={load} disabled={busy}>{busy?'SYNCING…':'↻  REFRESH DATA'}</button></div>
-   </header>
-
-   {error&&<div className="error" role="alert">{error}</div>}
-
-   <div className="sectionline"><h2>YOUR BUSINESS AT A GLANCE</h2><span>{lastUpdated?'UPDATED '+lastUpdated.toLocaleTimeString():'WAITING FOR DATABASE'}</span></div>
-   {!accessReady?<div className="panel empty">Checking your authorised departments…</div>:data&&visibleMetrics.length?<div className="metrics">{visibleMetrics.map(x=><Metric key={x.key} label={x.label} value={x.value} detail={x.detail} href={x.href} accent={x.key==='clients'?'amber':x.key==='inspections'?'blue':'green'}/>)}</div>:<div className="panel empty">{busy?'Connecting to the company database…':'No live metrics are available for your assigned departments.'}</div>}
-
-   {data&&accessReady&&staffAccess===null&&<><div className="sectionline"><h2>NEEDS YOUR ATTENTION</h2><span>LIVE WORK QUEUE</span></div><div className="actionbar"><article className="actioncard"><span className="actioncount">{Number(data.clients.pending||0).toLocaleString()}</span><div><strong>Client payments awaiting review</strong><p>Check submitted registrations and payment evidence.</p></div><Link href="/admin/clients">REVIEW ↗</Link></article><article className="actioncard"><span className="actioncount">{Number(data.inspections.pending||0).toLocaleString()}</span><div><strong>Inspection requests awaiting action</strong><p>Review requested visits and confirm the schedule.</p></div><Link href="/admin">OPEN DESK ↗</Link></article></div></>}
-   <div className="sectionline"><h2>PAYMENTS & CASH POSITION</h2><span>VERIFIED REGISTRATION RECORDS · NGN</span></div>
-   {data?<div className="metrics">
-    <Metric label="VERIFIED PAYMENTS" value={data.finance?.approved_count||0} detail="Approved client registration payments" href="/admin/clients" accent="green"/>
-    <Metric label="VERIFIED AMOUNT" value={'₦'+Number(data.finance?.approved_amount||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2})} detail="Recorded fees with approved status" href="/admin/clients" accent="green"/>
-    <Metric label="PENDING PAYMENT VALUE" value={'₦'+Number(data.finance?.pending_amount||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2})} detail={(data.finance?.pending_count||0)+' awaiting manual verification'} href="/admin/clients" accent="amber"/>
-    <Metric label="REJECTED PAYMENTS" value={data.finance?.rejected_count||0} detail="Registration payments not approved" href="/admin/clients" accent="blue"/>
-   </div>:<div className="panel empty">Payment totals will appear when live records are available.</div>}
-   <div className="columns">
-    <section className="panel">
-     <div className="panelhead"><h2>COMPANY WORKSPACE</h2><small>{!accessReady?'CHECKING ACCESS':staffAccess===null?'COMPANY DEPARTMENTS':'YOUR AUTHORISED DEPARTMENTS'}</small></div>
-     {visibleModules.map(item=><div className="module" key={item.key}><span className="moduleicon">{item.icon}</span><div><strong>{item.label}</strong><p>{item.description}</p></div><Link href={item.href}>OPEN ↗</Link></div>)}
-    </section>
-    <section className="panel">
-     <div className="panelhead"><h2>QUICK OPERATIONS</h2><small>COMMON TASKS</small></div>
-     <div className="quickgrid">{[['/admin/super','⌂','Manage properties','INVENTORY','properties.manage'],['/admin','◷','Review inspections','SCHEDULING','inspections.view'],['/admin/clients','♙','Client payments','REGISTRATION','clients.view'],['/admin/super/finance','₦','Company finance','INCOME & EXPENSES','payments.review'],['/admin/super/staff','⚙','Staff & permissions','ACCESS CONTROL','staff.manage'],['/admin/super/media','▧','Media library','ASSET MANAGEMENT','media.manage'],['/admin/super/activity','≋','Audit activity','GOVERNANCE','audit.view']].filter(x=>can(x[4])).map(([href,icon,label,detail])=><Link className="quick" href={href} key={href}><span>{icon}</span><strong>{label}</strong><small>{detail}</small></Link>)}</div>
-     <div className="systemrow"><span>Database connection</span><b>{data?'CONNECTED':'NOT CONNECTED'}</b></div>
-     <div className="systemrow"><span>Metrics endpoint</span><b>/api/admin/overview</b></div>
-    </section>
-   </div>
-   <footer className="foot"><span>G-BEST LUXURY REALTY · INTERNAL CONTROL CONSOLE</span><span>{lastUpdated?'LAST SYNC '+lastUpdated.toLocaleString():'NO SYNC RECORDED'}</span></footer>
-  </div>
- </main>;
+ const [data,setData]=useState(null),[busy,setBusy]=useState(true),[error,setError]=useState('');
+ const load=useCallback(async()=>{setBusy(true);setError('');try{const r=await fetch('/api/admin/overview',{cache:'no-store'}),d=await r.json();if(!r.ok)throw Error(d.error||'Could not load your workspace.');setData(d)}catch(e){setError(e.message||'Unable to load your workspace.')}finally{setBusy(false)}},[]);
+ useEffect(()=>{load()},[load]);
+ const permissions=new Set(data?.permissions||[]);
+ const cards=catalog.filter(x=>x.key==='staff'?data?.isSuperAdmin: x.key==='homepage'?data?.isSuperAdmin: x.key==='activity'?data?.isSuperAdmin:permissions.has(x.permission));
+ const stats=[];
+ if(data?.properties)stats.push({label:'PROPERTIES',value:data.properties.total,detail:(data.properties.published||0)+' published',href:'/admin/super'});
+ if(data?.clients)stats.push({label:'CLIENTS',value:data.clients.total,detail:(data.clients.pending||0)+' payment reviews pending',href:'/admin/clients'});
+ if(data?.inspections)stats.push({label:'INSPECTIONS',value:data.inspections.total,detail:(data.inspections.pending||0)+' awaiting review',href:'/admin'});
+ if(data?.media)stats.push({label:'MEDIA ASSETS',value:data.media.total,detail:'In company library',href:'/admin/super/media'});
+ return <main className="dash"><div className="inner">
+  <header className="head"><div><span className="eyebrow">G-BEST / WORKSPACE</span><h1>{data?.isSuperAdmin?'Control room':'Your workspace'}</h1><p>{data?.isSuperAdmin?'A clear view of company operations.':'Your assigned departments and daily work.'}</p></div><button onClick={load} disabled={busy}>{busy?'Updating…':'Refresh'}</button></header>
+  {error&&<div className="error" role="alert">{error}</div>}
+  {busy&&!data?<div className="loading">Loading your authorised workspace…</div>:null}
+  {data&&stats.length>0&&<section className="stats" aria-label="Workspace summary">{stats.map(x=><Stat key={x.label} {...x}/>)}</section>}
+  {data?.isSuperAdmin&&data.finance&&<section className="finance"><div><span>PAYMENTS VERIFIED</span><strong>{data.finance.approved_count||0}</strong></div><div><span>VERIFIED VALUE</span><strong>₦{Number(data.finance.approved_amount||0).toLocaleString('en-NG',{maximumFractionDigits:2})}</strong></div><div><span>AWAITING REVIEW</span><strong>{data.finance.pending_count||0}</strong></div></section>}
+  <section className="section"><div className="sectionhead"><div><span className="eyebrow">{data?.isSuperAdmin?'COMPANY OPERATIONS':'YOUR ACCESS'}</span><h2>Departments</h2></div><small>{cards.length} available</small></div>
+   {data&&cards.length?<div className="departments">{cards.map(x=><Link href={x.href} className="department" key={x.key}><span className="ico">{x.icon}</span><span className="copy"><strong>{x.title}</strong><small>{x.description}</small></span><span className="arrow">↗</span></Link>)}</div>:data?<p className="empty">No departments have been assigned to this account yet. Contact your Super Admin.</p>:null}
+  </section>
+  <footer>G-BEST LUXURY REALTY <span>·</span> SECURE WORKSPACE {data?.generatedAt?'· UPDATED '+new Date(data.generatedAt).toLocaleTimeString():''}</footer>
+ </div>
+ <style jsx>{`
+ .dash{min-height:calc(100dvh - 60px);padding:clamp(16px,3vw,34px);background:#111512;color:#f2f5ef}
+ .inner{max-width:1120px;margin:0 auto}
+ .head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-bottom:22px;border-bottom:1px solid #ffffff19}
+ .eyebrow{font:800 9px/1.4 ui-monospace,monospace;letter-spacing:.17em;color:#c9ee72}
+ h1{font-size:clamp(26px,4vw,38px);letter-spacing:-.05em;margin:7px 0 4px;line-height:1.1}
+ .head p{font-size:13px;color:#a4afa6;margin:0;line-height:1.5}
+ button{border:1px solid #d8f68d;border-radius:9px;padding:10px 14px;background:#c9ed70;color:#17210f;font-size:11px;font-weight:800;white-space:nowrap}
+ button:disabled{opacity:.65}
+ .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:20px 0}
+ .stat{min-width:0;padding:14px;border:1px solid #ffffff18;border-radius:12px;background:#1d241f;color:inherit;text-decoration:none;display:flex;flex-direction:column;gap:6px}
+ .stat span,.finance span{font-size:9px;letter-spacing:.12em;color:#a2afa5;font-weight:800}
+ .stat strong{font-size:26px;line-height:1.1;letter-spacing:-.04em;color:#e9f4df}
+ .stat small{font-size:10px;color:#9ba89e;line-height:1.35}
+ .finance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 22px;padding:13px;border:1px solid #ffffff16;border-radius:12px;background:#191f1b}
+ .finance div{display:flex;flex-direction:column;gap:7px;min-width:0}.finance strong{font-size:17px;overflow-wrap:anywhere;color:#d7f49b}
+ .section{margin-top:24px}.sectionhead{display:flex;align-items:end;justify-content:space-between;margin-bottom:10px}
+ h2{font-size:21px;letter-spacing:-.03em;margin:4px 0 0}.sectionhead small{font-size:10px;color:#8f9d92}
+ .departments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .department{display:flex;align-items:center;gap:12px;min-width:0;padding:14px;border:1px solid #ffffff18;border-radius:12px;background:linear-gradient(140deg,#222a24,#191f1b);color:#f2f5ef;text-decoration:none;transition:border-color .15s,background .15s}
+ .department:active{background:#2b352d}.department:hover{border-color:#9dc65b}
+ .ico{width:36px;height:36px;flex:0 0 36px;border-radius:10px;display:grid;place-items:center;background:#d7f29a;color:#192516;font-size:19px}
+ .copy{display:flex;flex-direction:column;gap:4px;min-width:0}.copy strong{font-size:13px}.copy small{font-size:10px;color:#9eaaa1;line-height:1.35}
+ .arrow{margin-left:auto;color:#c9ed70;font-size:17px}
+ .loading,.empty{padding:18px;border:1px solid #ffffff18;border-radius:11px;color:#aab5ad;font-size:12px;background:#1a201c}
+ .error{margin:14px 0;padding:11px;border-radius:9px;background:#40231e;color:#ffd3c8;font-size:12px}
+ footer{margin-top:28px;padding-top:13px;border-top:1px solid #ffffff16;color:#819087;font:9px ui-monospace,monospace;letter-spacing:.06em}footer span{color:#c9ed70}
+ @media(max-width:720px){.dash{padding:16px 13px 26px}.head{align-items:flex-start;padding-bottom:16px}.head p{font-size:11px;max-width:260px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}.stat{padding:11px;border-radius:10px}.stat strong{font-size:23px}.finance{gap:6px;padding:10px}.finance strong{font-size:14px}.finance span{font-size:8px}.section{margin-top:20px}.departments{grid-template-columns:1fr;gap:7px}.department{padding:12px}.copy strong{font-size:12px}.copy small{font-size:10px}}
+ @media(max-width:360px){.head{gap:8px}.head button{padding:8px;font-size:10px}.finance{grid-template-columns:1fr}.finance div{flex-direction:row;justify-content:space-between;align-items:center}}
+ `}</style></main>;
 }
