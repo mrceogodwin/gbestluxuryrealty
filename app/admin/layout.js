@@ -86,6 +86,19 @@ export default function SuperAdminLayout({children}){
   .gb-content>main{min-height:calc(100dvh - 60px)!important}
  }
 
+
+ .gb-content .ops,.gb-content .staff,.gb-content .audit,.gb-content .finance,.gb-content .media-room,.gb-content .client-admin-shell,.gb-content .admin-shell,.gb-content .super-shell{background:radial-gradient(ellipse at 80% 0%,#252d28 0%,transparent 42%),#111312!important;color:#edf2ed!important}
+ .gb-content .ops .pagehead h1,.gb-content .staff h1,.gb-content .audit h1,.gb-content .finance h1,.gb-content .media-title,.gb-content .client-admin-shell h1,.gb-content .super-head h1{color:#f1f5ef!important}
+ .gb-content .ops .eyebrow,.gb-content .staff .eyebrow,.gb-content .audit .eyebrow,.gb-content .finance .eyebrow{color:#caff70!important}
+ .gb-content .ops .sub,.gb-content .ops .metric p,.gb-content .ops .metric span,.gb-content .ops .module p{color:#aab5ad!important}
+ .gb-content .ops .metric strong,.gb-content .ops .metric a,.gb-content .ops .module h3{color:#eaf3e8!important}
+ .gb-content .ops .hero,.gb-content .staff .hero,.gb-content .audit .hero,.gb-content .finance .hero{background:linear-gradient(145deg,#343d37,#1a211d)!important;border:1px solid #ffffff20!important;box-shadow:0 24px 50px #0009,inset 0 2px 2px #ffffff1a,inset 0 -5px 12px #0007!important;transform:perspective(1100px) rotateX(1deg)}
+ .gb-content .ops .module,.gb-content .ops .quick{background:linear-gradient(145deg,#303833,#1b211d)!important;border:1px solid #ffffff1c!important;color:#eff4ec!important;box-shadow:0 16px 30px #0008,inset 0 1px #ffffff1a!important}
+ .gb-content .ops .metric{background:linear-gradient(145deg,#303833,#1b211d)!important;color:#f0f5ed!important;border:1px solid #ffffff1c!important}
+ .gb-content .ops .sectionline,.gb-content .ops .panel{border-color:#ffffff1b!important}
+ .gb-content .ops button,.gb-content .staff button,.gb-content .audit button,.gb-content .finance button,.gb-content .super-shell button{background:linear-gradient(145deg,#d9ff70,#a9d82a)!important;color:#17210f!important;border:1px solid #edffb8!important;border-radius:9px!important;font-weight:850!important;box-shadow:0 8px 18px #0008,inset 0 2px 2px #fff9,inset 0 -3px 6px #668c1c66!important}
+ .gb-content .ops a,.gb-content .staff a,.gb-content .audit a,.gb-content .finance a,.gb-content .super-shell a{color:#d9f79b}
+
  `}</style>
  <div className="gb-shell">
  <aside className={'gb-sidebar'+(open?' open':'')}>
@@ -94,6 +107,7 @@ export default function SuperAdminLayout({children}){
  <nav aria-label="Super admin navigation">{visibleGroups.map(group=><div className="gb-navgroup" key={group.label}><div className="gb-navlabel">{group.label}</div>{group.items.map(([href,label,icon])=><Link key={href} href={href} onClick={()=>setOpen(false)} className={'gb-navlink'+((path===href||((href==='/admin/super/staff#activity')&&path==='/admin/super/staff')||(href!=='/admin'&&href!=='/admin/super'&&href!=='/admin/clients'&&href!=='/admin/super/homepage'&&href!=='/admin/super/media'&&path.startsWith(href+'/')))?' active':'')}><span className="gb-navicon">{icon}</span>{label}</Link>)}</div>)}</nav>
  <div className="gb-sidefoot">G-BEST LUXURY REALTY<br/>Management console · Secure workspace</div>
  </aside>
+ {open&&<button type="button" aria-label="Close navigation drawer" onClick={()=>setOpen(false)} style={{position:'fixed',inset:0,zIndex:90,border:0,borderRadius:0,background:'#000a',backdropFilter:'blur(5px)',cursor:'pointer'}}/>}
  <div className="gb-main">
  <header className="gb-topbar"><div style={{display:'flex',alignItems:'center',gap:12}}><button className="gb-mobiletoggle" onClick={()=>setOpen(v=>!v)} aria-label="Toggle navigation">☰</button><div className="gb-crumb">G-BEST <span style={{opacity:.45}}> / </span><b>{path==='/admin/super/homepage'?'HOMEPAGE STUDIO':path==='/admin/super/media'?'MEDIA LIBRARY':path==='/admin/clients'?'CLIENTS':path.startsWith('/admin/super/finance')?'FINANCE CENTRE':path==='/admin'?'INSPECTIONS':path==='/admin/super'?'PROPERTY OPERATIONS':path==='/admin/super/overview'?'CONTROL ROOM DASHBOARD':path.startsWith('/admin/super/staff')?'STAFF & PERMISSIONS':path==='/admin/super/activity'?'ACTIVITY & AUDIT LOG':path==='/admin/control'?'LEGACY CONTROL ROOM':'SYSTEM SETTINGS'}</b></div></div><div className="gb-topright"><span className="gb-secure">● {staff?'STAFF WORKSPACE':'ADMIN WORKSPACE'}</span><button onClick={signOut} style={{border:"1px solid #d8e5d2",background:"#fff",borderRadius:99,padding:"7px 10px",color:"#426b3d",fontWeight:700,fontSize:11}}>SIGN OUT</button></div></header>
  <main className="gb-content">{children}</main>
