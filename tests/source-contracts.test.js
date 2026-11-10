@@ -285,3 +285,22 @@ test('master admin login rejects missing or cross-origin Origin headers', async 
   assert.match(route, /req\.headers\.get\('origin'\)!==req\.nextUrl\.origin/);
   assert.match(route, /Invalid request origin/);
 });
+
+test('master admin sessions are persisted as hashed tokens and can be revoked individually', async () => {
+  const auth = await source('lib/admin-auth.js');
+  assert.match(auth, /INSERT INTO public\.super_admin_sessions\(token_hash,expires_at\)/);
+  assert.match(auth, /SELECT 1 FROM public\.super_admin_sessions WHERE token_hash=\$1 AND revoked_at IS NULL AND expires_at>now\(\)/);
+  assert.match(auth, /UPDATE public\.super_admin_sessions SET revoked_at=now\(\)/);
+  assert.match(auth, /createHash\('sha256'\)/);
+  assert.doesNotMatch(auth, /token_hash\s*=\s*token\b/);
+});
+
+test('master admin login uses persistent database throttling and writes login audit events', async () => {
+  const route = await source('app/api/admin/session/route.js');
+  assert.match(route, /public\.staff_login_attempts/);
+  assert.match(route, /createHmac\('sha256'/);
+  assert.match(route, /Too many unsuccessful sign-in attempts/);
+  assert.match(route, /admin\.login/);
+  assert.match(route, /admin\.logout/);
+  assert.match(route, /revokeAdminSession\(token\)/);
+});
