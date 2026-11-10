@@ -26,7 +26,7 @@ export default function AdminOverview(){
  const [data,setData]=useState(null);
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
- const [lastUpdated,setLastUpdated]=useState(null);
+ const [lastUpdated,setLastUpdated]=useState(null); const [staffAccess,setStaffAccess]=useState(null);
 
  async function load(){
   setBusy(true);setError('');
@@ -39,7 +39,7 @@ export default function AdminOverview(){
   finally{setBusy(false);}
  }
 
- useEffect(()=>{load();},[]);
+ useEffect(()=>{load();(async()=>{try{const r=await fetch('/api/staff/session',{cache:'no-store'});const d=await r.json();if(d.authenticated)setStaffAccess(new Set(d.staff?.permissions||[]));}catch{}})();},[]); const can=key=>staffAccess===null||staffAccess.has(key); const visibleModules=modules.filter(item=>({properties:can('properties.manage'),clients:can('clients.view')||can('payments.review'),finance:can('payments.review'),inspections:can('inspections.view')||can('inspections.manage'),staff:can('staff.manage'),media:can('media.manage'),homepage:can('homepage.manage')}[item.key]));
 
 
  return <main className="ops">
@@ -132,20 +132,12 @@ export default function AdminOverview(){
    </div>:<div className="panel empty">Payment totals will appear when live records are available.</div>}
    <div className="columns">
     <section className="panel">
-     <div className="panelhead"><h2>COMPANY WORKSPACE</h2><small>CHOOSE A DEPARTMENT</small></div>
-     {modules.map(item=><div className="module" key={item.key}><span className="moduleicon">{item.icon}</span><div><strong>{item.label}</strong><p>{item.description}</p></div><Link href={item.href}>OPEN ↗</Link></div>)}
+     <div className="panelhead"><h2>COMPANY WORKSPACE</h2><small>{staffAccess===null?'COMPANY DEPARTMENTS':'YOUR AUTHORISED DEPARTMENTS'}</small></div>
+     {visibleModules.map(item=><div className="module" key={item.key}><span className="moduleicon">{item.icon}</span><div><strong>{item.label}</strong><p>{item.description}</p></div><Link href={item.href}>OPEN ↗</Link></div>)}
     </section>
     <section className="panel">
      <div className="panelhead"><h2>QUICK OPERATIONS</h2><small>COMMON TASKS</small></div>
-     <div className="quickgrid">
-      <Link className="quick" href="/admin/super"><span>⌂</span><strong>Manage properties</strong><small>INVENTORY</small></Link>
-      <Link className="quick" href="/admin"><span>◷</span><strong>Review inspections</strong><small>SCHEDULING</small></Link>
-      <Link className="quick" href="/admin/clients"><span>♙</span><strong>Client payments</strong><small>REGISTRATION</small></Link>
-      <Link className="quick" href="/admin/super/finance"><span>₦</span><strong>Company finance</strong><small>INCOME & EXPENSES</small></Link>
-      <Link className="quick" href="/admin/super/staff"><span>⚙</span><strong>Staff & permissions</strong><small>ACCESS CONTROL</small></Link>
-      <Link className="quick" href="/admin/super/media"><span>▧</span><strong>Media library</strong><small>ASSET MANAGEMENT</small></Link>
-      <Link className="quick" href="/admin/super/activity"><span>≋</span><strong>Audit activity</strong><small>GOVERNANCE</small></Link>
-     </div>
+     <div className="quickgrid">{[['/admin/super','⌂','Manage properties','INVENTORY','properties.manage'],['/admin','◷','Review inspections','SCHEDULING','inspections.view'],['/admin/clients','♙','Client payments','REGISTRATION','clients.view'],['/admin/super/finance','₦','Company finance','INCOME & EXPENSES','payments.review'],['/admin/super/staff','⚙','Staff & permissions','ACCESS CONTROL','staff.manage'],['/admin/super/media','▧','Media library','ASSET MANAGEMENT','media.manage'],['/admin/super/activity','≋','Audit activity','GOVERNANCE','audit.view']].filter(x=>can(x[4])).map(([href,icon,label,detail])=><Link className="quick" href={href} key={href}><span>{icon}</span><strong>{label}</strong><small>{detail}</small></Link>)}</div>
      <div className="systemrow"><span>Database connection</span><b>{data?'CONNECTED':'NOT CONNECTED'}</b></div>
      <div className="systemrow"><span>Metrics endpoint</span><b>/api/admin/overview</b></div>
     </section>
