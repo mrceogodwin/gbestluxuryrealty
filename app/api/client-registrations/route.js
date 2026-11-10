@@ -62,10 +62,10 @@ function registrationRateKey(type,value){
   return createHmac('sha256',secret).update(type+':'+value).digest('hex');
 }
 async function consumeRegistrationRateLimit(pool,key,limit){
-  const q=await pool.query(`INSERT INTO public.client_registration_rate_limits(rate_key,attempts,window_started_at,updated_at)
+  const q=await pool.query(`INSERT INTO public.client_registration_rate_limits AS rate_limit(rate_key,attempts,window_started_at,updated_at)
     VALUES($1,1,now(),now())
     ON CONFLICT(rate_key) DO UPDATE SET
-      attempts=CASE WHEN public.client_registration_rate_limits.window_started_at<now()-interval '1 hour' THEN 1 ELSE public.client_registration_rate_limits.attempts+1 END,
+      attempts=CASE WHEN rate_limit.window_started_at<now()-interval '1 hour' THEN 1 ELSE rate_limit.attempts+1 END,
       window_started_at=CASE WHEN public.client_registration_rate_limits.window_started_at<now()-interval '1 hour' THEN now() ELSE public.client_registration_rate_limits.window_started_at END,
       updated_at=now()
     RETURNING attempts`,[key]);
@@ -98,17 +98,6 @@ export async function POST(req) {
     const reference=clean(form.get('payment_reference'),120);
     if(!reference) return NextResponse.json({error:'Enter your transfer reference.'},{status:400});
     const pool=getDatabasePool(); await ensureTable(pool);
-    const emailRateKey=registrationRateKey('email',fields.email.toLowerCase());
-    if(await consumeRegistrationRateLimit(pool,emailRateKey,5))
-      return NextResponse.json({error:'Too many registration attempts for this email. Please try again later or contact G-BEST.'},{status:429});
-    const forwarded=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||'';
-    let ip=forwarded.split(',')[0]?.trim()||'';
-    if(ip.startsWith('[')&&ip.endsWith(']'))ip=ip.slice(1,-1);
-    if(isIP(ip)){
-      const ipRateKey=registrationRateKey('ip',ip);
-      if(await consumeRegistrationRateLimit(pool,ipRateKey,20))
-        return NextResponse.json({error:'Too many registration attempts from this network. Please try again later.'},{status:429});
-    }
     const bytes=Buffer.from(await file.arrayBuffer());
     const signatures={
       'image/jpeg':bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff,
@@ -117,6 +106,18 @@ export async function POST(req) {
       'application/pdf':bytes.length>=5&&bytes.toString('ascii',0,5)==='%PDF-'
     };
     if(!signatures[file.type])return NextResponse.json({error:'The uploaded receipt content does not match its file type.'},{status:400});
+    const emailRateKey=registrationRateKey('email',fields.email.toLowerCase());
+    if(await consumeRegistrationRateLimit(pool,emailRateKey,5))
+      return NextResponse.json({error:'Too many registration attempts for this email. Please try again later or contact G-BEST.'},{status:429});
+    const forwarded=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||req.headers.get('x-forwarded-for')||'';
+    let ip=forwarded.split(',')[0]?.trim()||'';
+    if(ip.startsWith('[')&&ip.endsWith(']'))ip=ip.slice(1,-1);
+    if(isIP(ip)){
+      const ipRateKey=registrationRateKey('ip',ip);
+      if(await consumeRegistrationRateLimit(pool,ipRateKey,20))
+        return NextResponse.json({error:'Too many registration attempts from this network. Please try again later.'},{status:429});
+    }
+
     const dbClient=await pool.connect();
     let q;
     try {
