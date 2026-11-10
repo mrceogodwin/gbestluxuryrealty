@@ -44,6 +44,7 @@ export async function POST(req){
  }catch(e){if(e.code==='23505')return NextResponse.json({error:'A staff account with that email already exists.'},{status:409});console.error('Staff admin POST',e.code||e.message);return NextResponse.json({error:'Could not create staff invitation.'},{status:500});}
 }
 export async function PATCH(req){
+ if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
  if(!await isAdminRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});
  let d;try{d=await req.json()}catch{return NextResponse.json({error:'Invalid request body.'},{status:400})}
  const id=clean(d.id,50);
