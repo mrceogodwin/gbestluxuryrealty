@@ -41,3 +41,5 @@
  .registration-form{gap:18px}
  .registration-form section{padding:18px 0 23px}
 }
+
+@media(max-width:850px){.registration-grid input,.registration-grid textarea{font-size:16px!important}}
