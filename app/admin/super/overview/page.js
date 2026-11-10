@@ -20,7 +20,7 @@ export default function AdminOverview(){
  const cards=catalog.filter(x=>x.key==='staff'?data?.isSuperAdmin: x.key==='homepage'?data?.isSuperAdmin: x.key==='activity'?data?.isSuperAdmin:permissions.has(x.permission));
  const stats=[];
  if(data?.properties)stats.push({label:'PROPERTIES',value:data.properties.total,detail:(data.properties.published||0)+' published',href:'/admin/super'});
- if(data?.clients)stats.push({label:'CLIENTS',value:data.clients.total,detail:(data.clients.pending||0)+' payment reviews pending',href:'/admin/clients'});
+ if(data?.clients)stats.push({label:'CLIENTS',value:data.clients.total,detail:data.clients.payment_metrics_available?(data.clients.pending||0)+' payment reviews pending':'Client profiles available',href:'/admin/clients'});
  if(data?.inspections)stats.push({label:'INSPECTIONS',value:data.inspections.total,detail:(data.inspections.pending||0)+' awaiting review',href:'/admin'});
  if(data?.media)stats.push({label:'MEDIA ASSETS',value:data.media.total,detail:'In company library',href:'/admin/super/media'});
  return <main className="dash"><div className="inner">
