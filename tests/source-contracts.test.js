@@ -231,3 +231,22 @@ test('media library prevents deleting images still referenced by properties or h
   assert.match(api, /Replace or remove that reference before deleting the file/);
   assert.match(page, /Images still referenced by property listings or homepage content will be protected/);
 });
+
+test('client profile viewers do not receive payment or receipt details without payments.review', async () => {
+  const code = await source('app/api/admin/client-registrations/route.js');
+  assert.match(code, /const canViewPaymentDetails=isSuperAdmin\|\|canReviewPayments/);
+  const profileOnly = code.match(/: \x60id,surname,other_names,address[\s\S]*?\x60\s*:\s*\x60id,COALESCE/);
+  assert.ok(profileOnly, 'profile-only projection exists');
+  for (const restrictedField of ['fee_amount','payment_reference','receipt_name','receipt_type','payment_status','admin_note','approved_by','approved_at','auditSelect']) {
+    assert.doesNotMatch(profileOnly[0], new RegExp('\\b' + restrictedField + '\\b'));
+  }
+});
+
+test('staff suspension and revocation invalidate all active staff sessions', async () => {
+  const code = await source('app/api/admin/staff/route.js');
+  assert.match(code, /if\(\['suspended','revoked'\]\.includes\(d\.status\)\)/);
+  assert.match(code, /UPDATE public\.staff_sessions SET revoked_at=now\(\) WHERE staff_id=\$1 AND revoked_at IS NULL/);
+  const auth = await source('lib/staff-auth.js');
+  assert.match(auth, /s\.revoked_at IS NULL AND s\.expires_at>now\(\)/);
+  assert.match(auth, /a\.status='active'/);
+});
