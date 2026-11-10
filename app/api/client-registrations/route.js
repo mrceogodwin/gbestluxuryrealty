@@ -74,7 +74,7 @@ async function consumeRegistrationRateLimit(pool,key,limit){
 
 export async function POST(req) {
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Registration is temporarily unavailable.'},{status:503});
-  if (req.headers.get('origin') && req.headers.get('origin') !== req.nextUrl.origin) return NextResponse.json({error:'Invalid request origin.'},{status:403});
+  if (req.headers.get('origin') !== req.nextUrl.origin) return NextResponse.json({error:'Invalid request origin.'},{status:403});
   const declaredLength = Number(req.headers.get('content-length') || 0);
   if (declaredLength > 6 * 1024 * 1024) return NextResponse.json({error:'Submission is too large. Keep the receipt under 5 MB.'},{status:413});
   try {
