@@ -330,3 +330,16 @@ test('Super Admin security centre supports single-session and global revocation'
   assert.match(auth, /last_seen_at=now\(\)/);
   assert.match(overview, /href:'\/admin\/super\/security'/);
 });
+
+test('Super Admin security centre exposes only hashed session identifiers and supports revocation', async () => {
+  const api = await source('app/api/admin/security/route.js');
+  const page = await source('app/admin/super/security/page.js');
+  assert.match(api, /isAdminRequest\(req\)/);
+  assert.match(api, /user_agent,ip_hash,revoked_at/);
+  assert.match(api, /right\(attempt_key,6\) AS reference/);
+  assert.match(api, /admin\.session_revoked/);
+  assert.match(api, /admin\.sessions_revoked_all/);
+  assert.match(page, /Device \/ browser/);
+  assert.match(page, /revoke-all/);
+  assert.match(page, /revoke-session/);
+});
