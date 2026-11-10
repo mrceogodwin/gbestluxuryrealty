@@ -32,7 +32,19 @@ async function ensureTable(pool) {
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
   )`);
-  await pool.query(`ALTER TABLE public.client_registrations ADD COLUMN IF NOT EXISTS fee_amount numeric(12,2)`);
+  // Keep both the current registration fields and the legacy columns used by the
+  // existing admin review screens available on fresh and upgraded Neon databases.
+  await pool.query(`ALTER TABLE public.client_registrations
+    ADD COLUMN IF NOT EXISTS full_name varchar(260),
+    ADD COLUMN IF NOT EXISTS email_normalized varchar(254),
+    ADD COLUMN IF NOT EXISTS registration_fee_kobo bigint,
+    ADD COLUMN IF NOT EXISTS client_status varchar(24) NOT NULL DEFAULT 'pending',
+    ADD COLUMN IF NOT EXISTS fee_amount numeric(12,2),
+    ADD COLUMN IF NOT EXISTS payment_reference varchar(120),
+    ADD COLUMN IF NOT EXISTS receipt_name varchar(255),
+    ADD COLUMN IF NOT EXISTS receipt_type varchar(100),
+    ADD COLUMN IF NOT EXISTS receipt_data bytea,
+    ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now()`);
   await pool.query(`CREATE INDEX IF NOT EXISTS client_registrations_status_created_idx ON public.client_registrations(payment_status, created_at DESC)`);
 }
 
