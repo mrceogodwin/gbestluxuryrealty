@@ -66,7 +66,7 @@ async function consumeRegistrationRateLimit(pool,key,limit){
     VALUES($1,1,now(),now())
     ON CONFLICT(rate_key) DO UPDATE SET
       attempts=CASE WHEN rate_limit.window_started_at<now()-interval '1 hour' THEN 1 ELSE rate_limit.attempts+1 END,
-      window_started_at=CASE WHEN public.client_registration_rate_limits.window_started_at<now()-interval '1 hour' THEN now() ELSE public.client_registration_rate_limits.window_started_at END,
+      window_started_at=CASE WHEN rate_limit.window_started_at<now()-interval '1 hour' THEN now() ELSE rate_limit.window_started_at END,
       updated_at=now()
     RETURNING attempts`,[key]);
   return Number(q.rows[0]?.attempts||0)>limit;
