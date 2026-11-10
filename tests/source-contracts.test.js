@@ -250,3 +250,21 @@ test('staff suspension and revocation invalidate all active staff sessions', asy
   assert.match(auth, /s\.revoked_at IS NULL AND s\.expires_at>now\(\)/);
   assert.match(auth, /a\.status='active'/);
 });
+
+test('client profile-only staff cannot receive payment metrics in the workspace overview', async () => {
+  const api = await source('app/api/admin/overview/route.js');
+  const page = await source('app/admin/super/overview/page.js');
+  assert.match(api, /admin\|\|granted\.has\('payments\.review'\)/);
+  assert.match(api, /SELECT COUNT\(\*\)::int AS total,false AS payment_metrics_available FROM public\.client_registrations/);
+  assert.match(page, /data\.clients\.payment_metrics_available\?/);
+  assert.match(page, /'Client profiles available'/);
+});
+
+test('client profile workspace hides payment status and review controls without payment permission', async () => {
+  const api = await source('app/api/admin/client-registrations/route.js');
+  const page = await source('app/admin/clients/page.js');
+  assert.match(api, /canReviewPayments:canViewPaymentDetails/);
+  assert.match(page, /setCanReviewPayments\(Boolean\(d\.canReviewPayments\)\)/);
+  assert.match(page, /canReviewPayments&&<span className=\{'client-pay-status '/);
+  assert.match(page, /canReviewPayments&&<><p>Receipt:/);
+});
