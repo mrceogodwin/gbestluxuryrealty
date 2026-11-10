@@ -10,7 +10,7 @@ function loginAttemptKeys(req,email){
  let candidate=forwarded.split(',')[0]?.trim()||'';
  if(candidate.startsWith('[')&&candidate.endsWith(']'))candidate=candidate.slice(1,-1);
  // Vercel overwrites its forwarded-IP headers at the edge; validate before hashing.
- const ip=isIP(candidate)?candidate:'unknown';
+ const ip=isIP(candidate)?candidate:'unknown:'+email;
  const secret=process.env.ADMIN_SECRET||process.env.DATABASE_URL;
  if(!secret)throw new Error('Missing server secret for login rate limiting');
  const digest=value=>createHmac('sha256',secret).update(value).digest('hex');
