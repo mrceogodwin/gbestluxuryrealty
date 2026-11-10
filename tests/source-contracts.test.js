@@ -343,3 +343,11 @@ test('Super Admin security centre exposes only hashed session identifiers and su
   assert.match(page, /revoke-all/);
   assert.match(page, /revoke-session/);
 });
+
+test('master admin login throttling is scoped per IP and cannot be globally locked by one remote client', async () => {
+  const route = await source('app/api/admin/session/route.js');
+  assert.match(route, /return \[key\('super-admin:ip:'\+ip\)\]/);
+  assert.doesNotMatch(route, /super-admin:global/);
+  assert.match(route, /END\)>=5/);
+  assert.match(route, /isIP\(ip\)/);
+});
