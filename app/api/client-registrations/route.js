@@ -109,7 +109,7 @@ export async function POST(req) {
     const emailRateKey=registrationRateKey('email',fields.email.toLowerCase());
     if(await consumeRegistrationRateLimit(pool,emailRateKey,5))
       return NextResponse.json({error:'Too many registration attempts for this email. Please try again later or contact G-BEST.'},{status:429});
-    const forwarded=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||req.headers.get('x-forwarded-for')||'';
+    const forwarded=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||'';
     let ip=forwarded.split(',')[0]?.trim()||'';
     if(ip.startsWith('[')&&ip.endsWith(']'))ip=ip.slice(1,-1);
     if(isIP(ip)){
