@@ -268,3 +268,20 @@ test('client profile workspace hides payment status and review controls without 
   assert.match(page, /canReviewPayments&&<span className=\{'client-pay-status '/);
   assert.match(page, /canReviewPayments&&<><p>Receipt:/);
 });
+
+test('master admin sessions support global revocation and enforce a two-hour maximum lifetime', async () => {
+  const auth = await source('lib/admin-auth.js');
+  const route = await source('app/api/admin/session/route.js');
+  assert.match(auth, /sv===\(process\.env\.ADMIN_SESSION_VERSION\|\|'1'\)/);
+  assert.match(auth, /d\.exp-d\.iat<=2\*60\*60\*1000/);
+  assert.match(auth, /sv:process\.env\.ADMIN_SESSION_VERSION\|\|'1'/);
+  assert.match(auth, /iat\+2\*60\*60\*1000/);
+  assert.doesNotMatch(auth, /Bearer '\+process\.env\.ADMIN_SECRET/);
+  assert.match(route, /maxAge:2\*60\*60/);
+});
+
+test('master admin login rejects missing or cross-origin Origin headers', async () => {
+  const route = await source('app/api/admin/session/route.js');
+  assert.match(route, /req\.headers\.get\('origin'\)!==req\.nextUrl\.origin/);
+  assert.match(route, /Invalid request origin/);
+});
