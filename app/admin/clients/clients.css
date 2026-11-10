@@ -1,1 +1,28 @@
-.client-admin-shell{max-width:980px;margin:0 auto;padding:32px 20px 80px;color:#20251e}.client-admin-shell>a{color:inherit;text-decoration:none}.client-admin-shell header{border-top:8px solid #39e900;padding:28px 0}.client-admin-shell header p,.client-admin-shell header span{font-size:12px;letter-spacing:.15em;font-weight:800;color:#36b900}.client-admin-shell h1{font-size:clamp(34px,7vw,62px);letter-spacing:-.06em}.client-admin-shell h1 i{font-style:normal;color:#36c900}.client-admin-shell form{display:grid;gap:12px;background:#f5f8f2;padding:18px;border-radius:12px}.client-admin-shell form label,.client-admin-shell article label{display:grid;gap:8px}.client-admin-shell input,.client-admin-shell textarea{padding:12px;border:1px solid #cbd4c5;border-radius:8px;font:inherit}.client-admin-shell button{padding:12px 16px;border:0;border-radius:7px;background:#39d600;font-weight:800;cursor:pointer}.client-admin-shell article{border:1px solid #e0e6dc;border-radius:12px;padding:18px;margin:16px 0}.client-admin-top,.client-admin-actions{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.client-pay-status{font-size:11px;text-transform:uppercase;font-weight:800;padding:6px 9px;border-radius:20px;background:#fff0d5}.client-pay-status.approved{background:#e7f8e1;color:#286b1c}.client-pay-status.rejected{background:#ffe9e5;color:#9b2d20}.client-admin-count{margin:20px 0;font-weight:750}.client-admin-shell .receipt-view{background:#eef5e9;margin:6px 0 16px}.client-admin-shell .reject{background:#ffe6e1;color:#8e2b1d}@media(max-width:560px){.client-admin-shell{padding:22px 14px 60px}}
+.client-admin-shell{max-width:1040px;margin:0 auto;padding:clamp(16px,3vw,32px) clamp(13px,2vw,22px) 56px;color:#edf3ec}
+.client-admin-shell>a{display:inline-flex;margin:0 14px 12px 0;color:#c9ed70;text-decoration:none;font-size:11px;font-weight:750}
+.client-admin-shell header{padding:22px 0 18px;border-bottom:1px solid #ffffff1a}
+.client-admin-shell header p,.client-admin-shell header span{font-size:9px;letter-spacing:.16em;font-weight:850;color:#c9ed70}
+.client-admin-shell h1{font-size:clamp(25px,4vw,38px);letter-spacing:-.05em;margin:8px 0;color:#f2f5ef}
+.client-admin-shell h1 i{font-style:normal;color:#c9ed70}
+.client-admin-shell form{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#1b221d;border:1px solid #ffffff18;padding:13px 14px;border-radius:11px;margin:16px 0;color:#aab5ad;font-size:11px}
+.client-admin-shell form label,.client-admin-shell article label{display:grid;gap:7px}
+.client-admin-shell input,.client-admin-shell textarea{box-sizing:border-box;width:100%;padding:11px;border:1px solid #465248;border-radius:8px;background:#111713;color:#f1f4ef;font:inherit}
+.client-admin-shell button{padding:10px 13px;border:1px solid #e4ffad;border-radius:8px;background:#c9ed70;color:#17210f;font-size:10px;font-weight:850;cursor:pointer}
+.client-admin-shell button:disabled{opacity:.5}
+.client-admin-shell article{border:1px solid #ffffff19;border-radius:12px;padding:15px;margin:10px 0;background:linear-gradient(145deg,#222a24,#191f1b);box-shadow:0 10px 24px #0004}
+.client-admin-top,.client-admin-actions{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.client-admin-top b{font-size:14px;color:#f1f5ed}
+.client-admin-shell article p{font-size:11px;line-height:1.5;color:#aab5ad;margin:8px 0;overflow-wrap:anywhere}
+.client-pay-status{font-size:9px;text-transform:uppercase;font-weight:850;padding:5px 9px;border-radius:99px;background:#3c3320;color:#f1d38a}
+.client-pay-status.approved{background:#243b27;color:#b9ef9a}
+.client-pay-status.rejected{background:#402722;color:#ffb5a6}
+.client-admin-count{margin:15px 0;font-size:11px;font-weight:750;color:#c6d1c8}
+.client-admin-shell .receipt-view{background:#27342a;border:1px solid #52634e;color:#d9f79b;margin:5px 0 14px}
+.client-admin-shell .reject{background:#472923;border:1px solid #885044;color:#ffd0c5}
+.client-admin-shell article label{font-size:10px;color:#c1cdc3;font-weight:750;margin:12px 0}
+.client-admin-shell .client-admin-actions{justify-content:flex-start;margin-top:12px}
+.client-admin-shell .client-admin-actions button{min-width:125px}
+.client-audit-history{border-top:1px solid #ffffff18;padding-top:10px;margin-top:12px;color:#c2cec4;font-size:10px}
+.client-audit-history summary{cursor:pointer;font-weight:800;color:#d8e8d3}
+.client-admin-shell [role=alert]{padding:11px;border-radius:9px;background:#402722;color:#ffd0c5;font-size:11px}
+@media(max-width:560px){.client-admin-shell{padding:16px 12px 38px}.client-admin-shell header{padding:15px 0}.client-admin-shell h1{font-size:27px}.client-admin-shell form{align-items:stretch}.client-admin-shell form button{width:100%}.client-admin-shell article{padding:12px}.client-admin-shell .client-admin-actions button{flex:1;min-width:0}}
