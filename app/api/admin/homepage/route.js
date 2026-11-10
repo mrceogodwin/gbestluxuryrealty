@@ -3,7 +3,7 @@ import { ensureHomepageTables } from '../../../../lib/homepage-cms';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
-const allowed=new Set(['eyebrow','title','description','buttonText','buttonUrl','imageUrl','videoUrl','extraText','visible','imageAlt','mobileImageUrl','imagePosition','layout','alignment','fontFamily','backgroundColor','textColor','accentColor','overlayOpacity','padding','slides','autoplay','autoplayInterval','transition','showArrows','showDots','columns','itemsPerView','socialLinks']);
+const allowed=new Set(['eyebrow','title','description','buttonText','buttonUrl','imageUrl','videoUrl','extraText','visible','imageAlt','mobileImageUrl','imagePosition','layout','alignment','fontFamily','backgroundColor','textColor','accentColor','overlayOpacity','padding','slides','autoplay','autoplayInterval','transition','showArrows','showDots','columns','itemsPerView','socialLinks','headerLogoUrl','footerLogoUrl']);
 function cleanContent(value){
  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Section content must be an object.');
  const out={};
@@ -11,6 +11,7 @@ function cleanContent(value){
   if(!allowed.has(key))continue;
   if(['visible','autoplay','showArrows','showDots'].includes(key)){out[key]=Boolean(val);continue;}
   if(['overlayOpacity','autoplayInterval','columns','itemsPerView'].includes(key)){const n=Number(val);if(!Number.isFinite(n)||n<0||n>10000)throw new Error('Invalid numeric setting: '+key);out[key]=n;continue;}
+  if(key==='headerLogoUrl'||key==='footerLogoUrl'){const url=String(val||'').trim();if(url&&(!/^https:\/\//i.test(url)||url.length>2000))throw new Error('Brand logo must be a valid HTTPS media URL.');out[key]=url;continue;}
   if(key==='socialLinks'){
    if(!val||typeof val!=='object'||Array.isArray(val))throw new Error('Social links must be an object.');
    const platforms=['instagram','facebook','x','linkedin','youtube','tiktok','whatsapp'];const links={};
