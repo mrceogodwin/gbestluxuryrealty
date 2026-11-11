@@ -532,3 +532,16 @@ test('Finance Centre UI separates operating ledger from client booking payments'
   assert.match(page, /TRANSACTION AUDIT/);
   assert.match(page, /Monthly performance/);
 });
+
+
+test('payment-review staff receive a minimal payment projection even when they also have client-profile permissions', async () => {
+  const code = await source('app/api/admin/client-registrations/route.js');
+  assert.match(code, /const fields=isSuperAdmin[\\s\\S]*?: canReviewPayments[\\s\\S]*?COALESCE\\(full_name,concat_ws\\(' ',surname,other_names\\)\\) AS full_name,surname,other_names,email,fee_amount,payment_reference,receipt_name,receipt_type,payment_status/);
+  const paymentProjection = code.match(/: canReviewPayments\\s*\\? \\x60([\\s\\S]*?)\\x60\\s*: \\x60/);
+  assert.ok(paymentProjection, 'payment-only projection exists independently of client profile permission');
+  for (const field of ['address','phone','nationality','state_of_origin','lga','occupation','property_type','price_range','preferred_location','property_description','terms_accepted']) assert.doesNotMatch(paymentProjection[1], new RegExp('\\\\b'+field+'\\\\b'));
+  assert.match(code, /paymentReviewerView:!isSuperAdmin&&canReviewPayments/);
+  const page = await source('app/admin/clients/page.js');
+  assert.match(page, /paymentReviewerView&&/);
+  assert.match(page, /!paymentReviewerView&&/);
+});
