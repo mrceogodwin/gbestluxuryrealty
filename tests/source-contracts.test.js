@@ -102,6 +102,14 @@ test('payment receipt retrieval requires the payment-review permission', async (
   assert.match(code, /X-Content-Type-Options.*nosniff/);
 });
 
+test('finance ledger API never creates or alters database schema at runtime', async () => {
+  const code = await source('app/api/admin/finance-ledger/route.js');
+  assert.doesNotMatch(code, /\\b(?:CREATE|ALTER|DROP)\\s+(?:TABLE|INDEX|COLUMN)\\b/i);
+  assert.match(code, /to_regclass\\('public\\.finance_ledger'\\)/);
+  assert.match(code, /FINANCE_SCHEMA_NOT_INSTALLED/);
+  assert.match(code, /status:e\.code==='FINANCE_SCHEMA_NOT_INSTALLED'\?503:500/);
+});
+
 test('only the authenticated Super Admin can invite staff or change staff permissions', async () => {
   const code = await source('app/api/admin/staff/route.js');
   for (const method of ['GET','POST','PATCH']) {
