@@ -5,13 +5,16 @@ import {getSchedule,slotIsAvailable,validClock} from '../../../lib/inspection-sc
 import {enforcePublicRateLimit} from '../../../lib/public-rate-limit';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
+const MAX_BODY_BYTES=8*1024;
 
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export async function POST(req){
  try{
   if(!process.env.DATABASE_URL)return NextResponse.json({error:'Booking is temporarily unavailable.'},{status:503});
   if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
-  let d;try{d=await req.json()}catch{return NextResponse.json({error:'Invalid request body. Send valid JSON and try again.'},{status:400});}
+  const contentLength=Number(req.headers.get('content-length')||0);if(contentLength>MAX_BODY_BYTES)return NextResponse.json({error:'Request body is too large.'},{status:413});
+  const raw=await req.text();if(new TextEncoder().encode(raw).byteLength>MAX_BODY_BYTES)return NextResponse.json({error:'Request body is too large.'},{status:413});
+  let d;try{d=JSON.parse(raw)}catch{return NextResponse.json({error:'Invalid request body. Send valid JSON and try again.'},{status:400});}
   if(!d||typeof d!=='object'||Array.isArray(d))return NextResponse.json({error:'Invalid request body.'},{status:400});
   const name=String(d.name||'').trim(),contact=String(d.contact||'').trim(),email=String(d.clientEmail||'').trim(),date=String(d.preferredDate||''),time=String(d.preferredTime||''),pid=String(d.propertyId||'').trim().toUpperCase(),message=String(d.message||'').trim();
   const rate=await enforcePublicRateLimit(req,{scope:'inspection-booking',limit:5,windowMinutes:15,identity:email});if(!rate.allowed)return NextResponse.json({error:'Too many inspection requests. Please wait 15 minutes before trying again.'},{status:429,headers:{'Retry-After':'900','Cache-Control':'no-store'}});
