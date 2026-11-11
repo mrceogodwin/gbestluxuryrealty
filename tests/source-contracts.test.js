@@ -419,10 +419,10 @@ test('public inspection booking uses the shared hashed IP and email rate limiter
   const route = await source('app/api/inspection-requests/route.js');
   const limiter = await source('lib/public-rate-limit.js');
   assert.match(route, /scope:'inspection-booking',limit:5,windowMinutes:15,identity:email/);
-  assert.match(limiter, /public\\.public_api_rate_limits/);
-  assert.match(limiter, /scope\\+':ip:'/);
-  assert.match(limiter, /scope\\+':identity:'/);
-  assert.match(limiter, /createHmac\\('sha256'/);
+  assert.match(limiter, /public\.public_api_rate_limits/);
+  assert.match(limiter, /scope\+':ip:'/);
+  assert.match(limiter, /scope\+':identity:'/);
+  assert.match(limiter, /createHmac\('sha256'/);
   assert.doesNotMatch(route, /inspection_booking_rate_limits|consumeBookingLimit/);
 });
 
@@ -440,10 +440,10 @@ test('public inspection booking is rate limited by IP and client identity', asyn
   const route = await source('app/api/inspection-requests/route.js');
   const limiter = await source('lib/public-rate-limit.js');
   assert.match(route, /scope:'inspection-booking',limit:5,windowMinutes:15,identity:email/);
-  assert.match(limiter, /CREATE TABLE IF NOT EXISTS public\\.public_api_rate_limits/);
-  assert.match(limiter, /createHmac\\('sha256'/);
-  assert.match(limiter, /scope\\+':ip:'/);
-  assert.match(limiter, /scope\\+':identity:'/);
+  assert.match(limiter, /CREATE TABLE IF NOT EXISTS public\.public_api_rate_limits/);
+  assert.match(limiter, /createHmac\('sha256'/);
+  assert.match(limiter, /scope\+':ip:'/);
+  assert.match(limiter, /scope\+':identity:'/);
 });
 
 test('anonymous client error reports are rate limited before body processing', async () => {
