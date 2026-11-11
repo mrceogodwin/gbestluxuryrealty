@@ -67,7 +67,7 @@ test('client payment decisions record the authenticated reviewer, not a fixed ad
 test('public client registration rate limits are hashed and applied after receipt validation', async () => {
   const code = await source('app/api/client-registrations/route.js');
   assert.match(code, /createHmac/);
-  assert.match(code, /createHmac\('sha256'/);
+  assert.ok(code.includes("createHmac('sha256'"));
   assert.match(code, /client_registration_rate_limits/);
   assert.match(code, /consumeRegistrationRateLimit\(pool,emailRateKey,5\)/);
   assert.match(code, /consumeRegistrationRateLimit\(pool,ipRateKey,20\)/);
@@ -298,7 +298,7 @@ test('master admin sessions are persisted as hashed tokens and can be revoked in
 test('master admin login uses persistent database throttling and writes login audit events', async () => {
   const route = await source('app/api/admin/session/route.js');
   assert.match(route, /public\.staff_login_attempts/);
-  assert.match(route, /createHmac\('sha256'/);
+  assert.ok(route.includes("createHmac('sha256'"));
   assert.match(route, /Too many unsuccessful sign-in attempts/);
   assert.match(route, /admin\.login/);
   assert.match(route, /admin\.logout/);
@@ -422,7 +422,7 @@ test('public inspection booking uses the shared hashed IP and email rate limiter
   assert.match(limiter, /public\.public_api_rate_limits/);
   assert.match(limiter, /scope\+':ip:'/);
   assert.match(limiter, /scope\+':identity:'/);
-  assert.match(limiter, /createHmac\('sha256'/);
+  assert.ok(limiter.includes("createHmac('sha256'"));
   assert.doesNotMatch(route, /inspection_booking_rate_limits|consumeBookingLimit/);
 });
 
@@ -441,7 +441,7 @@ test('public inspection booking is rate limited by IP and client identity', asyn
   const limiter = await source('lib/public-rate-limit.js');
   assert.match(route, /scope:'inspection-booking',limit:5,windowMinutes:15,identity:email/);
   assert.match(limiter, /CREATE TABLE IF NOT EXISTS public\.public_api_rate_limits/);
-  assert.match(limiter, /createHmac\('sha256'/);
+  assert.ok(limiter.includes("createHmac('sha256'"));
   assert.match(limiter, /scope\+':ip:'/);
   assert.match(limiter, /scope\+':identity:'/);
 });
