@@ -396,6 +396,9 @@ test('media deletion checks company video references as well as property and hom
   const api = await source('app/api/admin/media/route.js');
   assert.match(api, /FROM public\.company_profile_video WHERE video_url=\$1/);
   assert.match(api, /propertyUse\.rowCount\|\|homepageUse\.rowCount\|\|videoUse\.rowCount/);
+  assert.match(api, /COALESCE\(h\.draft_content,'\{\}'::jsonb\)::text/);
+  assert.match(api, /COALESCE\(h\.published_content,'\{\}'::jsonb\)::text/);
+  assert.match(api, /to_jsonb\(p\)::text/);
 });
 
 
