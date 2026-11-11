@@ -414,6 +414,14 @@ test('public inspection booking rejects missing or cross-origin Origin headers',
 });
 
  
+test('public inspection booking rejects oversized request bodies before parsing', async () => {
+  const route = await source('app/api/inspection-requests/route.js');
+  assert.match(route, /MAX_BODY_BYTES\s*=\s*8\s*\*\s*1024/);
+  assert.match(route, /content-length/);
+  assert.match(route, /TextEncoder\(\)\.encode\(raw\)\.byteLength>MAX_BODY_BYTES/);
+  assert.match(route, /status:413/);
+});
+
 test('public inspection booking uses the shared hashed IP and email rate limiter', async () => {
   const route = await source('app/api/inspection-requests/route.js');
   const limiter = await source('lib/public-rate-limit.js');
