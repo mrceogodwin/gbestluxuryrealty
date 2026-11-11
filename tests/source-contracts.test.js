@@ -144,14 +144,16 @@ test('staff dashboard cannot receive company finance metrics, even with payment-
 
 test('payment-only reviewers receive a reduced registration projection', async () => {
   const code = await source('app/api/admin/client-registrations/route.js');
-  const paymentProjection = code.match(/: `id,COALESCE\(full_name[\s\S]*?`;/);
-  assert.ok(paymentProjection, 'payment-only projection exists');
+  const paymentStart = code.indexOf(': canReviewPayments');
+  const profileStart = code.indexOf(': `id,surname,other_names,address', paymentStart);
+  assert.ok(paymentStart >= 0 && profileStart > paymentStart, 'payment-only projection exists');
+  const paymentProjection = code.slice(paymentStart, profileStart);
   for (const restrictedField of ['address','phone','nationality','state_of_origin','lga','occupation','preferred_location','property_description']) {
-    assert.doesNotMatch(paymentProjection[0], new RegExp('\\b' + restrictedField + '\\b'));
+    assert.doesNotMatch(paymentProjection, new RegExp('\\\\b' + restrictedField + '\\\\b'));
   }
-  assert.match(paymentProjection[0], /payment_reference/);
-  assert.match(paymentProjection[0], /receipt_name/);
-  assert.match(paymentProjection[0], /payment_status/);
+  assert.match(paymentProjection, /payment_reference/);
+  assert.match(paymentProjection, /receipt_name/);
+  assert.match(paymentProjection, /payment_status/);
 });
 
 test('registration throttling does not trust client-supplied X-Forwarded-For', async () => {
