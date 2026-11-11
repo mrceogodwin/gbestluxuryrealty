@@ -98,6 +98,7 @@ test('registration rate-limit upsert uses its PostgreSQL target alias consistent
 test('payment receipt retrieval requires the payment-review permission', async () => {
   const code = await source('app/api/admin/client-registrations/[id]/receipt/route.js');
   assert.match(code, /authorizeAdminRequest\(req,'payments\.review'\)/);
+  assert.match(code, /req\.headers\.get\('origin'\)!==req\.nextUrl\.origin/);
   assert.match(code, /Cache-Control.*no-store/);
   assert.match(code, /X-Content-Type-Options.*nosniff/);
 });
