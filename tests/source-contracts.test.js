@@ -102,6 +102,16 @@ test('payment receipt retrieval requires the payment-review permission', async (
   assert.match(code, /X-Content-Type-Options.*nosniff/);
 });
 
+test('finance ledger migration is additive, transactional and indexed', async () => {
+  const sql = await source('database/migrations/20261111_001_finance_ledger.sql');
+  assert.match(sql, /BEGIN;[\\s\\S]*COMMIT;/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\\.finance_ledger/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\\.finance_ledger_audit/);
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS approval_status/);
+  assert.match(sql, /REFERENCES public\\.finance_ledger\\(id\\) ON DELETE CASCADE/);
+  assert.match(sql, /CREATE INDEX IF NOT EXISTS/);
+});
+
 test('finance ledger API never creates or alters database schema at runtime', async () => {
   const code = await source('app/api/admin/finance-ledger/route.js');
   assert.doesNotMatch(code, /\b(?:CREATE|ALTER|DROP)\s+(?:TABLE|INDEX|COLUMN)\b/i);
