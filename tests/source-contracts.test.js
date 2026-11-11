@@ -398,3 +398,18 @@ test('media deletion checks company video references as well as property and hom
   assert.match(api, /FROM public\.company_profile_video WHERE video_url=\$1/);
   assert.match(api, /propertyUse\.rowCount\|\|homepageUse\.rowCount\|\|videoUse\.rowCount/);
 });
+
+
+test('staff invitation acceptance and staff login reject missing or cross-origin Origin headers', async () => {
+  const accept = await source('app/api/staff/accept/route.js');
+  const session = await source('app/api/staff/session/route.js');
+  assert.match(accept, /req\.headers\.get\('origin'\)!==req\.nextUrl\.origin/);
+  const login = session.match(/export async function POST\(req\)\{[\s\S]*?(?=export async function DELETE|$)/);
+  assert.ok(login);
+  assert.match(login[0], /req\.headers\.get\('origin'\)!==req\.nextUrl\.origin/);
+});
+
+test('public inspection booking rejects missing or cross-origin Origin headers', async () => {
+  const route = await source('app/api/inspection-requests/route.js');
+  assert.match(route, /req\.headers\.get\('origin'\)!==req\.nextUrl\.origin/);
+});
