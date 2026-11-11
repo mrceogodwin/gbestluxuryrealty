@@ -527,7 +527,7 @@ test('Finance Centre UI separates operating ledger from client booking payments'
   const page = await source('app/admin/super/finance/page.js');
   assert.match(page, /never enter a booking payment here a second time/);
   assert.match(page, /SAVE LEDGER ENTRY/);
-  assert.match(page, /PENDING APPROVAL/);
+  assert.match(page, /Pending approval/);
   assert.match(page, /EXPORT CSV/);
   assert.match(page, /TRANSACTION AUDIT/);
   assert.match(page, /Monthly performance/);
