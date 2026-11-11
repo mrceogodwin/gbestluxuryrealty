@@ -402,6 +402,13 @@ test('media deletion checks company video references as well as property and hom
 });
 
 
+test('staff login throttling ignores client-supplied X-Forwarded-For', async () => {
+  const code = await source('app/api/staff/session/route.js');
+  assert.match(code, /x-vercel-forwarded-for/);
+  assert.match(code, /x-real-ip/);
+  assert.doesNotMatch(code, /get\('x-forwarded-for'\)/i);
+});
+
 test('staff invitation acceptance and staff login reject missing or cross-origin Origin headers', async () => {
   const accept = await source('app/api/staff/accept/route.js');
   const session = await source('app/api/staff/session/route.js');
