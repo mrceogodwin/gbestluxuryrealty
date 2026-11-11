@@ -428,7 +428,7 @@ test('public inspection booking uses the shared hashed IP and email rate limiter
 
 test('anonymous client error reporting is same-origin, size-limited and rate-limited', async () => {
   const route = await source('app/api/client-errors/route.js');
-  assert.match(route, /request\\.headers\\.get\\('origin'\\)!==new URL\\(request\\.url\\)\\.origin/);
+  assert.ok(route.includes("request.headers.get('origin')!==new URL(request.url).origin"));
   assert.match(route, /MAX_BODY_BYTES = 8 \\* 1024/);
   assert.match(route, /scope:'client-error-report',limit:20,windowMinutes:15/);
   assert.doesNotMatch(route, /client_error_rate_limits|allowErrorReport/);
