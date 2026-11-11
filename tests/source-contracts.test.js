@@ -415,11 +415,40 @@ test('public inspection booking rejects missing or cross-origin Origin headers',
 });
 
  
-test('public inspection booking uses the shared hashed IP and email rate limiter', async () => {\n  const route = await source('app/api/inspection-requests/route.js');\n  const limiter = await source('lib/public-rate-limit.js');\n  assert.match(route, /scope:'inspection-booking',limit:5,windowMinutes:15,identity:email/);\n  assert.match(limiter, /public\\.public_api_rate_limits/);\n  assert.match(limiter, /scope\\+':ip:'/);\n  assert.match(limiter, /scope\\+':identity:'/);\n  assert.match(limiter, /createHmac\\('sha256'/);\n  assert.doesNotMatch(route, /inspection_booking_rate_limits|consumeBookingLimit/);\n});
+test('public inspection booking uses the shared hashed IP and email rate limiter', async () => {
+  const route = await source('app/api/inspection-requests/route.js');
+  const limiter = await source('lib/public-rate-limit.js');
+  assert.match(route, /scope:'inspection-booking',limit:5,windowMinutes:15,identity:email/);
+  assert.match(limiter, /public\\.public_api_rate_limits/);
+  assert.match(limiter, /scope\\+':ip:'/);
+  assert.match(limiter, /scope\\+':identity:'/);
+  assert.match(limiter, /createHmac\\('sha256'/);
+  assert.doesNotMatch(route, /inspection_booking_rate_limits|consumeBookingLimit/);
+});
 
-test('anonymous client error reporting is same-origin, size-limited and rate-limited', async () => {\n  const route = await source('app/api/client-errors/route.js');\n  assert.match(route, /request\\.headers\\.get\\('origin'\\)!==new URL\\(request\\.url\\)\\.origin/);\n  assert.match(route, /MAX_BODY_BYTES = 8 \\* 1024/);\n  assert.match(route, /scope:'client-error-report',limit:20,windowMinutes:15/);\n  assert.doesNotMatch(route, /client_error_rate_limits|allowErrorReport/);\n  assert.match(route, /status:429/);\n});
+test('anonymous client error reporting is same-origin, size-limited and rate-limited', async () => {
+  const route = await source('app/api/client-errors/route.js');
+  assert.match(route, /request\\.headers\\.get\\('origin'\\)!==new URL\\(request\\.url\\)\\.origin/);
+  assert.match(route, /MAX_BODY_BYTES = 8 \\* 1024/);
+  assert.match(route, /scope:'client-error-report',limit:20,windowMinutes:15/);
+  assert.doesNotMatch(route, /client_error_rate_limits|allowErrorReport/);
+  assert.match(route, /status:429/);
+});
 
 
-test('public inspection booking is rate limited by IP and client identity', async () => {\n  const route = await source('app/api/inspection-requests/route.js');\n  const limiter = await source('lib/public-rate-limit.js');\n  assert.match(route, /scope:'inspection-booking',limit:5,windowMinutes:15,identity:email/);\n  assert.match(limiter, /CREATE TABLE IF NOT EXISTS public\\.public_api_rate_limits/);\n  assert.match(limiter, /createHmac\\('sha256'/);\n  assert.match(limiter, /scope\\+':ip:'/);\n  assert.match(limiter, /scope\\+':identity:'/);\n});
+test('public inspection booking is rate limited by IP and client identity', async () => {
+  const route = await source('app/api/inspection-requests/route.js');
+  const limiter = await source('lib/public-rate-limit.js');
+  assert.match(route, /scope:'inspection-booking',limit:5,windowMinutes:15,identity:email/);
+  assert.match(limiter, /CREATE TABLE IF NOT EXISTS public\\.public_api_rate_limits/);
+  assert.match(limiter, /createHmac\\('sha256'/);
+  assert.match(limiter, /scope\\+':ip:'/);
+  assert.match(limiter, /scope\\+':identity:'/);
+});
 
-test('anonymous client error reports are rate limited before body processing', async () => {\n  const route = await source('app/api/client-errors/route.js');\n  assert.match(route, /scope:'client-error-report',limit:20,windowMinutes:15/);\n  assert.ok(route.indexOf('enforcePublicRateLimit') < route.indexOf('request.text()'));\n  assert.match(route, /status:429/);\n});
+test('anonymous client error reports are rate limited before body processing', async () => {
+  const route = await source('app/api/client-errors/route.js');
+  assert.match(route, /scope:'client-error-report',limit:20,windowMinutes:15/);
+  assert.ok(route.indexOf('enforcePublicRateLimit') < route.indexOf('request.text()'));
+  assert.match(route, /status:429/);
+});
