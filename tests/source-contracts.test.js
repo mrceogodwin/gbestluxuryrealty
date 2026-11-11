@@ -377,10 +377,12 @@ test('privileged logout and staff mutations reject missing or cross-origin Origi
   const adminSession = await source('app/api/admin/session/route.js');
   const staffSession = await source('app/api/staff/session/route.js');
   const staffAdmin = await source('app/api/admin/staff/route.js');
+  const paymentReview = await source('app/api/admin/client-registrations/route.js');
   assert.match(adminSession, /export async function DELETE\(req\)\{\s*if\(req\.headers\.get\('origin'\)!==req\.nextUrl\.origin\)/);
   assert.match(staffSession, /export async function DELETE\(req\)\{\s*if\(req\.headers\.get\('origin'\)!==req\.nextUrl\.origin\)/);
   assert.match(staffAdmin, /export async function POST\(req\)\{\s*if\(req\.headers\.get\('origin'\)!==req\.nextUrl\.origin\)/);
   assert.match(staffAdmin, /export async function PATCH\(req\)\{\s*if\(req\.headers\.get\('origin'\)!==req\.nextUrl\.origin\)/);
+  assert.match(paymentReview, /export async function PATCH\(req\)\{if\(req\.headers\.get\('origin'\)!==req\.nextUrl\.origin\)/);
 });
 
 test('public client registration rejects missing as well as cross-origin Origin headers', async () => {
