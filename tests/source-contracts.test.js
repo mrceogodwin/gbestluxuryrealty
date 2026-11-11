@@ -435,3 +435,21 @@ test('anonymous client error reporting is same-origin, size-limited and rate-lim
   assert.match(route, />30 THEN now\(\)\+interval '15 minutes'/);
   assert.match(route, /status:429/);
 });
+
+
+test('public inspection booking is rate limited by IP and client identity', async () => {
+  const route = await source('app/api/inspection-requests/route.js');
+  const limiter = await source('lib/public-rate-limit.js');
+  assert.match(route, /scope:'inspection-booking',limit:5,windowMinutes:15,identity:email/);
+  assert.match(limiter, /CREATE TABLE IF NOT EXISTS public\.public_api_rate_limits/);
+  assert.match(limiter, /createHmac\('sha256'/);
+  assert.match(limiter, /scope\+':ip:'/);
+  assert.match(limiter, /scope\+':identity:'/);
+});
+
+test('anonymous client error reports are rate limited before body processing', async () => {
+  const route = await source('app/api/client-errors/route.js');
+  assert.match(route, /scope:'client-error-report',limit:20,windowMinutes:15/);
+  assert.ok(route.indexOf('enforcePublicRateLimit') < route.indexOf('request.text()'));
+  assert.match(route, /status:429/);
+});
