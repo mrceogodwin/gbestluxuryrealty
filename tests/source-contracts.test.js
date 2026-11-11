@@ -104,12 +104,14 @@ test('payment receipt retrieval requires the payment-review permission', async (
 
 test('finance ledger migration is additive, transactional and indexed', async () => {
   const sql = await source('database/migrations/20261111_001_finance_ledger.sql');
-  assert.match(sql, /BEGIN;[\\s\\S]*COMMIT;/);
-  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\\.finance_ledger/);
-  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\\.finance_ledger_audit/);
-  assert.match(sql, /ADD COLUMN IF NOT EXISTS approval_status/);
-  assert.match(sql, /REFERENCES public\\.finance_ledger\\(id\\) ON DELETE CASCADE/);
-  assert.match(sql, /CREATE INDEX IF NOT EXISTS/);
+  assert.ok(sql.startsWith('-- G-BEST Finance Centre schema'));
+  assert.ok(sql.includes('BEGIN;'));
+  assert.ok(sql.includes('COMMIT;'));
+  assert.ok(sql.includes('CREATE TABLE IF NOT EXISTS public.finance_ledger'));
+  assert.ok(sql.includes('CREATE TABLE IF NOT EXISTS public.finance_ledger_audit'));
+  assert.ok(sql.includes('ADD COLUMN IF NOT EXISTS approval_status'));
+  assert.ok(sql.includes('REFERENCES public.finance_ledger(id) ON DELETE CASCADE'));
+  assert.ok(sql.includes('CREATE INDEX IF NOT EXISTS'));
 });
 
 test('finance ledger API never creates or alters database schema at runtime', async () => {
