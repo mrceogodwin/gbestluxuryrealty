@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import {enforcePublicRateLimit} from '../../../lib/public-rate-limit';
 import {createHmac} from 'node:crypto';
 import {isIP} from 'node:net';
 import {getDatabasePool} from '../../../lib/db';
@@ -19,6 +20,8 @@ async function allowErrorReport(request){
 
 export async function POST(request) {
   try {
+    const rate=await enforcePublicRateLimit(request,{scope:'client-error-report',limit:20,windowMinutes:15});
+    if(!rate.allowed)return NextResponse.json({received:false,error:'Too many reports. Try again later.'},{status:429,headers:{'Retry-After':'900','Cache-Control':'no-store'}});
     if(request.headers.get('origin')!==new URL(request.url).origin)return NextResponse.json({received:false,error:'Invalid request origin'},{status:403});
     const contentLength = Number(request.headers.get('content-length') || 0);
     if (contentLength > MAX_BODY_BYTES) {
