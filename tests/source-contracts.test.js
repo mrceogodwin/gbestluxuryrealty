@@ -228,7 +228,7 @@ test('media library prevents deleting images still referenced by properties or h
   assert.match(api, /draft_content,'\{\}'::jsonb\)::text LIKE/);
   assert.match(api, /published_content,'\{\}'::jsonb\)::text LIKE/);
   assert.match(api, /status:409/);
-  assert.match(api, /Replace or remove that reference before deleting the file/);
+  assert.match(api, /Remove or replace that reference before deleting it/);
   assert.match(page, /Images still referenced by property listings or homepage content will be protected/);
 });
 
@@ -366,4 +366,35 @@ test('public client registration rejects missing as well as cross-origin Origin 
   const route = await source('app/api/client-registrations/route.js');
   assert.match(route, /req\.headers\.get\('origin'\)\s*!==\s*req\.nextUrl\.origin/);
   assert.match(route, /Invalid request origin/);
+});
+
+
+test('media uploads use expiring, single-use database intents and verify file signatures', async () => {
+  const api = await source('app/api/admin/media/route.js');
+  assert.match(api, /admin_media_upload_intents/);
+  assert.match(api, /randomBytes\(32\)/);
+  assert.match(api, /expires_at>now\(\)/);
+  assert.match(api, /consumed_at IS NULL/);
+  assert.match(api, /SET consumed_at=now\(\) WHERE token_hash=\$1 AND consumed_at IS NULL/);
+  assert.match(api, /validImageSignature\(signature,requestedType\)/);
+  assert.match(api, /The file contents do not match the selected image format/);
+  assert.match(api, /GetObjectCommand/);
+});
+
+test('company video uploads use expiring, single-use intents and verify container signatures', async () => {
+  const api = await source('app/api/admin/company-video/route.js');
+  assert.match(api, /company_video_upload_intents/);
+  assert.match(api, /randomBytes\(32\)/);
+  assert.match(api, /expires_at>now\(\)/);
+  assert.match(api, /consumed_at IS NULL/);
+  assert.match(api, /SET consumed_at=now\(\) WHERE token_hash=\$1 AND consumed_at IS NULL/);
+  assert.match(api, /validVideoSignature\(signature,requestedType\)/);
+  assert.match(api, /The file contents do not match the selected video format/);
+  assert.match(api, /GetObjectCommand/);
+});
+
+test('media deletion checks company video references as well as property and homepage references', async () => {
+  const api = await source('app/api/admin/media/route.js');
+  assert.match(api, /FROM public\.company_profile_video WHERE video_url=\$1/);
+  assert.match(api, /propertyUse\.rowCount\|\|homepageUse\.rowCount\|\|videoUse\.rowCount/);
 });
