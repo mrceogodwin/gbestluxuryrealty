@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
+import {createHmac} from 'node:crypto';
+import {isIP} from 'node:net';
 import { getDatabasePool } from '../../../lib/db';
 import { queueInspectionEmails, deliverInspectionEmails } from '../../../lib/inspection-email-outbox';
 import {getSchedule,slotIsAvailable,validClock} from '../../../lib/inspection-schedule';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 
+const RATE_WINDOW_MINUTES=15,IP_LIMIT=8,EMAIL_LIMIT=4;
+function rateKey(scope,value){const secret=process.env.ADMIN_SECRET||process.env.DATABASE_URL;if(!secret)throw new Error('Rate limiting is not configured.');return createHmac('sha256',secret).update(scope+':'+value).digest('hex');}
+async function consumeBookingLimit(pool,key,limit){
+ await pool.query("CREATE TABLE IF NOT EXISTS public.inspection_booking_rate_limits(attempt_key text PRIMARY KEY,attempts integer NOT NULL DEFAULT 0,window_started_at timestamptz NOT NULL DEFAULT now(),blocked_until timestamptz,updated_at timestamptz NOT NULL DEFAULT now())");
+ const q=await pool.query("INSERT INTO public.inspection_booking_rate_limits AS booking_limit(attempt_key,attempts,window_started_at,blocked_until,updated_at) VALUES($1,1,now(),NULL,now()) ON CONFLICT(attempt_key) DO UPDATE SET attempts=CASE WHEN booking_limit.window_started_at<now()-($3 * interval '1 minute') THEN 1 ELSE booking_limit.attempts+1 END,window_started_at=CASE WHEN booking_limit.window_started_at<now()-($3 * interval '1 minute') THEN now() ELSE booking_limit.window_started_at END,blocked_until=CASE WHEN (CASE WHEN booking_limit.window_started_at<now()-($3 * interval '1 minute') THEN 1 ELSE booking_limit.attempts+1 END)>$2 THEN now()+interval '15 minutes' ELSE NULL END,updated_at=now() RETURNING attempts,blocked_until",[key,limit,RATE_WINDOW_MINUTES]);
+ return Boolean(q.rows[0]?.blocked_until);
+}
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export async function POST(req){
  try{
@@ -18,6 +27,12 @@ export async function POST(req){
   // Demo cards are for presentation only and must never create real inspection records.
   if(/^GB-00[1-8]$/.test(pid))return NextResponse.json({error:'This is a sample property, not a live listing. Please choose a published property before requesting an inspection.'},{status:400});
   const pool=getDatabasePool();
+  const forwarded=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||'';
+  let ip=forwarded.split(',')[0]?.trim()||'unknown';
+  if(ip.startsWith('[')&&ip.endsWith(']'))ip=ip.slice(1,-1);
+  if(!isIP(ip))ip='unknown';
+  const ipKey=rateKey('inspection-ip',ip),emailKey=rateKey('inspection-email',email.toLowerCase());
+  if(await consumeBookingLimit(pool,ipKey,IP_LIMIT)||await consumeBookingLimit(pool,emailKey,EMAIL_LIMIT))return NextResponse.json({error:'Too many inspection requests. Please wait before trying again.'},{status:429});
   // Only clients whose manual bank transfer has been checked and approved
   // by G-BEST staff may request an inspection.
   const registrationTable=await pool.query("SELECT to_regclass('public.client_registrations') AS table_name");
