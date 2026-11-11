@@ -489,3 +489,46 @@ test('anonymous client error reports are rate limited before body processing', a
   assert.ok(route.indexOf('enforcePublicRateLimit') < route.indexOf('request.text()'));
   assert.match(route, /status:429/);
 });
+
+
+test('Finance Centre API is Super Admin-only and reads only the reviewed ledger schema', async () => {
+  const api = await source('app/api/admin/finance-ledger/route.js');
+  assert.match(api, /isAdminRequest\(req\)/);
+  assert.match(api, /to_regclass\('public\.finance_ledger'\)/);
+  assert.match(api, /to_regclass\('public\.finance_ledger_audit'\)/);
+  assert.match(api, /Cache-Control':'no-store/);
+  assert.match(api, /approval_status='approved'/);
+  assert.match(api, /GROUP BY currency/);
+  assert.doesNotMatch(api, /\b(?:CREATE|ALTER|DROP)\s+(?:TABLE|INDEX|COLUMN)\b/i);
+});
+
+test('Finance Centre creates pending entries and writes creation audit in one transaction', async () => {
+  const api = await source('app/api/admin/finance-ledger/route.js');
+  assert.match(api, /req\.headers\.get\('origin'\)!==req\.nextUrl\.origin/);
+  assert.match(api, /BEGIN/);
+  assert.match(api, /approval_status,recorded_by\) VALUES\([\s\S]*?'pending'/);
+  assert.match(api, /INSERT INTO public\.finance_ledger_audit/);
+  assert.match(api, /'created'/);
+  assert.match(api, /COMMIT/);
+  assert.match(api, /ROLLBACK/);
+  assert.match(api, /client\.release\(\)/);
+});
+
+test('Finance Centre approval is concurrency-safe and records reviewer decisions', async () => {
+  const api = await source('app/api/admin/finance-ledger/route.js');
+  assert.match(api, /SELECT approval_status FROM public\.finance_ledger WHERE id=\$1 FOR UPDATE/);
+  assert.match(api, /already reviewed/);
+  assert.match(api, /approved_by=\$3,approved_at=now\(\),approval_note=\$4/);
+  assert.match(api, /old_status,new_status,note/);
+  assert.match(api, /'reviewed'/);
+});
+
+test('Finance Centre UI separates operating ledger from client booking payments', async () => {
+  const page = await source('app/admin/super/finance/page.js');
+  assert.match(page, /never enter a booking payment here a second time/);
+  assert.match(page, /SAVE LEDGER ENTRY/);
+  assert.match(page, /PENDING APPROVAL/);
+  assert.match(page, /EXPORT CSV/);
+  assert.match(page, /TRANSACTION AUDIT/);
+  assert.match(page, /Monthly performance/);
+});
