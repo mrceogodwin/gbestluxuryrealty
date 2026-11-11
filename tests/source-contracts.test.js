@@ -413,3 +413,25 @@ test('public inspection booking rejects missing or cross-origin Origin headers',
   const route = await source('app/api/inspection-requests/route.js');
   assert.match(route, /req\.headers\.get\('origin'\)!==req\.nextUrl\.origin/);
 });
+
+ 
+test('public inspection booking applies hashed IP and email rate limits', async () => {
+  const route = await source('app/api/inspection-requests/route.js');
+  assert.match(route, /inspection_booking_rate_limits/);
+  assert.match(route, /createHmac\('sha256'/);
+  assert.match(route, /inspection-ip/);
+  assert.match(route, /inspection-email/);
+  assert.match(route, /IP_LIMIT=8,EMAIL_LIMIT=4/);
+  assert.match(route, /status:429/);
+  assert.doesNotMatch(route, /get\('x-forwarded-for'\)/i);
+});
+
+test('anonymous client error reporting is same-origin, size-limited and rate-limited', async () => {
+  const route = await source('app/api/client-errors/route.js');
+  assert.match(route, /request\.headers\.get\('origin'\)!==new URL\(request\.url\)\.origin/);
+  assert.match(route, /MAX_BODY_BYTES = 8 \* 1024/);
+  assert.match(route, /client_error_rate_limits/);
+  assert.match(route, /createHmac\('sha256'/);
+  assert.match(route, />30 THEN now\(\)\+interval '15 minutes'/);
+  assert.match(route, /status:429/);
+});
