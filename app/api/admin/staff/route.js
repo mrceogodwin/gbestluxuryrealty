@@ -56,10 +56,11 @@ export async function PATCH(req){
  const p=getDatabasePool(),client=await p.connect();
  try{
   await client.query('BEGIN');
-  const prior=await client.query('SELECT id,email,role,status FROM public.staff_accounts WHERE id=$1 FOR UPDATE',[id]);
+  const prior=await client.query('SELECT id,email,role,status,password_hash FROM public.staff_accounts WHERE id=$1 FOR UPDATE',[id]);
   if(!prior.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Staff account not found.'},{status:404});}
   const current=prior.rows[0];
   if(current.role==='super_admin'){await client.query('ROLLBACK');return NextResponse.json({error:'The master super-admin account is protected and cannot be changed here.'},{status:403});}
+  if(d.status==='invited'&&(current.status!=='invited'||current.password_hash)){await client.query('ROLLBACK');return NextResponse.json({error:'An accepted staff account cannot be changed back into an invitation. Suspend or revoke it instead.'},{status:409});}
   if(d.status==='active'&&current.status!=='active'){await client.query('ROLLBACK');return NextResponse.json({error:'Staff accounts can only become active by accepting a valid invitation and setting a password.'},{status:409});}
   if(d.status!==undefined&&d.status!==current.status){await client.query('UPDATE public.staff_accounts SET status=$2,updated_at=now() WHERE id=$1',[id,d.status]);if(['suspended','revoked'].includes(d.status)){await client.query('UPDATE public.staff_sessions SET revoked_at=now() WHERE staff_id=$1 AND revoked_at IS NULL',[id]);}await client.query("INSERT INTO public.staff_audit_events(actor_type,actor_email,action,target_type,target_id,details) VALUES('super_admin','master-admin','staff.status_changed','staff',$1,$2::jsonb)",[id,JSON.stringify({from:current.status,to:d.status,email:current.email})]);}
   if(d.role!==undefined&&d.role!==current.role){await client.query('UPDATE public.staff_accounts SET role=$2,updated_at=now() WHERE id=$1',[id,d.role]);await client.query("INSERT INTO public.staff_audit_events(actor_type,actor_email,action,target_type,target_id,details) VALUES('super_admin','master-admin','staff.role_changed','staff',$1,$2::jsonb)",[id,JSON.stringify({from:current.role,to:d.role,email:current.email})]);}
