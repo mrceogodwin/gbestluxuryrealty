@@ -3,7 +3,7 @@ import {getDatabasePool} from '../../../../lib/db';
 import {hashPassword,hashToken,STAFF_COOKIE,STAFF_SESSION_SECONDS,staffCookieOptions,newOpaqueToken} from '../../../../lib/staff-auth';
 export const runtime='nodejs';export const dynamic='force-dynamic';
 export async function POST(req){
- if(req.headers.get('origin')&&req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
+ if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
  let body;try{body=await req.json()}catch{return NextResponse.json({error:'Invalid request.'},{status:400})}
  const token=String(body?.token||''),password=String(body?.password||'');
  if(token.length<32||token.length>200||password.length<12||password.length>128)return NextResponse.json({error:'Use a valid invitation and a password of at least 12 characters.'},{status:400});
