@@ -560,3 +560,11 @@ test('accepted staff accounts cannot be converted back into unusable invitations
   assert.match(code, /d\.status==='invited'&&\(current\.status!=='invited'\|\|current\.password_hash\)/);
   assert.match(code, /An accepted staff account cannot be changed back into an invitation/);
 });
+
+
+test('Super Admin login passes rate-limit keys as a single PostgreSQL text-array parameter', async () => {
+  const route = await source('app/api/admin/session/route.js');
+  assert.match(route, /updated_at=now\(\)`,\[keys\]\);/);
+  assert.match(route, /attempt_key=ANY\(\$1::text\[\]\)/);
+  assert.doesNotMatch(route, /updated_at=now\(\)`,keys\);/);
+});
