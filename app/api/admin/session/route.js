@@ -51,7 +51,7 @@ export async function POST(req){
   await pool.query("INSERT INTO public.staff_audit_events(actor_type,actor_email,action,target_type,target_id,details) VALUES('super_admin','master-admin','admin.login','session',NULL,'{}'::jsonb)");
   const response=NextResponse.json({ok:true,expiresIn:options.maxAge});
   response.cookies.set(ADMIN_COOKIE,token,options);return response;
- }catch(e){console.error('Admin login',phase,e.code||e.message);return NextResponse.json({error:'Admin sign-in is temporarily unavailable.'},{status:500});}
+ }catch(e){console.error('Admin login',phase,{code:e.code||null,message:e.message||'Unknown database error',detail:e.detail||null,hint:e.hint||null});return NextResponse.json({error:'Admin sign-in is temporarily unavailable.'},{status:500});}
 }
 export async function DELETE(req){
  if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
