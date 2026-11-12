@@ -553,3 +553,10 @@ test('payment-review staff receive a minimal payment projection even when they a
   assert.match(page, /paymentReviewerView&&/);
   assert.match(page, /!paymentReviewerView&&/);
 });
+
+test('accepted staff accounts cannot be converted back into unusable invitations', async () => {
+  const code = await source('app/api/admin/staff/route.js');
+  assert.match(code, /SELECT id,email,role,status,password_hash FROM public\.staff_accounts WHERE id=\$1 FOR UPDATE/);
+  assert.match(code, /d\.status==='invited'&&\(current\.status!=='invited'\|\|current\.password_hash\)/);
+  assert.match(code, /An accepted staff account cannot be changed back into an invitation/);
+});
