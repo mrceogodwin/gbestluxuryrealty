@@ -567,5 +567,5 @@ test('Super Admin login uses scalar IP throttle parameters and identifies failin
   assert.ok(route.includes('attempt_key=$1'));
   assert.ok(route.includes('updated_at=now()`,[key]);'));
   assert.ok(!route.includes('attempt_key=ANY($1::text[])'));
-  assert.ok(route.includes("console.error('Admin login',phase,e.code||e.message)"));
+  assert.ok(route.includes("console.error('Admin login',phase,{code:e.code||null,message:e.message||'Unknown database error'"));
 });
