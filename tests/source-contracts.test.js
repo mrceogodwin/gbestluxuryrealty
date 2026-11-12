@@ -562,10 +562,10 @@ test('accepted staff accounts cannot be converted back into unusable invitations
 });
 
 
-test('Super Admin login uses scalar parameters for IP throttle queries and labels failing phases', async () => {
+test('Super Admin login uses scalar IP throttle parameters and identifies failing phase', async () => {
   const route = await source('app/api/admin/session/route.js');
-  assert.match(route, /attempt_key=\\$1/);
-  assert.match(route, /updated_at=now\\(\\)`,\\[key\\]\\);/);
-  assert.doesNotMatch(route, /attempt_key=ANY\\(\\$1::text\\[\\]\\)/);
-  assert.match(route, /console\\.error\\('Admin login',phase,e\\.code\\|\\|e\\.message\\)/);
+  assert.ok(route.includes('attempt_key=$1'));
+  assert.ok(route.includes('updated_at=now()`,[key]);'));
+  assert.ok(!route.includes('attempt_key=ANY($1::text[])'));
+  assert.ok(route.includes("console.error('Admin login',phase,e.code||e.message)"));
 });
