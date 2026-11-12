@@ -562,9 +562,10 @@ test('accepted staff accounts cannot be converted back into unusable invitations
 });
 
 
-test('Super Admin login passes rate-limit keys as a single PostgreSQL text-array parameter', async () => {
+test('Super Admin login uses scalar parameters for IP throttle queries and labels failing phases', async () => {
   const route = await source('app/api/admin/session/route.js');
-  assert.match(route, /updated_at=now\(\)`,\[keys\[0\]\]\);/);
-  assert.match(route, /attempt_key=ANY\(\$1::text\[\]\)/);
-  assert.doesNotMatch(route, /updated_at=now\(\)`,\[keys\]\);/);
+  assert.match(route, /attempt_key=\\$1/);
+  assert.match(route, /updated_at=now\\(\\)`,\\[key\\]\\);/);
+  assert.doesNotMatch(route, /attempt_key=ANY\\(\\$1::text\\[\\]\\)/);
+  assert.match(route, /console\\.error\\('Admin login',phase,e\\.code\\|\\|e\\.message\\)/);
 });
