@@ -755,7 +755,7 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 @media(prefers-reduced-motion:reduce){.footer-details-carousel-track{animation:none;overflow-x:auto}}
 .gbest-footer-ticker{overflow:hidden;width:calc(100% + 14vw);margin:34px -7vw 0;background:#173d2b;color:#d8f36b;border-top:1px solid #315b3b;border-bottom:1px solid #315b3b}
 .gbest-footer-ticker-track{width:max-content;display:flex;align-items:center;gap:28px;padding:17px 0;animation:gbestTicker 32s linear infinite}
-.gbest-footer-ticker-track span{font:800 10px 'DM Mono',monospace;letter-spacing:.16em;white-space:nowrap}.gbest-footer-ticker-track i{font-style:normal;color:#f7f3e8;font-size:16px}
+.gbest-footer-ticker-track span{font:800 10px 'DM Mono',monospace;letter-spacing:.16em;white-space:nowrap}.gbest-footer-ticker-track i{font-style:normal;color:#d8f36b;font-size:16px}
 @keyframes gbestTicker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @media(prefers-reduced-motion:reduce){.gbest-footer-ticker-track{animation:none}}
 .footer-trust-line{max-width:1300px;margin:auto;padding:20px 0;border-top:1px solid #c9c7b4;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font:700 9px 'DM Mono',monospace;letter-spacing:.1em;color:#607265}
@@ -771,7 +771,6 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 .social-video-screen{border:1px solid #49654e;background:#07170f;padding:12px;box-shadow:0 24px 65px #0005}
 .social-video-screen video,.social-video-screen iframe{display:block;width:100%;aspect-ratio:16/9;max-height:480px;background:#000;object-fit:contain;border:0}
 .social-video-empty{aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:24px;background:radial-gradient(circle at 50% 40%,#315b3b,#0a2116 72%);color:#fff8e9}
-.social-play-mark{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:#d8f36b;color:#173d2b;padding-left:4px;font-size:20px}
 .social-video-empty b{font-size:clamp(17px,2vw,24px);letter-spacing:.04em}.social-video-empty small{font-size:12px;line-height:1.6;color:#c9d9c8;max-width:340px}
 .social-video-caption{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 5px 4px;font:700 9px 'DM Mono',monospace;letter-spacing:.12em;color:#b9c9b6}
 .social-video-caption a{color:#d8f36b;text-decoration:none}
