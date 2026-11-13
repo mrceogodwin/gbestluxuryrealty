@@ -763,13 +763,11 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 .social-connect-section{padding:clamp(54px,7vw,84px) 7vw;background:#e9e4d2;color:#173d2b}
 .social-connect-heading{max-width:1100px;margin:0 auto 34px}.social-connect-heading h2{color:#173d2b}.social-connect-heading>p:last-child{color:#68766b}
 .social-connect-heading .eyebrow{color:#65833c!important}
-.social-platform-grid{max-width:1300px;margin:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.social-platform-card{min-height:245px;padding:24px;display:flex;flex-direction:column;align-items:flex-start;text-decoration:none;background:#173d2b;color:#fff8e9;transition:transform .2s,box-shadow .2s;box-shadow:0 12px 28px #173d2b14}
-.social-platform-card:hover{transform:translateY(-5px);box-shadow:0 20px 36px #173d2b25}
-.social-platform-1{background:#d8f36b;color:#173d2b}.social-platform-2{background:#315b3b}.social-platform-3{background:#f7f3e8;color:#173d2b}
-.social-platform-icon{width:46px;height:46px;display:grid;place-items:center;border:1px solid currentColor;border-radius:50%;font:800 17px 'DM Mono',monospace;letter-spacing:-.05em;margin-bottom:20px;background:#ffffff12}.social-platform-1 .social-platform-icon,.social-platform-3 .social-platform-icon{background:#173d2b0a}
-.social-platform-card small{font:700 9px 'DM Mono',monospace;letter-spacing:.14em;color:#d8f36b}.social-platform-1 small,.social-platform-3 small{color:#567936}
-.social-platform-card b{font-size:23px;line-height:1.1;margin:9px 0}.social-platform-card p{font-size:12px;line-height:1.7;opacity:.78;margin:0 0 20px}
-.social-platform-card strong{font:800 9px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;margin-top:auto;color:#d8f36b}.social-platform-1 strong,.social-platform-3 strong{color:#315b2c}
-@media(max-width:900px){.social-reels-inner{grid-template-columns:1fr}.social-platform-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:560px){.social-reels-section,.social-connect-section{padding-left:20px;padding-right:20px}.social-platform-grid{grid-template-columns:1fr}.social-platform-card{min-height:205px}.social-video-screen{padding:7px}}
+.social-platform-grid{max-width:520px;margin:34px auto 0;display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap}
+.social-platform-icon{width:58px;height:58px;min-width:58px;padding:0;display:grid;place-items:center;border:1.5px solid #173d2b;border-radius:50%;font:800 25px 'DM Mono',monospace;text-decoration:none;color:#173d2b;background:transparent;transition:transform .2s,background .2s,color .2s,box-shadow .2s}
+.social-platform-icon:hover{transform:translateY(-3px);background:#173d2b;color:#f7f3e8;box-shadow:0 8px 18px #173d2b20}
+.social-platform-1{background:#d8f36b;border-color:#d8f36b;color:#173d2b}.social-platform-1:hover{background:#173d2b;color:#d8f36b;border-color:#173d2b}
+.social-platform-2{background:#315b3b;border-color:#315b3b;color:#fff8e9}.social-platform-2:hover{background:#d8f36b;color:#173d2b;border-color:#d8f36b}
+.social-platform-3{background:#f7f3e8;border-color:#173d2b;color:#173d2b}
+@media(max-width:900px){.social-reels-inner{grid-template-columns:1fr}}
+@media(max-width:560px){.social-reels-section,.social-connect-section{padding-left:20px;padding-right:20px}.social-platform-grid{gap:14px}.social-platform-icon{width:52px;height:52px;min-width:52px;font-size:22px}.social-video-screen{padding:7px}}
