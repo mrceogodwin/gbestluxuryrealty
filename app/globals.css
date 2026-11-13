@@ -465,3 +465,62 @@ footer .brand{color:var(--ink)}footer .logo{background:var(--ink);color:var(--go
 @media(max-width:1000px){.market-widgets{grid-template-columns:1fr;gap:30px}.market-intro h2{font-size:64px}}
 @media(max-width:760px){.market-widgets{padding:58px 5%;gap:25px}.market-intro h2{font-size:clamp(42px,11vw,61px)}.market-grid a{min-height:118px;padding:12px}.market-grid a b{font-size:20px}.market-grid a small{font-size:8px}.booking{grid-template-columns:1fr;gap:32px;padding:65px 5%}.booking-copy{position:static}.booking-copy h2{font-size:clamp(50px,12vw,72px)}.formbox{padding:22px 17px}.two{grid-template-columns:1fr;gap:15px}}
 @media(max-width:420px){.market-grid a b{font-size:18px}.market-grid a small{max-width:130px}.booking-copy h2{font-size:clamp(42px,11vw,56px)}}
+
+
+/* Inspection desk — approved ivory / black reference (mobile-safe) */
+.formbox{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  background:#fffef8;
+  color:#171914;
+  border:2px solid #171914;
+  border-radius:0;
+  box-shadow:7px 7px 0 #171914;
+  padding:clamp(22px,3vw,38px);
+}
+.formbox form,
+.formbox form > label,
+.formbox .two,
+.formbox .two > label{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+}
+.formbox input:not([type=checkbox]),
+.formbox select,
+.formbox textarea{
+  box-sizing:border-box;
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  border:2px solid #171914;
+  border-radius:0;
+  background:#fffef8;
+  color:#171914;
+  padding:14px;
+  box-shadow:3px 3px 0 #c8c8bb;
+  font:500 14px/1.4 'Space Grotesk',sans-serif;
+}
+.formbox input[type=date]{
+  appearance:auto;
+  -webkit-appearance:auto;
+  min-height:56px;
+  overflow:hidden;
+}
+.formbox input::placeholder,
+.formbox textarea::placeholder{color:#a4a59f;opacity:1}
+.formbox label{min-width:0}
+.formbox .field-hint{overflow-wrap:anywhere}
+.formbox .consent{display:flex;align-items:flex-start;gap:10px}
+.formbox .consent input[type=checkbox]{flex:0 0 18px;width:18px;height:18px;margin:2px 0 0;accent-color:#075b35}
+.formbox h3{color:#171914}
+.formbox>.eyebrow{color:#315f3e!important}
+@media(max-width:760px){
+  .formbox{padding:22px 17px;box-shadow:5px 5px 0 #171914}
+  .formbox .two{grid-template-columns:minmax(0,1fr)}
+  .formbox input:not([type=checkbox]),
+  .formbox select,
+  .formbox textarea{font-size:14px;padding:14px}
+}
