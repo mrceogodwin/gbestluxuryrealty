@@ -15,7 +15,21 @@ const propertyImages=item=>[...new Set([item?.img,...(Array.isArray(item?.images
 const displayPropertyCode=value=>{const raw=String(value??'').trim();if(!raw||raw==='PREVIEW ONLY')return raw||'ID PENDING';if(/^GB-[A-Z0-9]{8}$/i.test(raw))return raw.toUpperCase();const compact=raw.replace(/[^a-z0-9]/gi,'').toUpperCase();return 'GB-'+compact.slice(-8).padStart(8,'0');};
 
 const TYPES=['All properties','Luxury home','Penthouse','Family home','Investment property','Land'];
-function socialVideoSource(value){const raw=String(value||'').trim();if(!raw)return {kind:'none',src:''};if(/\.(mp4|webm|ogg)(\?.*)?$/i.test(raw))return {kind:'file',src:raw};try{const u=new URL(raw);if(u.hostname==='youtu.be'){return {kind:'embed',src:'https://www.youtube-nocookie.com/embed/'+u.pathname.slice(1)}}if(u.hostname.includes('youtube.com')){const id=u.searchParams.get('v')||u.pathname.split('/').filter(Boolean).pop();if(id&&id!=='watch')return {kind:'embed',src:'https://www.youtube-nocookie.com/embed/'+id}}if(u.hostname.includes('vimeo.com')){const id=u.pathname.split('/').filter(Boolean).pop();if(id)return {kind:'embed',src:'https://player.vimeo.com/video/'+id}}if(u.hostname.includes('instagram.com')&&u.pathname.includes('/reel/'))return {kind:'embed',src:raw.replace(/\/$/,'')+'/embed'}if(u.hostname.includes('tiktok.com'))return {kind:'link',src:raw}}catch{}return {kind:'embed',src:raw}}
+function socialVideoSource(value){
+ const raw=String(value||'').trim();
+ if(!raw)return {kind:'none',src:''};
+ const lower=raw.toLowerCase().split('?')[0];
+ if(['.mp4','.webm','.ogg'].some(ext=>lower.endsWith(ext)))return {kind:'file',src:raw};
+ try{
+  const u=new URL(raw);
+  if(u.hostname==='youtu.be')return {kind:'embed',src:'https://www.youtube-nocookie.com/embed/'+u.pathname.slice(1)};
+  if(u.hostname.includes('youtube.com')){const id=u.searchParams.get('v')||u.pathname.split('/').filter(Boolean).pop();if(id&&id!=='watch')return {kind:'embed',src:'https://www.youtube-nocookie.com/embed/'+id};}
+  if(u.hostname.includes('vimeo.com')){const id=u.pathname.split('/').filter(Boolean).pop();if(id)return {kind:'embed',src:'https://player.vimeo.com/video/'+id};}
+  if(u.hostname.includes('instagram.com')&&u.pathname.includes('/reel/'))return {kind:'embed',src:raw.replace(/\/$/,'')+'/embed'};
+  if(u.hostname.includes('tiktok.com'))return {kind:'link',src:raw};
+ }catch{}
+ return {kind:'embed',src:raw};
+}
 function cmsValue(data,key,field,fallback){const section=data?.[key];if(!section||section.visible===false)return fallback;const value=section[field];return typeof value==='string'&&value.length?value:fallback;}
 
 function cmsBackground(data,key){const section=data?.[key];if(!section||section.visible===false)return {};const opacity=Math.max(0,Math.min(100,Number(section.overlayOpacity)||0))/100;const image=section.imageUrl?{backgroundImage:'linear-gradient(180deg,rgba(7,28,18,'+opacity+'),rgba(7,28,18,'+opacity+')),url('+section.imageUrl+')',backgroundSize:'cover',backgroundPosition:section.imagePosition||'center'}:{};return {...image,backgroundColor:section.backgroundColor||undefined,color:section.textColor||undefined,textAlign:section.alignment||undefined,fontFamily:section.fontFamily&&section.fontFamily!=='inherit'?section.fontFamily:undefined,padding:section.padding!==undefined?Math.max(0,Math.min(300,Number(section.padding)||0))+'px 0':undefined,'--cms-accent':section.accentColor||undefined,'--cms-overlay':String(opacity)};}
