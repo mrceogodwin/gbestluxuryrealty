@@ -1165,3 +1165,12 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .property-orbit-placement .footer-property-orbit-item{width:150px;flex-basis:150px}
  .property-orbit-placement .footer-property-orbit-image{width:132px;height:132px}
 }
+
+
+/* Social spotlight: restore the warm G-BEST editorial palette */
+.social-reels-section{background:linear-gradient(125deg,#f2efe3 0%,#e4ecdf 52%,#d3e5d7 100%)!important;color:#173c2a;border-top:1px solid #c8d7c8;border-bottom:1px solid #c8d7c8}
+.social-reels-section .social-reels-heading h2{color:#173c2a}
+.social-reels-section .social-reels-heading>p:last-child{color:#53685a}
+.social-reels-section .social-reels-heading .eyebrow{color:#6d8b42!important}
+.social-reels-section .social-reel-controls button{background:#d8f36b;border-color:#a8c64d;color:#173c2a}
+.social-reels-section:before{color:#173c2a;opacity:.035}
