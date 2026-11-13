@@ -1150,3 +1150,18 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .property-orbit-placement .footer-property-orbit-item{width:136px;flex-basis:136px}
  .property-orbit-placement .footer-property-orbit-image{width:120px;height:120px}
 }
+
+
+/* Independent transparent property orbit, positioned directly below the hero proof strip */
+.property-orbit-placement{background:transparent!important;color:#f7f3e8;padding:22px 5vw 28px;overflow:hidden}
+.property-orbit-placement .footer-property-orbit{margin:0 auto;padding:0;background:transparent!important}
+.property-orbit-placement .footer-property-orbit-window,
+.property-orbit-placement .footer-property-orbit-track,
+.property-orbit-placement .footer-property-orbit-item,
+.property-orbit-placement .footer-property-orbit-image{background:transparent!important}
+.property-orbit-placement .footer-property-orbit-track{animation-duration:64s}
+@media(max-width:700px){
+ .property-orbit-placement{padding:18px 4vw 24px}
+ .property-orbit-placement .footer-property-orbit-item{width:150px;flex-basis:150px}
+ .property-orbit-placement .footer-property-orbit-image{width:132px;height:132px}
+}
