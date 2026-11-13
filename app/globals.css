@@ -406,3 +406,26 @@ footer .brand{color:var(--ink)}footer .logo{background:var(--ink);color:var(--go
 @media(max-width:650px){.availability-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .legal-change-summary{margin:0;padding:10px 12px;border-left:3px solid #c5a24a;background:#f7f3e8;color:#304537;font-size:11px;line-height:1.6}.legal-published-meta{margin:0;color:#68786e;font-size:10px;line-height:1.6}
+
+
+/* Social spotlight — link-first presentation, never a video player */
+.social-spotlight{padding:clamp(54px,7vw,96px) 6.5%;background:#f0f1e8;border-top:1px solid #d5dccf;border-bottom:1px solid #d5dccf}
+.social-spotlight-head{max-width:1440px;margin:0 auto 30px}
+.social-spotlight-head h2{max-width:850px;margin:0;color:#123c2b;font:900 clamp(48px,7.5vw,92px)/.88 'Archivo Black',sans-serif;letter-spacing:-.075em;text-transform:uppercase}
+.social-spotlight-controls{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-top:26px}
+.social-spotlight-controls>span{font:600 11px 'DM Mono',monospace;letter-spacing:.16em;color:#8aa044}
+.social-spotlight-controls>span i{font-style:normal;color:#687568;margin:0 9px}
+.social-spotlight-controls>div{display:flex;gap:10px}
+.social-spotlight-controls button{width:54px;height:54px;border:1px solid #d7e0b4;background:#e5edb6;color:#315a3e;font-size:27px;line-height:1}
+.social-spotlight-controls button:disabled{opacity:.82;cursor:default}
+.social-spotlight-card{max-width:1440px;margin:0 auto;background:#07120e;color:#f5f1e6;border:1px solid #294535;padding:18px;box-shadow:0 18px 38px #102d1d1c}
+.social-spotlight-card-top,.social-spotlight-card-bottom{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;font:600 10px 'DM Mono',monospace;letter-spacing:.13em;color:#d6e96c}
+.social-spotlight-card-top{padding:5px 5px 17px;border-bottom:1px solid #294535}
+.social-spotlight-link{min-height:250px;display:grid;place-items:center;padding:28px;border:1px solid #294535;margin:0}
+.social-spotlight-link>a{display:flex;align-items:center;justify-content:center;gap:16px;color:#f5f1e6;text-align:center;font:700 clamp(20px,3vw,32px)/1.15 'DM Mono',monospace;letter-spacing:.04em;text-decoration:none;max-width:100%;overflow-wrap:anywhere}
+.social-spotlight-link>a:hover{color:#d6e96c}
+.social-spotlight-link-icon{width:54px;height:54px;flex:0 0 54px;display:grid;place-items:center;border:1px solid #d6e96c;border-radius:50%;color:#d6e96c;font-size:28px}
+.social-spotlight-empty{font:600 11px 'DM Mono',monospace;letter-spacing:.15em;color:#aebbb0}
+.social-spotlight-card-bottom{padding:17px 5px 3px;border-top:1px solid #294535;color:#aab8ad}
+.social-spotlight-card-bottom a{color:#d6e96c}
+@media(max-width:680px){.social-spotlight{padding:52px 5%}.social-spotlight-head h2{font-size:clamp(43px,12vw,64px);line-height:.9}.social-spotlight-controls{margin-top:22px}.social-spotlight-controls button{width:46px;height:46px}.social-spotlight-card{padding:12px}.social-spotlight-card-top,.social-spotlight-card-bottom{font-size:8px;letter-spacing:.08em}.social-spotlight-link{min-height:190px;padding:18px}.social-spotlight-link>a{font-size:18px;gap:11px}.social-spotlight-link-icon{width:42px;height:42px;flex-basis:42px;font-size:22px}}
