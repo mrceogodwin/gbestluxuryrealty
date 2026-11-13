@@ -1133,7 +1133,7 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 
 
 /* Circular property rail relocated beneath the hero/trust strip, before listings */
-.property-orbit-placement{position:relative;z-index:2;background:transparent!important;color:#173c2a;padding:18px 0 28px;margin:0;overflow:hidden}
+.property-orbit-placement{position:relative;z-index:2;background:linear-gradient(115deg,#e9eddf 0%,#dce9d9 48%,#c9dfd0 100%)!important;color:#173c2a;padding:18px 0 28px;margin:0;overflow:hidden}
 .property-orbit-placement .footer-property-orbit{max-width:1380px;margin:0 auto;padding:0 5vw;background:transparent!important}
 .property-orbit-placement .footer-property-orbit-window{background:transparent!important;mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
 .property-orbit-placement .footer-property-orbit-track{gap:clamp(16px,2.6vw,34px);padding:4px 8px 12px;animation-duration:52s}
