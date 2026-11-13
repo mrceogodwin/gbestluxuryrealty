@@ -1067,3 +1067,51 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .formbox .submit{min-height:44px}
 }
 @media(max-width:420px){.formbox .two{grid-template-columns:1fr}.formbox h3{max-width:90%}}
+
+
+/* Premium compact inspection booking panel */
+.booking{gap:5%;align-items:start}
+.formbox{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  padding:clamp(22px,3vw,34px);
+  border:1px solid rgba(117,190,139,.42);
+  border-radius:3px;
+  color:#f5f7ef;
+  background:
+    radial-gradient(ellipse at 88% 4%,rgba(34,190,91,.22),transparent 42%),
+    linear-gradient(145deg,#07110c 0%,#0b2618 48%,#031009 100%);
+  box-shadow:0 24px 55px rgba(0,0,0,.24),0 7px 0 rgba(3,26,14,.18),inset 0 1px 0 rgba(255,255,255,.08);
+}
+.formbox:before{content:"";position:absolute;inset:9px;border:1px solid rgba(160,224,176,.12);pointer-events:none;z-index:-1}
+.formbox .eyebrow.dark{color:#b6ee78}
+.formbox h3{font-size:clamp(28px,3vw,36px);color:#f7f5e9;margin-bottom:6px}
+.formbox .form-intro{color:#b8c8bc;margin:0 0 16px}
+.formbox form{gap:12px}
+.formbox label{gap:6px;color:#dce9df;font-size:10px;letter-spacing:.5px}
+.formbox input:not([type=checkbox]),.formbox select,.formbox textarea{
+  min-height:43px;padding:10px 12px;border:1px solid rgba(190,220,197,.3);
+  background:rgba(247,250,244,.97);color:#15251b;border-radius:2px;font-size:12px;
+  box-shadow:0 3px 0 rgba(0,0,0,.18);outline-color:#8be65a
+}
+.formbox textarea{min-height:76px;resize:vertical}
+.formbox .field-hint{font-size:9px;line-height:1.45;color:#aabeb0}
+.formbox .consent{color:#c4d2c8;font-size:10px}
+.formbox .consent input{accent-color:#8be65a}
+.formbox .submit{background:linear-gradient(100deg,#a8ed55,#4cce56);color:#07160d;padding:14px;border-radius:2px;box-shadow:0 5px 0 #1d7139;font-size:11px}
+.formbox .fine{color:#aabeb0;font-size:9px}
+.formbox .status{background:rgba(143,220,145,.14);color:#d8f7d8;border:1px solid rgba(143,220,145,.3)}
+@media(max-width:680px){
+  .booking{grid-template-columns:1fr;gap:22px;padding:48px 4%}
+  .booking-copy{position:static}
+  .booking-copy h2{font-size:clamp(38px,10vw,54px)}
+  .formbox{padding:20px 16px;margin:0 2px;border-radius:3px}
+  .formbox:before{inset:6px}
+  .formbox form{gap:11px}
+  .formbox label{font-size:9px}
+  .formbox input:not([type=checkbox]),.formbox select,.formbox textarea{min-height:42px;padding:10px;font-size:12px}
+  .formbox .two{grid-template-columns:1fr;gap:11px}
+  .formbox h3{font-size:30px}
+  .form-intro{margin-bottom:12px}
+}
