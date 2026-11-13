@@ -910,3 +910,33 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 .property-collection-track-large .collection-property-copy p,.property-collection-track-large .collection-property-copy>button{color:#d8f36b;border-color:#315b3b}
 @media(max-width:680px){.property-collection{padding:22px 5% 30px}.property-collection-heading{align-items:flex-end;gap:10px}.property-collection-heading h2{font-size:27px}.property-collection-heading p{font-size:10px;max-width:280px}.property-collection-controls button{width:36px;height:36px}.property-collection-track{grid-auto-columns:calc((100% - 20px)/3);gap:10px}.property-collection-track-large{grid-auto-columns:calc((100% - 10px)/2);gap:10px}.collection-property-image{height:100px}.collection-property-copy{padding:10px}.collection-property-copy h3{font-size:12px}.collection-property-copy>small{font-size:7px}.collection-property-copy p{font-size:9px}.property-collection-track-large .collection-property-image{height:150px}.property-collection-premium{margin:14px 3% 25px;padding:23px 3% 20px}}
 @media(prefers-reduced-motion:reduce){.collection-property-image img{transition:none}}
+
+
+/* G-BEST compact editorial benefit tiles — sits directly before inspection */
+.marketing-experience{padding:clamp(30px,4vw,48px) 5% clamp(28px,3.5vw,42px)!important}
+.marketing-experience .marketing-section-heading{max-width:900px;margin:0 auto 18px!important}
+.marketing-experience .marketing-section-heading .eyebrow{font-size:8px;letter-spacing:.15em}
+.marketing-experience .marketing-section-heading h2{font-size:clamp(27px,3.6vw,42px)!important;line-height:.98!important;max-width:720px;margin:10px 0 12px!important}
+.marketing-experience .marketing-section-heading>p:not(.eyebrow){font-size:clamp(13px,1.25vw,16px)!important;line-height:1.5!important;max-width:660px}
+.marketing-benefit-grid{max-width:1100px!important;margin:18px auto 0!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:9px!important}
+.marketing-benefit-grid article{position:relative;min-height:128px!important;padding:14px 14px 13px!important;border-radius:2px!important;border:1px solid #ffffff30;overflow:hidden}
+.marketing-benefit-grid article:after{content:"";position:absolute;right:-17px;bottom:-23px;width:64px;height:64px;border:1px solid currentColor;border-radius:50%;opacity:.14}
+.marketing-benefit-grid span{display:block;font:800 8px 'DM Mono',monospace!important;letter-spacing:.12em}
+.marketing-benefit-grid h3{font-size:clamp(14px,1.35vw,18px)!important;line-height:1.12!important;margin:12px 0 6px!important}
+.marketing-benefit-grid p{font-size:10px!important;line-height:1.45!important;margin:0!important;max-width:300px}
+.marketing-benefit-grid article:nth-child(1){background:#f3f0e4;color:#173d2b;border-top:3px solid #d8f36b}
+.marketing-benefit-grid article:nth-child(2){background:#d8f36b;color:#173d2b;border-top:3px solid #173d2b}
+.marketing-benefit-grid article:nth-child(3){background:#315b3b;color:#fff9e9;border-top:3px solid #d8f36b}
+.marketing-benefit-grid article:nth-child(4){background:#101c16;color:#fff9e9;border-top:3px solid #d8f36b}
+.marketing-benefit-grid article:nth-child(3) span,.marketing-benefit-grid article:nth-child(4) span{color:#d8f36b}
+@media(max-width:680px){
+ .marketing-experience{padding:28px 20px 30px!important}
+ .marketing-experience .marketing-section-heading{margin-bottom:14px!important}
+ .marketing-experience .marketing-section-heading h2{font-size:clamp(26px,7vw,34px)!important;max-width:440px}
+ .marketing-experience .marketing-section-heading>p:not(.eyebrow){font-size:13px!important;line-height:1.45!important}
+ .marketing-benefit-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin-top:14px!important}
+ .marketing-benefit-grid article{min-height:116px!important;padding:12px 11px 11px!important}
+ .marketing-benefit-grid h3{font-size:15px!important;margin:10px 0 5px!important}
+ .marketing-benefit-grid p{font-size:9px!important;line-height:1.4!important}
+}
+@media(prefers-reduced-motion:reduce){.marketing-benefit-grid article:after{display:none}}
