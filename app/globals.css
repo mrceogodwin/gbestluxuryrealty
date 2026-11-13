@@ -1115,3 +1115,18 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   .formbox h3{font-size:30px}
   .form-intro{margin-bottom:12px}
 }
+
+
+/* Social spotlight: cleaner heading and unmistakable G-BEST green controls */
+.social-reels-heading>p:not(.eyebrow){display:none!important}
+.social-reel-controls button{
+  background:#d8f36b!important;color:#073b24!important;
+  border:1px solid #d8f36b!important;
+  box-shadow:0 4px 0 #397c3e,0 8px 18px rgba(0,0,0,.24);
+  font-weight:800;
+}
+.social-reel-controls button:hover:not(:disabled){
+  background:#a9e94e!important;color:#031b10!important;
+  border-color:#a9e94e!important;transform:translateY(-1px)
+}
+.social-reel-controls button:disabled{opacity:.42;box-shadow:none}
