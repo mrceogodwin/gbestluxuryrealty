@@ -811,25 +811,23 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 @media(max-width:680px){.market-ticker{padding:13px 0}.market-ticker-heading{padding:0 20px;gap:7px 10px}.market-ticker-heading>b{font-size:12px}.market-ticker-heading>small{flex-basis:100%}.market-ticker-item{width:245px;min-height:108px;padding:12px 14px}.market-ticker-item strong{font-size:16px}}
 
 /* One-line live locations rail, sourced only from published property addresses */
-.posted-locations{margin-top:34px;border-top:1px solid #cbd8ca;border-bottom:1px solid #cbd8ca;padding:13px 0 14px;overflow:hidden}
-.posted-locations-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 10px;color:#315b3b;font:800 8px 'DM Mono',monospace;letter-spacing:.14em}
+.posted-locations{margin-top:34px;border-top:1px solid #cbd8ca;border-bottom:1px solid #cbd8ca;padding:12px 0 13px;overflow:hidden}
+.posted-locations-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 9px;color:#315b3b;font:800 8px 'DM Mono',monospace;letter-spacing:.14em}
+.posted-locations-heading-actions{display:flex;align-items:center;gap:12px}
 .posted-locations-top b{color:#748276;font-size:8px}
-.posted-locations-window{width:100%;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 2%,#000 98%,transparent)}
-.posted-locations-track{display:flex;align-items:center;gap:9px;width:max-content;animation:postedLocationsMove 48s linear infinite}
-.posted-locations:hover .posted-locations-track{animation-play-state:paused}
-.posted-locations-track button{display:flex;align-items:center;gap:10px;min-height:48px;padding:9px 14px;background:#f8f8f0;border:1px solid #cbd8ca;border-bottom:3px solid #174a32;color:#173d2b;white-space:nowrap;text-align:left;cursor:pointer}
-.posted-locations-track button:nth-child(4n+2){background:#d8f36b;border-color:#d8f36b;color:#173d2b}
-.posted-locations-track button:nth-child(4n+3){background:#173d2b;border-color:#315b3b;color:#fff9e9}
-.posted-locations-track button:nth-child(4n){background:#050706;border-color:#315b3b;color:#fff9e9}
-.posted-location-index{font:800 8px 'DM Mono',monospace;color:#c72f35}
-.posted-locations-track strong{font:800 11px Inter,Arial,sans-serif;letter-spacing:.01em}
-.posted-locations-track small{font:800 7px 'DM Mono',monospace;letter-spacing:.08em;opacity:.7}
-.posted-locations-track i{font-style:normal;color:#d8f36b}
-.posted-locations-empty{padding:13px 14px;background:#f8f8f0;border-left:3px solid #d8f36b;color:#657468;font:600 10px 'DM Mono',monospace;letter-spacing:.04em}
-@keyframes postedLocationsMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-@media(prefers-reduced-motion:reduce){.posted-locations-track{animation:none;overflow-x:auto}}
-@media(max-width:680px){.posted-locations{margin-top:25px}.posted-locations-top{padding-left:2px;padding-right:2px}.posted-locations-track button{min-height:43px;padding:8px 11px;gap:8px}.posted-locations-track strong{font-size:10px}.posted-locations-track small{font-size:7px}}
-
+.posted-locations-controls{display:flex;gap:5px}
+.posted-locations-controls button{width:25px;height:25px;border:1px solid #315b3b;background:#173d2b;color:#d8f36b;font-size:13px;line-height:1;cursor:pointer}
+.posted-locations-window{width:100%;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.posted-locations-window::-webkit-scrollbar{display:none}
+.posted-locations-track{display:flex;align-items:center;gap:7px;width:max-content}
+.posted-locations-track button{display:flex;align-items:center;gap:8px;min-height:36px;padding:6px 10px;background:#f8f8f0;border:1px solid #cbd8ca;border-bottom:2px solid #174a32;color:#173d2b;white-space:nowrap;text-align:left;cursor:pointer;scroll-snap-align:start}
+.posted-locations-track button:nth-child(3n+2){background:#d8f36b;border-color:#d8f36b;color:#173d2b}
+.posted-locations-track button:nth-child(3n){background:#173d2b;border-color:#315b3b;color:#fff9e9}
+.posted-location-index{font:800 7px 'DM Mono',monospace;color:#c72f35}
+.posted-locations-track strong{font:800 9px Inter,Arial,sans-serif;letter-spacing:.01em}
+.posted-locations-track small{font:800 6px 'DM Mono',monospace;letter-spacing:.06em;opacity:.7}
+.posted-locations-empty{padding:11px 12px;background:#f8f8f0;border-left:3px solid #d8f36b;color:#657468;font:600 9px 'DM Mono',monospace;letter-spacing:.04em}
+@media(max-width:680px){.posted-locations{margin-top:22px}.posted-locations-top{padding-left:2px;padding-right:2px}.posted-locations-track button{min-height:33px;padding:5px 8px;gap:7px}.posted-locations-track strong{font-size:8px}.posted-locations-track small{font-size:6px}.posted-locations-controls button{width:23px;height:23px}}
 /* G-BEST three flagship property collections */
 .property-collections-hub{background:#f3f0e5;padding:clamp(38px,5vw,68px) 0 12px;overflow:hidden}
 .property-collection{padding:24px 5% 38px;max-width:1600px;margin:0 auto}
