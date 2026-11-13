@@ -1016,3 +1016,54 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 .social-video-caption{border-top:1px solid #27362b;margin-top:10px;padding:14px 3px 2px;color:#aab8ad}
 .social-video-caption a{color:#d8f36b}
 @media(max-width:760px){.social-reels-section{padding:44px 5vw 50px}.social-reels-inner{grid-template-columns:1fr;gap:22px}.social-reels-heading h2{font-size:clamp(38px,10vw,54px);max-width:520px}.social-reels-heading>p:last-child{font-size:14px}.social-reel-controls{margin-top:18px}.social-reel-controls button{width:40px;height:40px}.social-video-screen{padding:8px}.social-video-topline{font-size:8px}.social-video-caption{font-size:8px}}
+
+
+/* G-BEST inspection desk — compact, dimensional dark-green flagship treatment */
+.booking{padding-top:clamp(42px,5vw,68px);padding-bottom:clamp(48px,6vw,76px);gap:clamp(22px,4vw,54px);align-items:start}
+.booking-copy{top:24px}
+.booking-copy h2{font-size:clamp(38px,4.5vw,60px);line-height:.96}
+.booking-copy>p:not(.eyebrow){font-size:12px;line-height:1.7;margin:16px 0}
+.booking-step{padding:12px 0}
+.booking-step>b{font-size:21px}
+.formbox{position:relative;isolation:isolate;overflow:hidden;padding:clamp(20px,2.5vw,30px);border:1px solid #55735d;border-radius:3px;background:radial-gradient(ellipse at 88% 0%,#24583b 0%,transparent 43%),linear-gradient(145deg,#07130d 0%,#102b1d 48%,#07140d 100%);color:#f5f2e7;box-shadow:0 22px 55px #07170f35, inset 0 1px 0 #ffffff22, inset 0 -1px 0 #d8f36b22;transform:translateZ(0)}
+.formbox:before{content:"";position:absolute;inset:8px;border:1px solid #d8f36b24;pointer-events:none;z-index:-1}
+.formbox:after{content:"G-BEST / INSPECTION DESK";position:absolute;right:20px;top:20px;color:#d8f36b;font:700 8px 'DM Mono',monospace;letter-spacing:.16em;opacity:.72;pointer-events:none}
+.formbox>.eyebrow,.formbox .eyebrow.dark{color:#d8f36b!important}
+.formbox h3{font-size:clamp(27px,3vw,36px);line-height:1;color:#fff9e9;margin:0 0 7px;max-width:78%}
+.form-intro{font-size:11px;line-height:1.55;color:#b8c8bb;margin:0 0 16px}
+.formbox form{gap:12px}
+.formbox label{gap:6px;color:#e8efdf;font-size:9px;letter-spacing:.035em}
+.formbox input:not([type=checkbox]),.formbox select,.formbox textarea{box-sizing:border-box;width:100%;min-width:0;border:1px solid #718776;background:linear-gradient(180deg,#f9f8ef,#e9eee4);color:#14251a;padding:11px 12px;font-size:12px;border-radius:2px;box-shadow:0 3px 0 #020a06, inset 0 1px 0 #fff}
+.formbox input:not([type=checkbox]),.formbox select{min-height:43px}
+.formbox textarea{min-height:76px}
+.formbox input::placeholder,.formbox textarea::placeholder{color:#879187}
+.formbox input:focus,.formbox select:focus,.formbox textarea:focus{outline:2px solid #d8f36b;outline-offset:1px;border-color:#d8f36b}
+.formbox .field-hint,.formbox .fine{color:#aebeb1;font-size:9px;line-height:1.45}
+.formbox .two{gap:10px}
+.formbox .consent{color:#c7d4c9;font-size:10px;line-height:1.45}
+.formbox .consent input{accent-color:#d8f36b}
+.formbox .submit{min-height:46px;padding:12px 16px;background:linear-gradient(110deg,#d8f36b,#a9ce4b);color:#102419;border:1px solid #e8ff9a;font-size:10px;box-shadow:0 5px 0 #405c27,0 10px 22px #0005;transition:transform .18s,box-shadow .18s}
+.formbox .submit:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 7px 0 #405c27,0 14px 25px #0006}
+.formbox .status{background:#d8f36b;color:#102419;border-radius:2px}
+@media(max-width:760px){
+ .booking{grid-template-columns:1fr;gap:18px;padding:38px 5vw 48px}
+ .booking-copy{position:static}
+ .booking-copy h2{font-size:clamp(37px,10vw,48px);max-width:540px}
+ .booking-copy>p:not(.eyebrow){font-size:12px;line-height:1.65;margin:12px 0}
+ .booking-step{padding:9px 0}
+ .booking-step>b{font-size:19px}
+ .formbox{padding:22px 18px 20px;border-radius:3px;box-shadow:0 16px 38px #07170f42,inset 0 1px 0 #ffffff22}
+ .formbox:before{inset:6px}
+ .formbox:after{right:15px;top:17px;font-size:7px}
+ .formbox h3{font-size:29px;max-width:82%}
+ .form-intro{margin-bottom:13px}
+ .formbox form{gap:11px}
+ .formbox label{gap:5px;font-size:9px}
+ .formbox input:not([type=checkbox]),.formbox select,.formbox textarea{padding:10px 11px;font-size:12px;min-height:42px}
+ .formbox textarea{min-height:68px}
+ .formbox .two{grid-template-columns:1fr 1fr;gap:9px}
+ .formbox .field-hint{font-size:8px}
+ .formbox .consent{font-size:9px}
+ .formbox .submit{min-height:44px}
+}
+@media(max-width:420px){.formbox .two{grid-template-columns:1fr}.formbox h3{max-width:90%}}
