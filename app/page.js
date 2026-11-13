@@ -28,6 +28,7 @@ const visibleProperties=filtered.slice(0,visibleCount);
 useEffect(()=>{SetVisibleCount(6)},[type,query,savedOnly]);
 function toggleSaved(x){const id=String(x.id);SetSaved(old=>old.includes(id)?old.filter(v=>v!==id):[...old,id])}
 async function send(e){e.preventDefault();SB(true);SS('');let f=e.currentTarget,d=Object.fromEntries(new FormData(f));d.propertyId=String(p.id);d.acceptedDocuments=acceptedDocs;d.preferredDate=inspectionDate;d.preferredTime=selectedTime;try{let r=await fetch('/api/inspection-requests',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(d)}),j=await r.json();if(!r.ok)throw Error(j.error||'Could not submit request');SS('Request received, pending admin approval. This is not a confirmed appointment.');f.reset();SetAcceptedDocs([]);SetInspectionDate('');SetSelectedTime('');SetPropertyCodeInput('')}catch(e){SS(e.message)}finally{SB(false)}}
+function propertyDisplayCode(value){const raw=String(value??'').trim();if(/^gb-00[1-8]$/i.test(raw))return 'PREVIEW ONLY';if(/^\\d+$/.test(raw))return 'GB-'+raw.padStart(8,'0');const compact=raw.replace(/[^a-z0-9]/gi,'').toUpperCase();return 'GB-'+compact.slice(-8).padStart(8,'0');}
 function choose(x){SP(x);SetPropertyCodeInput(propertyDisplayCode(x.propertyCode||x.property_code||x.id));document.getElementById('inspection').scrollIntoView({behavior:'smooth'})}
 function openProperty(x){SD(x);SetGalleryIndex(0);SetPropertyVideoPlaying(false)}
 const detailImages=detail?(Array.isArray(detail.images)&&detail.images.length?detail.images:[detail.img].filter(Boolean)):[];
