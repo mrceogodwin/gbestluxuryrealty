@@ -716,7 +716,34 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 .marketing-intro .eyebrow{color:#d8f36b!important}.marketing-intro h2{color:#fff9e9;font-size:clamp(38px,6vw,76px);line-height:.96;letter-spacing:-.05em;max-width:850px;margin:18px 0}
 .marketing-intro-inner>p:not(.eyebrow){max-width:720px;line-height:1.85;color:#d5e1d5;font-size:16px}
 .marketing-intro-actions{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:30px}.marketing-intro-actions .goldbtn{background:#d8f36b!important;color:#143a28!important;border:0;border-radius:3px;padding:16px 23px;font-weight:800}.marketing-intro-actions span{font:700 10px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#d8f36b}
-.marketing-cards-section,.marketing-experience{padding:clamp(58px,7vw,96px) 7vw;background:#f6f4eb;color:#183526}
+.marketing-cards-section,/* Compact flagship G-BEST experience carousel */
+.marketing-cards-section{padding:clamp(30px,4vw,54px) 4% clamp(28px,4vw,48px);background:#f3f0e4}
+.marketing-cards-section .marketing-section-heading{margin-bottom:20px}
+.marketing-cards-section .marketing-section-heading h2{font-size:clamp(30px,4.2vw,52px);max-width:760px;line-height:.98}
+.marketing-cards-section .marketing-section-heading>p:not(.eyebrow){max-width:680px;font-size:clamp(14px,1.35vw,18px);line-height:1.55}
+.marketing-carousel-meta{max-width:1300px;margin:18px auto 10px;display:flex;justify-content:space-between;gap:12px;color:#315b3b;font:800 8px 'DM Mono',monospace;letter-spacing:.12em}
+.marketing-card-track{max-width:1300px;margin:0 auto;display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;scroll-padding-inline:2px;padding:4px 2px 14px;scrollbar-width:thin;scrollbar-color:#a8bd8a transparent}
+.marketing-card-track::-webkit-scrollbar{height:4px}.marketing-card-track::-webkit-scrollbar-thumb{background:#a8bd8a;border-radius:10px}
+.marketing-image-card{flex:0 0 clamp(220px,25%,300px);min-width:0;scroll-snap-align:start;background:#173d2b;border:1px solid #c7d4c3;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 26px #173d2b16}
+.marketing-card-image{height:clamp(112px,13vw,155px);background:#dce7d6;overflow:hidden}
+.marketing-card-image img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s}
+.marketing-image-card:hover .marketing-card-image img{transform:scale(1.045)}
+.marketing-image-placeholder{height:100%;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;padding:14px;background:linear-gradient(135deg,#173d2b,#315d3d 60%,#d8f36b);color:#fff9e9}
+.marketing-image-placeholder span,.marketing-image-placeholder small{font:700 8px 'DM Mono',monospace;letter-spacing:.1em}
+.marketing-image-placeholder b{font-size:clamp(22px,2.5vw,31px);line-height:.9;letter-spacing:-.04em}
+.marketing-card-copy{padding:15px 16px 16px;display:flex;flex:1;min-height:150px;flex-direction:column;align-items:flex-start;background:#173d2b;color:#fff9e9}
+.marketing-image-card:nth-child(2) .marketing-card-copy{background:#d8f36b;color:#173d2b}
+.marketing-image-card:nth-child(3) .marketing-card-copy{background:#315b3b;color:#fff9e9}
+.marketing-image-card:nth-child(4) .marketing-card-copy{background:#e9e4d2;color:#173d2b}
+.marketing-image-card:nth-child(5n) .marketing-card-copy{background:#101c16;color:#fff9e9}
+.marketing-card-copy>small{font:700 8px 'DM Mono',monospace;letter-spacing:.12em;color:#d8f36b}
+.marketing-image-card:nth-child(2) .marketing-card-copy>small,.marketing-image-card:nth-child(4) .marketing-card-copy>small{color:#4d7131}
+.marketing-card-copy h3{font-size:clamp(17px,1.7vw,21px);line-height:1.08;margin:9px 0;color:inherit}
+.marketing-card-copy p{font-size:12px;line-height:1.55;color:inherit;opacity:.84;margin:0 0 10px}
+.marketing-card-copy a{margin-top:auto;padding-top:10px;color:#d8f36b;font:800 8px 'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:5px}
+.marketing-image-card:nth-child(2) .marketing-card-copy a,.marketing-image-card:nth-child(4) .marketing-card-copy a{color:#315b2c}
+@media(max-width:680px){.marketing-cards-section{padding:30px 5% 28px}.marketing-cards-section .marketing-section-heading h2{font-size:clamp(29px,8vw,38px)}.marketing-carousel-meta{font-size:7px;margin:14px auto 9px}.marketing-card-track{gap:10px;padding-bottom:11px}.marketing-image-card{flex-basis:clamp(205px,72vw,260px)}.marketing-card-image{height:118px}.marketing-card-copy{min-height:138px;padding:13px}.marketing-card-copy h3{font-size:18px}.marketing-card-copy p{font-size:11px;line-height:1.48}.marketing-image-placeholder{padding:12px}.marketing-image-placeholder b{font-size:25px}}
+.marketing-experience{padding:clamp(58px,7vw,96px) 7vw;background:#f6f4eb;color:#183526}
 .marketing-section-heading .eyebrow,.footer-details-heading .eyebrow{color:#66833e!important}
 .marketing-section-heading h2,.footer-details-heading h2{font-size:clamp(34px,5.4vw,68px);line-height:.98;letter-spacing:-.045em;max-width:850px;margin:16px 0;color:#163d2b}
 .marketing-section-heading>p:not(.eyebrow),.footer-details-heading>p:not(.eyebrow){max-width:760px;line-height:1.8;color:#667368;font-size:16px}
