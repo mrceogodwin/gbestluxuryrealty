@@ -110,3 +110,39 @@ test('company workspace management is reserved for Super Admin', async () => {
   assert.match(page, /still shared by the current application data model/);
   assert.match(layout, /__super_admin_only__/);
 });
+
+
+test('public property and booking endpoints enforce company ownership', async () => {
+  const properties = await source('app/api/properties/route.js');
+  const booking = await source('app/api/inspection-requests/route.js');
+  const availability = await source('app/api/inspection-schedule/route.js');
+  assert.match(properties, /resolveSiteTenant/);
+  assert.match(properties, /tenant_id=\$1/);
+  assert.match(booking, /resolveSiteTenant/);
+  assert.match(booking, /tenant_id=\$2/);
+  assert.match(booking, /inspection_requests\(tenant_id,full_name/);
+  assert.match(availability, /getSchedule\(tenant\.id\)/);
+});
+
+test('property administration and inspection queues are tenant scoped', async () => {
+  const properties = await source('app/api/admin/properties/route.js');
+  const inspections = await source('app/api/admin/inspection-requests/route.js');
+  const schedule = await source('app/api/admin/inspection-schedule/route.js');
+  assert.match(properties, /ensureSiteTenants/);
+  assert.match(properties, /WHERE p\.tenant_id=\$1/);
+  assert.match(properties, /targetTenant/);
+  assert.match(inspections, /WHERE r\.tenant_id=\$1/);
+  assert.match(inspections, /You cannot manage another company/);
+  assert.match(schedule, /inspection_schedule_tenant_settings/);
+});
+
+test('client registrations and payment receipts are isolated by company', async () => {
+  const registrations = await source('app/api/client-registrations/route.js');
+  const admin = await source('app/api/admin/client-registrations/route.js');
+  const receipt = await source('app/api/admin/client-registrations/[id]/receipt/route.js');
+  assert.match(registrations, /resolveSiteTenant/);
+  assert.match(registrations, /receipt_data,tenant_id/);
+  assert.match(admin, /WHERE tenant_id=\$1/);
+  assert.match(admin, /another company’s registration/);
+  assert.match(receipt, /another company’s receipt/);
+});
