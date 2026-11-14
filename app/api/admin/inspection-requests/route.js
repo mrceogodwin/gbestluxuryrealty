@@ -4,6 +4,7 @@ import { queueInspectionEmails, deliverInspectionEmails } from '../../../../lib/
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
 import {isAdminRequest} from '../../../../lib/admin-auth';
 import {ensureSiteTenants} from '../../../../lib/site-tenants';
+import {getStaffSession} from '../../../../lib/staff-auth';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,7 +13,7 @@ export async function GET(req) {
   if (!await authorizeAdminRequest(req,['inspections.view','inspections.manage'])) return NextResponse.json({error:'Unauthorized'},{status:401});
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
   try {
-    const pool=getDatabasePool();await ensureSiteTenants(pool);const admin=await isAdminRequest(req);const url=new URL(req.url);let tenantId=url.searchParams.get('tenantId');if(!admin){const owner=await pool.query("SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");tenantId=String(owner.rows[0]?.id||'');}else if(!tenantId){const owner=await pool.query("SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");tenantId=String(owner.rows[0]?.id||'');}if(!/^\\d+$/.test(String(tenantId||'')))return NextResponse.json({error:'Choose a valid company workspace.'},{status:400});const tenant=await pool.query('SELECT id FROM public.site_tenants WHERE id=$1',[tenantId]);if(!tenant.rowCount)return NextResponse.json({error:'Company workspace not found.'},{status:404});
+    const pool=getDatabasePool();await ensureSiteTenants(pool);const admin=await isAdminRequest(req);const url=new URL(req.url);let tenantId=url.searchParams.get('tenantId');if(!admin){const staff=await getStaffSession(req);tenantId=String(staff?.tenant_id||'');}else if(!tenantId){const owner=await pool.query("SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");tenantId=String(owner.rows[0]?.id||'');}if(!/^\\d+$/.test(String(tenantId||'')))return NextResponse.json({error:'Choose a valid company workspace.'},{status:400});const tenant=await pool.query('SELECT id FROM public.site_tenants WHERE id=$1',[tenantId]);if(!tenant.rowCount)return NextResponse.json({error:'Company workspace not found.'},{status:404});
     const q=await pool.query(`SELECT r.id,r.tenant_id,r.full_name,r.contact,r.client_email,r.preferred_date,r.preferred_time,r.duration_minutes,r.property_id,r.message,r.status,r.calendar_event_id,r.created_at,
       COALESCE(o.sent_count,0)::int AS emails_sent,COALESCE(o.failed_count,0)::int AS emails_failed,COALESCE(o.pending_count,0)::int AS emails_pending
       FROM public.inspection_requests r
@@ -32,7 +33,7 @@ export async function PATCH(req) {
     const pool=getDatabasePool();await ensureSiteTenants(pool);const admin=await isAdminRequest(req);
     const id=String(d.id||''), status=String(d.status||'');
     const ownership=await pool.query('SELECT tenant_id FROM public.inspection_requests WHERE id=$1',[id]);if(!ownership.rowCount)return NextResponse.json({error:'Request not found'},{status:404});
-    if(!admin){const owner=await pool.query("SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");if(Number(ownership.rows[0].tenant_id)!==Number(owner.rows[0]?.id))return NextResponse.json({error:'You cannot manage another company’s inspection request.'},{status:403});}
+    if(!admin){const staff=await getStaffSession(req);if(Number(ownership.rows[0].tenant_id)!==Number(staff?.tenant_id))return NextResponse.json({error:'You cannot manage another company’s inspection request.'},{status:403});}
     if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({error:'Invalid request ID'},{status:400});
     // Re-check eligibility at approval time as well as at submission time.
     // This prevents a pending request from being confirmed after its registration
