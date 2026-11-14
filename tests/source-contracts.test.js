@@ -239,3 +239,18 @@ test('company hero videos are isolated by tenant and served by the requesting do
   assert.match(publicRoute, /WHERE tenant_id=\$1/);
   assert.match(page, /COMPANY WORKSPACE/);
 });
+
+
+test('homepage drafts, published sections and revision history are isolated by tenant', async () => {
+  const helper = await source('lib/tenant-homepage.js');
+  const admin = await source('app/api/admin/homepage/route.js');
+  const publicRoute = await source('app/api/homepage/route.js');
+  const page = await source('app/admin/super/homepage/page.js');
+  assert.match(helper, /homepage_tenant_sections/);
+  assert.match(helper, /homepage_tenant_section_revisions/);
+  assert.match(admin, /WHERE tenant_id=\$1 AND section_key=\$2/);
+  assert.match(admin, /homepage_tenant_section_revisions WHERE tenant_id=\$1/);
+  assert.match(publicRoute, /homepage_tenant_sections WHERE tenant_id=\$1/);
+  assert.match(page, /COMPANY WORKSPACE/);
+  assert.match(admin, /key==='site_settings'&&!admin/);
+});
