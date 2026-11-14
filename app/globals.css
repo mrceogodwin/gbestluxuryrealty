@@ -2109,3 +2109,21 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   }
   .gbest-footer-standard .gbest-footer-bottom{justify-content:center;text-align:center}
 }
+
+
+/* G-BEST brand lockups and a properly centred, unboxed footer */
+.gbest-brand-lockup{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;min-width:0;color:#d8f36b!important;text-decoration:none!important}
+.gbest-brand-mark{display:block;flex:0 0 52px;width:52px;height:46px;color:#d8f36b}
+.gbest-brand-wordmark{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+.gbest-brand-wordmark b{color:#f7f3e8!important;font:800 clamp(22px,2.2vw,30px)/1 Inter,Arial,sans-serif!important;letter-spacing:-.045em!important}
+.gbest-brand-wordmark small{display:block;margin-top:5px;color:#d8f36b!important;font:700 9px/1.1 'DM Mono',monospace!important;letter-spacing:.15em!important}
+.gbest-main-footer{width:100%!important;max-width:none!important;margin:0!important;padding:44px 24px 24px!important;box-sizing:border-box!important;background:transparent!important}
+.gbest-footer-standard{width:min(100%,1120px)!important;margin:0 auto!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:24px!important;text-align:center!important}
+.gbest-footer-standard .gbest-footer-logo{display:flex!important;align-items:center!important;justify-content:center!important;gap:12px!important;width:auto!important;margin:0 auto!important}
+.gbest-footer-standard .gbest-footer-mark{flex:0 0 64px!important;width:64px!important;height:58px!important}
+.gbest-footer-standard .gbest-footer-wordmark{align-items:flex-start!important}
+.gbest-footer-standard .gbest-footer-nav{height:auto!important;min-height:0!important;width:100%!important;max-width:760px!important;margin:0 auto!important;padding:20px 16px!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-wrap:wrap!important;gap:16px 28px!important;background:transparent!important;background-image:none!important;border:0!important;border-top:1px solid rgba(223,236,218,.2)!important;border-bottom:1px solid rgba(223,236,218,.2)!important;box-shadow:none!important;position:static!important}
+.gbest-footer-standard .gbest-footer-nav a{display:inline-block!important;padding:0!important;background:transparent!important;color:#f0f2e9!important;font:700 9px 'DM Mono',monospace!important;letter-spacing:.08em!important;white-space:nowrap!important}
+.gbest-footer-standard .gbest-footer-bottom{width:100%!important;margin:0!important;padding:16px 0 0!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-wrap:wrap!important;gap:8px 24px!important;border-top:0!important;text-align:center!important}
+@media(max-width:760px){nav{padding-left:18px!important;padding-right:18px!important;gap:12px!important}.gbest-brand-lockup{gap:8px!important}.gbest-brand-mark{flex-basis:40px;width:40px;height:38px}.gbest-brand-wordmark b{font-size:21px!important}.gbest-brand-wordmark small{font-size:7px!important;letter-spacing:.1em!important}nav>div{gap:9px!important}.gbest-main-footer{padding:34px 18px 22px!important}.gbest-footer-standard{gap:20px!important}.gbest-footer-standard .gbest-footer-nav{padding:16px 8px!important;gap:15px 20px!important}.gbest-footer-standard .gbest-footer-nav a{font-size:8px!important}.gbest-footer-standard .gbest-footer-bottom{flex-direction:column!important;gap:7px!important;font-size:8px!important;line-height:1.6!important}}
+@media(max-width:390px){.gbest-brand-mark{flex-basis:34px;width:34px;height:34px}.gbest-brand-wordmark b{font-size:18px!important}nav>div{gap:6px!important}nav>div a{font-size:8px!important}}
