@@ -2508,3 +2508,28 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   .booking{padding-inline:4vw!important}
   .booking .formbox{padding:20px 14px!important}
 }
+
+/* Mobile inspection form: prevent native date control overflow and iOS input zoom */
+@media (max-width: 680px){
+  html{scroll-behavior:auto!important;scroll-padding-top:12px}
+  body{overflow-x:hidden}
+  .booking,.booking-copy,.formbox,.formbox form,.formbox label,.formbox .two,.formbox .two>label{min-width:0;max-width:100%;width:100%}
+  .formbox{overflow:hidden}
+  .formbox input:not([type=checkbox]),.formbox select,.formbox textarea{
+    display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+    font-size:16px!important;line-height:1.35;
+  }
+  .formbox input[type=date],.formbox .inspection-date-field{
+    -webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;
+    min-width:0;box-sizing:border-box;padding:14px 12px;height:56px;
+    font-size:16px!important;overflow:hidden;
+  }
+  .formbox input[type=date]::-webkit-date-and-time-value{text-align:left}
+  .formbox input[type=date]::-webkit-calendar-picker-indicator{margin-left:4px;opacity:.72}
+  .formbox .two{grid-template-columns:minmax(0,1fr);gap:17px}
+  .booking-copy{position:static!important;top:auto!important}
+  .property-card:hover,.property-card:focus-within{transform:none!important}
+  .property-card:hover .photo-wrap img{transform:none!important}
+  .property-card,.photo-wrap img{transition:none!important}
+  .hero,.hero *{backface-visibility:hidden}
+}
