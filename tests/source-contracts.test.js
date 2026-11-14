@@ -146,3 +146,32 @@ test('client registrations and payment receipts are isolated by company', async 
   assert.match(admin, /another company’s registration/);
   assert.match(receipt, /another company’s receipt/);
 });
+
+
+test('homepage property cards open a complete accessible property detail view', async () => {
+  const page = await source('app/page.js');
+  assert.match(page, /role="dialog" aria-modal="true"/);
+  assert.match(page, /property-modal-title/);
+  assert.match(page, /property-modal-gallery-controls/);
+  assert.match(page, /BOOK AN INSPECTION/);
+  assert.match(page, /document\.body\.style\.overflow='hidden'/);
+  assert.match(page, /onClick=\{e=>\{if\(!e\.target\.closest\('button,a,input,select,textarea'\)\)SD\(x\)\}\}/);
+});
+
+test('featured property orbit supports manual scrolling and touch-friendly compact mobile sizing', async () => {
+  const page = await source('app/page.js');
+  const styles = await source('app/globals.css');
+  assert.match(page, /function scrollOrbit\(direction\)/);
+  assert.match(page, /Previous properties/);
+  assert.match(page, /Next properties/);
+  assert.match(page, /ref=\{orbitWindowRef\}/);
+  assert.match(styles, /scroll-snap-type:x mandatory/);
+  assert.match(styles, /width:84px!important;height:84px!important/);
+  assert.match(styles, /social-reels-section\{padding-top:28px!important/);
+});
+
+test('public property data includes all gallery images for the detail view', async () => {
+  const route = await source('app/api/properties/route.js');
+  assert.match(route, /COALESCE\(images, ARRAY\[\]::text\[\]\) AS images/);
+  assert.match(route, /images: Array\.isArray\(x\.images\)/);
+});
