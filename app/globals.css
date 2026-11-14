@@ -2429,3 +2429,82 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   .gbest-main-footer .gbest-footer-nav{gap:12px 17px!important;padding:15px 4px!important}
   .gbest-main-footer .gbest-footer-nav a{font-size:7px!important;letter-spacing:.045em!important}
 }
+
+
+/* Mobile stability patch: inspection form sizing, iOS input zoom and scroll motion. */
+@media(max-width:760px){
+  html{scroll-behavior:auto!important}
+  .booking{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    overflow-x:clip!important;
+    gap:20px!important;
+  }
+  .booking-copy,.booking .formbox{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+  }
+  .booking .formbox{
+    margin:0!important;
+    overflow:hidden!important;
+  }
+  .booking .formbox form,
+  .booking .formbox form>label,
+  .booking .formbox .two,
+  .booking .formbox .two>label{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+  }
+  .booking .formbox input:not([type=checkbox]),
+  .booking .formbox select,
+  .booking .formbox textarea{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+    font-size:16px!important;
+    line-height:1.35!important;
+  }
+  .booking .formbox input[type=date]{
+    -webkit-appearance:none!important;
+    appearance:none!important;
+    min-width:0!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-height:48px!important;
+    padding-inline:12px!important;
+    font-size:16px!important;
+  }
+  .booking .formbox input[type=date]::-webkit-date-and-time-value{
+    text-align:left;
+    min-height:1.35em;
+  }
+  .booking .formbox .two{grid-template-columns:minmax(0,1fr)!important}
+  .booking .formbox .consent{min-width:0!important;align-items:flex-start!important}
+  .booking .formbox .consent input{flex:0 0 20px!important;margin-top:3px!important}
+  .booking .formbox .submit{width:100%!important;max-width:100%!important}
+  .booking .formbox h3{max-width:100%!important;overflow-wrap:anywhere}
+  .booking .formbox:after{max-width:42%;white-space:nowrap;overflow:hidden}
+  /* Pause decorative, continuously translating rails on touch devices.
+     Users can still swipe the actual collection tracks normally. */
+  .footer-details-carousel-track,
+  .gbest-footer-ticker-track,
+  .market-ticker-track,
+  .market-property-orbit-track,
+  .footer-property-orbit-track{
+    animation-play-state:paused!important;
+    will-change:auto!important;
+  }
+}
+@media(max-width:420px){
+  .booking{padding-inline:4vw!important}
+  .booking .formbox{padding:20px 14px!important}
+}
