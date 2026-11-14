@@ -225,3 +225,17 @@ test('media library records and object storage keys are company isolated', async
   assert.match(page, /COMPANY WORKSPACE/);
   assert.match(page, /tenant_id:body\.tenant_id\|\|activeTenantId/);
 });
+
+
+test('company hero videos are isolated by tenant and served by the requesting domain', async () => {
+  const tenants = await source('lib/site-tenants.js');
+  const admin = await source('app/api/admin/company-video/route.js');
+  const publicRoute = await source('app/api/company-video/route.js');
+  const page = await source('app/admin/super/company-video/page.js');
+  assert.match(tenants, /company_profile_video_tenants/);
+  assert.match(admin, /company-video\/\+tenant\.id\+\//);
+  assert.match(admin, /ON CONFLICT\(tenant_id\)/);
+  assert.match(publicRoute, /resolveSiteTenant/);
+  assert.match(publicRoute, /WHERE tenant_id=\$1/);
+  assert.match(page, /COMPANY WORKSPACE/);
+});
