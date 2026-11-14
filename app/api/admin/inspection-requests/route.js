@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getDatabasePool } from '../../../../lib/db';
 import { queueInspectionEmails, deliverInspectionEmails } from '../../../../lib/inspection-email-outbox';
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
+import {isAdminRequest} from '../../../../lib/admin-auth';
+import {ensureSiteTenants} from '../../../../lib/site-tenants';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -10,12 +12,14 @@ export async function GET(req) {
   if (!await authorizeAdminRequest(req,['inspections.view','inspections.manage'])) return NextResponse.json({error:'Unauthorized'},{status:401});
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
   try {
-    const q=await getDatabasePool().query(`SELECT r.id,r.full_name,r.contact,r.client_email,r.preferred_date,r.preferred_time,r.duration_minutes,r.property_id,r.message,r.status,r.calendar_event_id,r.created_at,
+    const pool=getDatabasePool();await ensureSiteTenants(pool);const admin=await isAdminRequest(req);const url=new URL(req.url);let tenantId=url.searchParams.get('tenantId');if(!admin){const owner=await pool.query(\"SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1\");tenantId=String(owner.rows[0]?.id||'');}else if(!tenantId){const owner=await pool.query(\"SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1\");tenantId=String(owner.rows[0]?.id||'');}if(!/^\\d+$/.test(String(tenantId||'')))return NextResponse.json({error:'Choose a valid company workspace.'},{status:400});const tenant=await pool.query('SELECT id FROM public.site_tenants WHERE id=$1',[tenantId]);if(!tenant.rowCount)return NextResponse.json({error:'Company workspace not found.'},{status:404});
+    const q=await pool.query(`SELECT r.id,r.tenant_id,r.full_name,r.contact,r.client_email,r.preferred_date,r.preferred_time,r.duration_minutes,r.property_id,r.message,r.status,r.calendar_event_id,r.created_at,
       COALESCE(o.sent_count,0)::int AS emails_sent,COALESCE(o.failed_count,0)::int AS emails_failed,COALESCE(o.pending_count,0)::int AS emails_pending
       FROM public.inspection_requests r
       LEFT JOIN LATERAL (SELECT count(*) FILTER (WHERE status='sent') AS sent_count,count(*) FILTER (WHERE status='failed') AS failed_count,count(*) FILTER (WHERE status='pending') AS pending_count FROM public.inspection_email_outbox WHERE inspection_request_id=r.id) o ON true
-      ORDER BY r.created_at DESC LIMIT 100`);
-    return NextResponse.json({requests:q.rows},{headers:{'Cache-Control':'no-store'}});
+      WHERE r.tenant_id=$1 ORDER BY r.created_at DESC LIMIT 100`,[tenantId]);
+    const tenants=admin?(await pool.query('SELECT id,tenant_key,display_name,status FROM public.site_tenants ORDER BY created_at ASC')).rows:[];
+    return NextResponse.json({requests:q.rows,tenants,activeTenantId:Number(tenantId)},{headers:{'Cache-Control':'no-store'}});
   } catch(e) { console.error('Admin request list failed',e.code||e.message); return NextResponse.json({error:'Could not load requests'},{status:500}); }
 }
 export async function PATCH(req) {
@@ -25,7 +29,10 @@ export async function PATCH(req) {
   try { d=await req.json(); } catch { return NextResponse.json({error:'Invalid JSON body'},{status:400}); }
   if(!d||typeof d!=='object'||Array.isArray(d)) return NextResponse.json({error:'Request body must be an object'},{status:400});
   try {
+    const pool=getDatabasePool();await ensureSiteTenants(pool);const admin=await isAdminRequest(req);
     const id=String(d.id||''), status=String(d.status||'');
+    const ownership=await pool.query('SELECT tenant_id FROM public.inspection_requests WHERE id=$1',[id]);if(!ownership.rowCount)return NextResponse.json({error:'Request not found'},{status:404});
+    if(!admin){const owner=await pool.query(\"SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1\");if(Number(ownership.rows[0].tenant_id)!==Number(owner.rows[0]?.id))return NextResponse.json({error:'You cannot manage another company’s inspection request.'},{status:403});}
     if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({error:'Invalid request ID'},{status:400});
     // Re-check eligibility at approval time as well as at submission time.
     // This prevents a pending request from being confirmed after its registration
@@ -49,8 +56,7 @@ export async function PATCH(req) {
       cancelled:['pending','confirmed','contacted']
     };
     if(!/^[0-9a-f-]{36}$/i.test(id)||!Object.hasOwn(allowedPrevious,status)) return NextResponse.json({error:'Invalid action'},{status:400});
-    const pool=getDatabasePool();
-    const current=await pool.query('SELECT id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1',[id]);
+    const current=await pool.query('SELECT id,tenant_id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1',[id]);
     if(!current.rowCount)return NextResponse.json({error:'Request not found'},{status:404});
     const currentRow=current.rows[0];
     if(!allowedPrevious[status].includes(currentRow.status) && currentRow.status!==status)
