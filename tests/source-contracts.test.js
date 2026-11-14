@@ -213,3 +213,15 @@ test('company staff managers can administer only their own workspace team', asyn
   assert.match(layout, /href==='\/admin\/super\/staff'\)return access\.has\('staff\.manage'\)/);
   assert.doesNotMatch(layout, /path\.startsWith\('\/admin\/super\/staff'\)\|\|path==='\/admin\/super\/activity'/);
 });
+
+
+test('media library records and object storage keys are company isolated', async () => {
+  const api = await source('app/api/admin/media/route.js');
+  const page = await source('app/admin/super/media/page.js');
+  assert.match(api, /admin_media_assets ADD COLUMN IF NOT EXISTS tenant_id/);
+  assert.match(api, /WHERE tenant_id=\$1 ORDER BY created_at DESC/);
+  assert.match(api, /website\/\+tenant\.id\+\//);
+  assert.match(api, /WHERE id=\$1 AND tenant_id=\$2/);
+  assert.match(page, /COMPANY WORKSPACE/);
+  assert.match(page, /tenant_id:body\.tenant_id\|\|activeTenantId/);
+});
