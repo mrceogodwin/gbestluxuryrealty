@@ -3,6 +3,7 @@ import { ensureHomepageTables } from '../../../../lib/homepage-cms';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
+import {isAdminRequest} from '../../../../lib/admin-auth';
 const allowed=new Set(['eyebrow','title','description','buttonText','buttonUrl','imageUrl','videoUrl','extraText','visible','imageAlt','logoUrl','logoAlt','mobileImageUrl','imagePosition','layout','alignment','fontFamily','backgroundColor','textColor','accentColor','overlayOpacity','padding','slides','autoplay','autoplayInterval','transition','showArrows','showDots','columns','itemsPerView','cards','videoUrls','siteName','tagline','primaryColor','pageBackgroundColor','buttonRadius','seoTitle','seoDescription','seoImage','faviconUrl','navigationItems','footerLinks','sectionOrder','audioUrl','audioTitle','audioEnabled','audioLoop','audioVolume']);
 function cleanContent(value){
  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Section content must be an object.');
