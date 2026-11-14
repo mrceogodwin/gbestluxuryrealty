@@ -1780,3 +1780,79 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 @media(prefers-reduced-motion:reduce){
   .footer-details-section>.property-orbit-placement .footer-property-orbit-track{animation:none}
 }
+
+
+/* Slim, neutral global updates rail — no green strip or red CTA block */
+.market-ticker{
+  height:34px!important;
+  min-height:34px!important;
+  box-sizing:border-box!important;
+  padding:0 0 0 clamp(12px,2.4vw,26px)!important;
+  background:#050706!important;
+  color:#f7f3e8!important;
+  border-top:1px solid rgba(255,255,255,.12)!important;
+  border-bottom:1px solid rgba(255,255,255,.12)!important;
+}
+.market-ticker-window{
+  height:100%!important;
+  min-height:0!important;
+  align-items:center!important;
+  mask-image:linear-gradient(90deg,#000 0%,#000 98%,transparent 100%)!important;
+}
+.market-ticker-track{
+  height:100%!important;
+  min-height:0!important;
+  align-items:center!important;
+  padding:0!important;
+}
+.market-ticker-item{
+  height:100%!important;
+  min-height:0!important;
+  gap:9px!important;
+  padding:0 22px 0 0!important;
+  background:transparent!important;
+  border:0!important;
+  color:#f7f3e8!important;
+}
+.market-ticker-item>span{
+  font-size:7px!important;
+  letter-spacing:.12em!important;
+  color:#d8f36b!important;
+}
+.market-ticker-item>b{
+  font-size:10px!important;
+  line-height:1!important;
+  color:#f7f3e8!important;
+}
+.market-ticker-item>i{
+  font-size:11px!important;
+  color:#9aaa8e!important;
+}
+.market-ticker-cta{
+  height:100%!important;
+  min-width:0!important;
+  padding:0 14px!important;
+  gap:6px!important;
+  background:transparent!important;
+  border:0!important;
+  border-left:1px solid rgba(255,255,255,.14)!important;
+  color:#d8f36b!important;
+  font-size:8px!important;
+  letter-spacing:.12em!important;
+  white-space:nowrap;
+}
+.market-ticker-cta:hover{
+  background:rgba(216,243,107,.08)!important;
+}
+.market-ticker-cta span{font-size:11px!important}
+@media(max-width:680px){
+  .market-ticker{
+    height:32px!important;
+    min-height:32px!important;
+    padding:0 0 0 10px!important;
+  }
+  .market-ticker-item{gap:7px!important;padding-right:16px!important}
+  .market-ticker-item>span{font-size:6px!important}
+  .market-ticker-item>b{font-size:9px!important}
+  .market-ticker-cta{padding:0 10px!important;font-size:7px!important}
+}
