@@ -3,7 +3,7 @@ import { ensureHomepageTables } from '../../../../lib/homepage-cms';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
-const allowed=new Set(['eyebrow','title','description','buttonText','buttonUrl','imageUrl','videoUrl','extraText','visible','imageAlt','mobileImageUrl','imagePosition','layout','alignment','fontFamily','backgroundColor','textColor','accentColor','overlayOpacity','padding','slides','autoplay','autoplayInterval','transition','showArrows','showDots','columns','itemsPerView']);
+const allowed=new Set(['eyebrow','title','description','buttonText','buttonUrl','imageUrl','videoUrl','extraText','visible','imageAlt','logoUrl','logoAlt','mobileImageUrl','imagePosition','layout','alignment','fontFamily','backgroundColor','textColor','accentColor','overlayOpacity','padding','slides','autoplay','autoplayInterval','transition','showArrows','showDots','columns','itemsPerView','cards']);
 function cleanContent(value){
  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Section content must be an object.');
  const out={};
@@ -11,11 +11,12 @@ function cleanContent(value){
   if(!allowed.has(key))continue;
   if(['visible','autoplay','showArrows','showDots'].includes(key)){out[key]=Boolean(val);continue;}
   if(['overlayOpacity','autoplayInterval','columns','itemsPerView'].includes(key)){const n=Number(val);if(!Number.isFinite(n)||n<0||n>10000)throw new Error('Invalid numeric setting: '+key);out[key]=n;continue;}
+  if(key==='cards'){if(!Array.isArray(val)||val.length>12)throw new Error('Cards must be a list of up to 12 items.');out.cards=val.map(card=>{if(!card||typeof card!=='object'||Array.isArray(card))throw new Error('Each card must be an object.');const item={};for(const field of ['eyebrow','title','description','imageAlt','buttonText','buttonUrl'])if(typeof card[field]==='string')item[field]=card[field].trim().slice(0,field==='description'?2000:500);if(typeof card.imageUrl==='string'){item.imageUrl=card.imageUrl.trim().slice(0,1200);if(item.imageUrl&&!/^https:\/\//i.test(item.imageUrl))throw new Error('Card images must use HTTPS URLs.');}if(item.buttonUrl&&!/^(https:\/\/|\/|#)/i.test(item.buttonUrl))throw new Error('Card links must be HTTPS URLs or local paths.');return item;});continue;}
   if(key==='slides'){if(!Array.isArray(val)||val.length>30)throw new Error('Carousel slides must be a list of up to 30 items.');out.slides=val.slice(0,30).map((slide)=>{if(!slide||typeof slide!=='object'||Array.isArray(slide))throw new Error('Each slide must be an object.');const clean={};for(const k of ['eyebrow','title','description','imageUrl','imageAlt','buttonText','buttonUrl'])if(typeof slide[k]==='string')clean[k]=slide[k].trim().slice(0,1200);if(clean.imageUrl&&!/^https:\/\//i.test(clean.imageUrl))throw new Error('Slide images must use HTTPS URLs.');if(clean.buttonUrl&&!/^(https:\/\/|\/|#)/i.test(clean.buttonUrl))throw new Error('Slide buttons must use HTTPS URLs or local paths.');return clean;});continue;}
   if(typeof val!=='string')throw new Error('Content fields must be text.');
-  const max=key==='description'||key==='extraText'?4000:['imageUrl','videoUrl','buttonUrl','mobileImageUrl'].includes(key)?1200:500;
+  const max=key==='description'||key==='extraText'?4000:['imageUrl','videoUrl','buttonUrl','mobileImageUrl','logoUrl'].includes(key)?1200:500;
   out[key]=val.trim().slice(0,max);
-  if(['imageUrl','videoUrl','mobileImageUrl'].includes(key)&&out[key]&&!/^https:\/\//i.test(out[key]))throw new Error(key+' must use an HTTPS URL.');
+  if(['imageUrl','videoUrl','mobileImageUrl','logoUrl'].includes(key)&&out[key]&&!/^https:\/\//i.test(out[key]))throw new Error(key+' must use an HTTPS URL.');
   if(key==='buttonUrl'&&out[key]&&!/^(https:\/\/|\/|#)/i.test(out[key]))throw new Error('Button links must be HTTPS URLs or local paths.');
  }
  return out;
