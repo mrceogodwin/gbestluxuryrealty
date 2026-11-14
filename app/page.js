@@ -97,4 +97,4 @@ return <><div className="topline" style={{display:homepage.announcement?.visible
  </div>
  <nav className="gbest-footer-nav" aria-label="Footer navigation"><a href="#top">Home</a><a href="#properties">Properties</a><a href="#land">Land opportunities</a><a href="#inspection">Book an inspection</a><a href="#contact">Contact</a></nav>
  <div className="gbest-footer-bottom"><span>© {new Date().getFullYear()} G-BEST Luxury Realty. All rights reserved.</span><span>YOUR INVESTMENT, OUR PRIORITY.</span></div>
-</footer></>}
+</footer></>;
