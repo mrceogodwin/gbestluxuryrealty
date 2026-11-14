@@ -68,9 +68,14 @@ return <><div className="topline" style={{display:homepage.announcement?.visible
  <form className="newsletter-form" onSubmit={subscribe}><label htmlFor="newsletter-email">EMAIL ADDRESS</label><div className="newsletter-input-row"><input id="newsletter-email" type="email" name="email" autoComplete="email" maxLength="254" required placeholder="you@example.com"/><button type="submit" disabled={newsletterBusy}>{newsletterBusy?'SAVING…':'SUBSCRIBE'}</button></div><label className="newsletter-consent"><input type="checkbox" name="consent" value="yes" required/> I agree to receive G-BEST property listings, market updates and company news by email. I understand I can unsubscribe at any time.</label><p className="newsletter-status" role="status" aria-live="polite">{newsletterStatus}</p><small>We use your email only for the updates described above. Subscription requires your consent.</small></form>
 </section>
 <footer className="site-footer" style={{display:homepage.footer?.visible===false?'none':undefined}}>
- <div className="footer-main"><div className="footer-brand"><a className="brand" href="#top"><span className="brand-copy"><b>{cmsValue(homepage,'footer','title','G-BEST LUXURY REALTY')}</b><small>{cmsValue(homepage,'footer','description','PROPERTY · INVESTMENT · NIGERIA')}</small></span></a><p>{cmsValue(homepage,'footer','buttonText','Your investment, our priority. Property discovery, local perspective and physical inspections across Nigeria.')}</p><a className="footer-cta" href="#inspection">{cmsValue(homepage,'footer','extraText','Arrange a physical inspection')} ↗</a></div>
- <div className="footer-column"><b>EXPLORE</b><a href="#properties">All properties</a><a href="#properties" onClick={()=>{ST('Luxury home');SQ('')}}>Luxury homes</a><a href="#properties" onClick={()=>{ST('Land');SQ('')}}>Land opportunities</a><a href="#properties" onClick={()=>{ST('Investment property');SQ('')}}>Investment properties</a><a href="#company-film">About G-BEST</a></div>
- <div className="footer-column"><b>MARKETS</b><a href="#properties" onClick={()=>{ST('All properties');SQ('Lagos')}}>Lagos</a><a href="#properties" onClick={()=>{ST('All properties');SQ('Abuja')}}>Abuja</a><a href="#properties" onClick={()=>{ST('All properties');SQ('Benin City')}}>Benin City</a><a href="#properties" onClick={()=>{ST('All properties');SQ('Port Harcourt')}}>Port Harcourt</a></div>
- <div className="footer-column"><b>GET STARTED</b><a href="#inspection">Book an inspection</a><a href="#newsletter">Property updates</a><a href="#why">Why G-BEST</a><span className="footer-contact-note">For verified contact details, please use the official company channels supplied by G-BEST.</span></div></div>
- <div className="footer-bottom"><span>© {new Date().getFullYear()} G-BEST Luxury Realty. All rights reserved.</span><a href="#top">BACK TO TOP ↑</a></div>
+ <div className="compact-footer-top">
+  <a className="compact-footer-brand" href="#top" aria-label="G-BEST Luxury Realty home">
+   <svg viewBox="0 0 76 58" aria-hidden="true"><path d="M5 51 18 42V19l9-8v31l9-6V7l10-6v44l9-8V19l9 7v20l7 5" fill="none" stroke="currentColor" strokeWidth="4" strokeLinejoin="round"/><path d="M2 55h72" fill="none" stroke="currentColor" strokeWidth="3"/></svg>
+   <span><b>{cmsValue(homepage,'footer','title','G-BEST')}</b><small>Luxury Realty</small></span>
+  </a>
+  <nav className="compact-footer-nav" aria-label="Footer navigation">
+   <a href="#top">HOME</a><a href="#properties">PROPERTIES</a><a href="#inspection">BOOK AN INSPECTION</a><a href="#inspection">CONTACT</a>
+  </nav>
+ </div>
+ <div className="compact-footer-bottom"><span>© {new Date().getFullYear()} G-BEST Luxury Realty. All rights reserved.</span><strong>{cmsValue(homepage,'footer','buttonText','YOUR INVESTMENT, OUR PRIORITY.')}</strong></div>
 </footer></>}
