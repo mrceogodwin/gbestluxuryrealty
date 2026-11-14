@@ -1934,3 +1934,57 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 .legal-content p,.legal-content li{color:#46594c;font-size:14px;line-height:1.8}
 .legal-content ul{padding-left:22px}
 .legal-note{margin-top:42px;padding-top:18px;border-top:1px solid #cbd4c7;color:#68776b;font-size:11px}
+
+
+/* Restore the original light, high-contrast inspection booking panel */
+.booking{
+  background:#f4f1e8!important;
+}
+.booking .formbox{
+  background:#fffdf6!important;
+  background-image:none!important;
+  border:3px solid #171713!important;
+  color:#171713!important;
+  box-shadow:14px 14px 0 #171713!important;
+}
+.booking .formbox .eyebrow.dark,
+.booking .formbox h3,
+.booking .formbox label{
+  color:#171713!important;
+}
+.booking .formbox h3{
+  font:500 clamp(34px,4.4vw,64px)/1.02 Inter,Arial,sans-serif!important;
+  letter-spacing:-.055em;
+  text-transform:uppercase;
+}
+.booking .formbox .form-intro{
+  color:#62665e!important;
+}
+.booking .formbox input:not([type=checkbox]),
+.booking .formbox select,
+.booking .formbox textarea{
+  background:#fffdf6!important;
+  border:2px solid #171713!important;
+  color:#171713!important;
+  box-shadow:4px 4px 0 rgba(23,23,19,.22)!important;
+}
+.booking .formbox input::placeholder,
+.booking .formbox textarea::placeholder{
+  color:#a4a6a1!important;
+}
+.booking .formbox .field-hint,
+.booking .formbox .fine{
+  color:#62665e!important;
+}
+.booking .formbox .submit{
+  background:#d9fa35!important;
+  color:#171713!important;
+  border:2px solid #171713!important;
+  box-shadow:5px 5px 0 #171713!important;
+}
+@media(max-width:680px){
+  .booking .formbox{
+    box-shadow:8px 8px 0 #171713!important;
+    padding:24px 20px!important;
+  }
+}
