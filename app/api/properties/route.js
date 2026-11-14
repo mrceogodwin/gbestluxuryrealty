@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getDatabasePool } from '../../../lib/db';
+import {resolveSiteTenant} from '../../../lib/site-tenants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req) {
   if (!process.env.DATABASE_URL) {
     return NextResponse.json({ properties: [], source: 'demo' }, {
       headers: { 'Cache-Control': 'no-store' }
@@ -13,6 +14,9 @@ export async function GET() {
 
   try {
     const pool = getDatabasePool();
+    const host=req.headers.get('x-forwarded-host')||req.headers.get('host')||'';
+    const tenant=await resolveSiteTenant(pool,host);
+    if(!tenant)return NextResponse.json({error:'This domain is not connected to an active company workspace.'},{status:404,headers:{'Cache-Control':'no-store'}});
     const q = await pool.query(`
       SELECT
         id::text AS id,
@@ -30,9 +34,9 @@ export async function GET() {
         description,
         video_url
       FROM public.properties
-      WHERE status IN ('published', 'available')
+      WHERE tenant_id=$1 AND status IN ('published', 'available')
       ORDER BY updated_at DESC, id DESC
-    `);
+    `,[tenant.id]);
 
     const properties = q.rows.map((x) => ({
       ...x,
