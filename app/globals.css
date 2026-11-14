@@ -1484,3 +1484,60 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
     overflow-wrap:break-word;
   }
 }
+
+
+/* Featured property orbit — live land-development video background */
+.property-orbit-placement{
+  position:relative!important;
+  isolation:isolate;
+  overflow:hidden;
+  background:#07130d!important;
+  color:#f7f3e8!important;
+  min-height:560px;
+}
+.property-orbit-placement .property-orbit-video{
+  position:absolute;
+  z-index:-2;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+  min-height:100%;
+  object-fit:cover;
+  object-position:center 54%;
+  opacity:.82;
+  pointer-events:none;
+}
+.property-orbit-placement .property-orbit-video-shade{
+  position:absolute;
+  z-index:-1;
+  inset:0;
+  background:
+    linear-gradient(90deg,rgba(3,12,7,.78) 0%,rgba(3,12,7,.57) 52%,rgba(3,12,7,.66) 100%),
+    linear-gradient(0deg,rgba(3,12,7,.82) 0%,rgba(3,12,7,.18) 48%,rgba(3,12,7,.5) 100%);
+  pointer-events:none;
+}
+.property-orbit-placement>.footer-property-orbit{
+  position:relative;
+  z-index:1;
+  background:transparent!important;
+}
+.property-orbit-placement .footer-property-orbit-heading .eyebrow{color:#d8f36b}
+.property-orbit-placement .footer-property-orbit-heading h2{color:#fff9e9}
+.property-orbit-placement .footer-property-orbit-heading>span{color:#e1e8dc}
+.property-orbit-placement .footer-property-orbit-item{color:#fff9e9}
+.property-orbit-placement .footer-property-orbit-item>b{color:#fff9e9}
+.property-orbit-placement .footer-property-orbit-item>small{color:#d4ded2}
+.property-orbit-placement .footer-property-orbit-item>strong{color:#d8f36b}
+.property-orbit-placement .footer-property-orbit-image{
+  border-color:rgba(232,244,224,.72);
+  box-shadow:0 12px 34px rgba(0,0,0,.42);
+}
+@media(max-width:700px){
+  .property-orbit-placement{min-height:500px;padding:24px 4vw 30px!important}
+  .property-orbit-placement .property-orbit-video{object-position:58% center}
+}
+@media(prefers-reduced-motion:reduce){
+  .property-orbit-placement .property-orbit-video{display:none}
+  .property-orbit-placement{background:linear-gradient(135deg,#183b29,#07130d)!important}
+}
