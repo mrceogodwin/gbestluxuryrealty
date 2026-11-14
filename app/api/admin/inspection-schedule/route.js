@@ -10,7 +10,7 @@ async function chooseTenant(req,pool,requested){
  await ensureSiteTenants(pool);
  const admin=await isAdminRequest(req);let id=requested;
  if(!admin){const staff=await getStaffSession(req);id=staff?.tenant_id;}else if(id===undefined||id===null||id===''){const owner=await pool.query("SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");id=owner.rows[0]?.id;}
- if(!/^\\d+$/.test(String(id||'')))throw new Error('Choose a valid company workspace.');
+ if(!Number.isSafeInteger(Number(id))||Number(id)<1)throw new Error('Choose a valid company workspace.');
  const q=await pool.query('SELECT id,tenant_key,display_name FROM public.site_tenants WHERE id=$1',[id]);
  if(!q.rowCount)throw new Error('Company workspace not found.');
  return {tenant:q.rows[0],admin};
