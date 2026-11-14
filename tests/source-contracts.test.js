@@ -61,11 +61,12 @@ test('business contact administration is protected and supports status updates',
   assert.match(code, /UPDATE public\.business_contact_submissions/);
 });
 
-test('global white-label and audio settings are restricted to Super Admin', async () => {
+test('global brand settings are restricted while tenant audio remains editable', async () => {
   const code = await source('app/api/admin/homepage/route.js');
-  assert.match(code, /Only the Super Admin can change global brand and audio settings/);
+  assert.match(code, /key==='site_settings'&&!admin/);
   assert.match(code, /site_settings/);
   assert.match(code, /site_audio/);
+  assert.doesNotMatch(code, /\['site_settings','site_audio'\]\.includes\(key\)/);
 });
 
 test('homepage exposes configured company branding, metadata and visitor-controlled audio', async () => {
