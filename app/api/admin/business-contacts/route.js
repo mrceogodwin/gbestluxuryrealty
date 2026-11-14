@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
-import {getDatabasePool} from '../../../../../lib/db';
-import {authorizeAdminRequest} from '../../../../../lib/admin-permissions';
+import {getDatabasePool} from '../../../../lib/db';
+import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 async function ensureTable(pool){await pool.query(`CREATE TABLE IF NOT EXISTS public.business_contact_submissions (
