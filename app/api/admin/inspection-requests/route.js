@@ -41,7 +41,7 @@ export async function PATCH(req) {
       const eligibility = await getDatabasePool().query(
         `SELECT r.id FROM public.inspection_requests i
          JOIN LATERAL (SELECT id,payment_status FROM public.client_registrations
-           WHERE lower(email)=lower(i.client_email)
+           WHERE tenant_id=i.tenant_id AND lower(email)=lower(i.client_email)
            ORDER BY updated_at DESC,created_at DESC LIMIT 1) r ON true
          WHERE i.id=$1 AND r.payment_status='approved'`,
         [id]
