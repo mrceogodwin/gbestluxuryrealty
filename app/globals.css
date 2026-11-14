@@ -464,3 +464,28 @@ footer .brand{color:var(--ink)}footer .logo{background:var(--ink);color:var(--go
  .footer-bottom{font-size:8px}
 }
 @media(prefers-reduced-motion:reduce){.collection-card,.collection-image img{transition:none}}
+
+
+/* Approved compact G-BEST collection footer */
+.compact-footer-top{display:grid;grid-template-columns:minmax(220px,auto) 1fr;align-items:center;gap:34px;padding:34px 0 28px}
+.compact-footer-brand{display:inline-flex;align-items:center;gap:12px;width:max-content;color:#d9f35b;text-decoration:none}
+.compact-footer-brand svg{width:68px;height:54px;flex:0 0 auto}
+.compact-footer-brand span{display:grid;gap:1px}
+.compact-footer-brand b{font:900 27px/1 'DM Sans',sans-serif;letter-spacing:-.055em;color:#f7f8f1}
+.compact-footer-brand small{font:500 17px/1.1 'DM Sans',sans-serif;color:#f7f8f1}
+.compact-footer-nav{display:flex;justify-content:flex-end;align-items:center;gap:clamp(14px,2.6vw,38px);flex-wrap:wrap}
+.compact-footer-nav a{color:#edf2eb;text-decoration:none;font:800 10px 'DM Mono',monospace;letter-spacing:.075em;white-space:nowrap;transition:color .2s}
+.compact-footer-nav a:hover{color:#d9f35b}
+.compact-footer-bottom{display:flex;justify-content:space-between;align-items:center;gap:20px;border-top:1px solid #ffffff35;padding:18px 0 20px;color:#aebdb1;font:500 10px 'DM Mono',monospace;letter-spacing:.045em}
+.compact-footer-bottom strong{color:#d9f35b;font:800 11px 'DM Mono',monospace;letter-spacing:.11em;text-align:right}
+@media(max-width:760px){
+ .compact-footer-top{grid-template-columns:1fr;gap:22px;padding:26px 0 22px}
+ .compact-footer-brand svg{width:58px;height:46px}
+ .compact-footer-brand b{font-size:24px}
+ .compact-footer-brand small{font-size:15px}
+ .compact-footer-nav{justify-content:flex-start;gap:13px 20px}
+ .compact-footer-nav a{font-size:9px}
+ .compact-footer-bottom{align-items:flex-start;flex-direction:column;gap:9px;font-size:8px}
+ .compact-footer-bottom strong{text-align:left;font-size:9px}
+}
+@media(max-width:390px){.compact-footer-nav{gap:12px 15px}.compact-footer-nav a{font-size:8px}}
