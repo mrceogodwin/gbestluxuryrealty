@@ -1916,3 +1916,21 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   .gbest-footer-standard .gbest-footer-nav a{font-size:7px}
   .gbest-footer-standard .gbest-footer-bottom{justify-content:center;text-align:center;gap:8px;flex-direction:column;margin-top:0;padding-top:15px}
 }
+
+
+/* G-BEST legal information pages */
+.legal-page{
+  min-height:100vh;
+  padding:clamp(30px,6vw,76px) max(22px,calc((100vw - 860px)/2));
+  background:#f3f0e6;
+  color:#173d2b;
+}
+.legal-back{display:inline-block;margin-bottom:42px;color:#315b3b;text-decoration:none;font:800 9px 'DM Mono',monospace;letter-spacing:.12em}
+.legal-page>.eyebrow{color:#71864b;font:800 9px 'DM Mono',monospace;letter-spacing:.17em}
+.legal-page h1{margin:14px 0 8px;color:#173d2b;font:900 clamp(36px,7vw,68px)/.98 Inter,Arial,sans-serif;letter-spacing:-.06em}
+.legal-updated{color:#718078;font:700 10px 'DM Mono',monospace}
+.legal-content{margin-top:38px;padding-top:28px;border-top:1px solid #cbd4c7;max-width:780px}
+.legal-content h2{margin:28px 0 9px;color:#173d2b;font-size:18px;letter-spacing:-.02em}
+.legal-content p,.legal-content li{color:#46594c;font-size:14px;line-height:1.8}
+.legal-content ul{padding-left:22px}
+.legal-note{margin-top:42px;padding-top:18px;border-top:1px solid #cbd4c7;color:#68776b;font-size:11px}
