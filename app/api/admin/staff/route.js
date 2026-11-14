@@ -3,12 +3,15 @@ import {getDatabasePool} from '../../../../lib/db';
 import {isAdminRequest} from '../../../../lib/admin-auth';
 import {newOpaqueToken,hashToken} from '../../../../lib/staff-auth';
 import {ensureSiteTenants} from '../../../../lib/site-tenants';
+import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
+import {getStaffSession} from '../../../../lib/staff-auth';
 export const runtime='nodejs';export const dynamic='force-dynamic';
 const PERMISSIONS=['dashboard.view','properties.manage','inspections.view','inspections.manage','clients.view','clients.manage','payments.review','contacts.view','contacts.manage','media.manage','homepage.manage','staff.manage','audit.view','settings.manage'];
 const ROLES=['administrator','moderator'];
 const clean=(v,n=180)=>String(v??'').trim().slice(0,n);
-async function selectedTenant(pool,requested){
- const id=String(requested||'');
+async function selectedTenant(pool,requested,req,admin){
+ let id=String(requested||'');
+ if(!admin){const staff=await getStaffSession(req);id=String(staff?.tenant_id||'');}
  const validId=id!==''&&Number.isSafeInteger(Number(id))&&Number(id)>0;
  const q=validId
   ?await pool.query('SELECT id,tenant_key,display_name,status FROM public.site_tenants WHERE id=$1',[id])
@@ -20,23 +23,23 @@ async function audit(pool,tenantId,action,targetType,targetId,details={}){
  await pool.query("INSERT INTO public.staff_audit_events(actor_type,actor_email,action,target_type,target_id,details,tenant_id) VALUES('super_admin','master-admin',$1,$2,$3,$4::jsonb,$5)",[action,targetType,targetId,JSON.stringify(details),tenantId]);
 }
 export async function GET(req){
- if(!await isAdminRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});
+ const admin=await isAdminRequest(req);if(!admin&&!await authorizeAdminRequest(req,'staff.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
-  const p=getDatabasePool();await ensureSiteTenants(p);const url=new URL(req.url),tenant=await selectedTenant(p,url.searchParams.get('tenantId'));
+  const p=getDatabasePool();await ensureSiteTenants(p);const url=new URL(req.url),tenant=await selectedTenant(p,url.searchParams.get('tenantId'),req,admin);
   const [staff,events,defaults,companies]=await Promise.all([
    p.query("SELECT s.id,s.tenant_id,s.full_name,s.email,s.role,s.status,s.invited_by,s.created_at,s.updated_at,s.last_login_at,COALESCE((SELECT json_agg(json_build_object('permission_key',a.permission_key,'enabled',a.enabled) ORDER BY a.permission_key) FROM public.staff_account_permissions a WHERE a.staff_id=s.id),'[]'::json) permissions FROM public.staff_accounts s WHERE s.tenant_id=$1 AND s.role <> 'super_admin' ORDER BY s.created_at DESC",[tenant.id]),
    p.query('SELECT id,tenant_id,actor_type,actor_email,action,target_type,target_id,details,created_at FROM public.staff_audit_events WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 100',[tenant.id]),
    p.query("SELECT role,permission_key,enabled FROM public.staff_role_permissions ORDER BY role,permission_key"),
-   p.query('SELECT id,tenant_key,display_name,status FROM public.site_tenants ORDER BY created_at ASC')
+   admin?p.query('SELECT id,tenant_key,display_name,status FROM public.site_tenants ORDER BY created_at ASC'):Promise.resolve({rows:[]})
   ]);
   return NextResponse.json({staff:staff.rows,events:events.rows,rolePermissions:defaults.rows,permissionCatalog:PERMISSIONS,tenants:companies.rows,tenant,activeTenantId:tenant.id},{headers:{'Cache-Control':'no-store'}});
  }catch(e){console.error('Staff admin GET',e.code||e.message);return NextResponse.json({error:'Could not load staff management data.'},{status:500});}
 }
 export async function POST(req){
- if(!await isAdminRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});
+ const admin=await isAdminRequest(req);if(!admin&&!await authorizeAdminRequest(req,'staff.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
  let d;try{d=await req.json()}catch{return NextResponse.json({error:'Invalid request body.'},{status:400})}
  try{
-  const p=getDatabasePool();await ensureSiteTenants(p);const tenant=await selectedTenant(p,d.tenant_id);
+  const p=getDatabasePool();await ensureSiteTenants(p);const tenant=await selectedTenant(p,d.tenant_id,req,admin);
   if(d.action==='resend'){
    const id=clean(d.id,50);if(!/^[0-9a-f-]{36}$/i.test(id))return NextResponse.json({error:'Invalid staff ID.'},{status:400});
    const token=newOpaqueToken(),tokenHash=hashToken(token),base=process.env.NEXT_PUBLIC_SITE_URL||req.nextUrl.origin;
@@ -64,7 +67,7 @@ export async function POST(req){
  }catch(e){if(e.code==='23505')return NextResponse.json({error:'A staff account with that email already exists.'},{status:409});console.error('Staff admin POST',e.code||e.message);return NextResponse.json({error:'Could not create staff invitation.'},{status:500});}
 }
 export async function PATCH(req){
- if(!await isAdminRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});
+ const admin=await isAdminRequest(req);if(!admin&&!await authorizeAdminRequest(req,'staff.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
  let d;try{d=await req.json()}catch{return NextResponse.json({error:'Invalid request body.'},{status:400})}
  const id=clean(d.id,50);
  if(!/^[0-9a-f-]{36}$/i.test(id))return NextResponse.json({error:'Invalid staff ID.'},{status:400});
@@ -74,7 +77,7 @@ export async function PATCH(req){
  if(d.status===undefined&&d.role===undefined&&d.permissions===undefined)return NextResponse.json({error:'No staff changes were supplied.'},{status:400});
  const p=getDatabasePool(),client=await p.connect();
  try{
-  await ensureSiteTenants(p);const tenant=await selectedTenant(p,d.tenant_id);
+  await ensureSiteTenants(p);const tenant=await selectedTenant(p,d.tenant_id,req,admin);
   await client.query('BEGIN');
   const prior=await client.query('SELECT id,email,role,status FROM public.staff_accounts WHERE id=$1 AND tenant_id=$2 FOR UPDATE',[id,tenant.id]);
   if(!prior.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Staff account not found in this company.'},{status:404});}
