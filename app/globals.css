@@ -1948,3 +1948,25 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
     padding:24px 20px!important;
   }
 }
+
+
+/* Property rail arrows: consistent premium controls and reliable one-card movement */
+.property-collection-controls{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex:0 0 auto}
+.property-collection-controls button{
+ width:42px;height:42px;display:grid;place-items:center;
+ border:1px solid #c9cfc2;background:#e4e1d5;color:#173d2b;
+ box-shadow:2px 2px 0 #c9cfc2;font:500 22px/1 'DM Mono',monospace;
+ cursor:pointer;transition:background .18s,color .18s,border-color .18s,transform .18s,box-shadow .18s
+}
+.property-collection-controls button:hover{
+ background:#d8f36b;color:#173d2b;border-color:#173d2b;
+ transform:translate(-1px,-1px);box-shadow:3px 3px 0 #173d2b
+}
+.property-collection-controls button:focus-visible{outline:3px solid #8cae42;outline-offset:3px}
+@media(max-width:680px){
+ .property-collection-heading{display:flex;flex-wrap:wrap;align-items:flex-start;gap:13px}
+ .property-collection-heading>div:first-child{width:100%;max-width:none}
+ .property-collection-controls{width:100%;justify-content:flex-end;margin-top:0}
+ .property-collection-controls button{width:38px;height:38px;font-size:20px}
+ .property-collection-track{scroll-margin-inline:5vw}
+}
