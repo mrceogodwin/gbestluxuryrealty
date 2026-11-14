@@ -1590,3 +1590,51 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .gbest-footer-follow>span{width:100%;text-align:center}
  .gbest-footer-socials{justify-content:center}
 }
+
+
+/* Mid-page inspection CTA: positioned between featured homes and land listings */
+.gbest-midpage-cta{
+  display:block;
+  width:100%;
+  margin:0;
+  padding:clamp(48px,7vw,88px) clamp(20px,5vw,72px);
+  background:#050706!important;
+  color:#f7f3e8;
+  border-top:1px solid rgba(216,243,107,.18);
+  border-bottom:1px solid rgba(216,243,107,.18);
+  position:relative;
+  isolation:isolate;
+}
+.gbest-midpage-cta .gbest-footer-main{
+  width:100%;
+  max-width:1180px;
+  margin:0 auto;
+  padding:0;
+  border:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:clamp(24px,3.5vw,38px);
+  text-align:center;
+}
+.gbest-midpage-cta .gbest-footer-promise .eyebrow{font-size:clamp(9px,1vw,12px);letter-spacing:.2em;margin-bottom:22px}
+.gbest-midpage-cta .gbest-footer-promise h2{font-size:clamp(36px,7.2vw,88px);line-height:.98;letter-spacing:-.06em}
+.gbest-midpage-cta .gbest-footer-promise>p:last-child{font-size:clamp(13px,1.7vw,19px);margin-top:24px}
+.gbest-midpage-cta .gbest-footer-cta{
+  width:min(100%,870px);
+  min-height:clamp(76px,10vw,120px);
+  padding:18px 28px;
+  gap:18px;
+  font-size:clamp(11px,1.35vw,16px);
+  letter-spacing:.1em;
+  white-space:normal;
+}
+.gbest-midpage-cta .gbest-footer-cta span{font-size:clamp(18px,2vw,25px)}
+@media(max-width:600px){
+ .gbest-midpage-cta{padding:52px 20px 56px}
+ .gbest-midpage-cta .gbest-footer-promise h2{font-size:clamp(34px,10vw,48px)}
+ .gbest-midpage-cta .gbest-footer-promise .eyebrow{font-size:8px;letter-spacing:.14em}
+ .gbest-midpage-cta .gbest-footer-promise>p:last-child{font-size:12px;line-height:1.6;margin-top:17px}
+ .gbest-midpage-cta .gbest-footer-cta{min-height:76px;width:100%;font-size:10px;padding:16px 18px}
+}
