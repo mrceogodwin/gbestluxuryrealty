@@ -202,3 +202,14 @@ test('staff access to property and client operations follows assigned workspace'
   assert.match(inspections,/staff\?\.tenant_id/);
   assert.match(registrations,/staff\?\.tenant_id/);
 });
+
+
+test('company staff managers can administer only their own workspace team', async () => {
+  const api = await source('app/api/admin/staff/route.js');
+  const layout = await source('app/admin/layout.js');
+  assert.match(api, /authorizeAdminRequest\(req,'staff\.manage'\)/);
+  assert.match(api, /if\(!admin\).*staff\?\.tenant_id/s);
+  assert.match(api, /WHERE id=\$1 AND tenant_id=\$2 FOR UPDATE/);
+  assert.match(layout, /href==='\/admin\/super\/staff'\)return access\.has\('staff\.manage'\)/);
+  assert.doesNotMatch(layout, /path\.startsWith\('\/admin\/super\/staff'\)\|\|path==='\/admin\/super\/activity'/);
+});
