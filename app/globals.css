@@ -1856,3 +1856,63 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   .market-ticker-item>b{font-size:9px!important}
   .market-ticker-cta{padding:0 10px!important;font-size:7px!important}
 }
+
+
+/* Clean G-BEST legal footer: brand mark, essential links, and copyright only */
+.gbest-main-footer{
+  max-width:1320px!important;
+  margin:0 auto!important;
+  padding:clamp(28px,4vw,48px) 0 22px!important;
+  background:#050706!important;
+  color:#f7f3e8!important;
+}
+.gbest-footer-standard{
+  width:100%;
+  display:grid;
+  grid-template-columns:minmax(150px,230px) minmax(0,1fr);
+  align-items:center;
+  gap:24px clamp(28px,5vw,72px);
+}
+.gbest-footer-standard .gbest-footer-logo{
+  width:100%;
+  min-width:0;
+  justify-content:flex-start;
+}
+.gbest-footer-standard .gbest-footer-logo img{
+  display:block;
+  width:100%;
+  max-width:220px;
+  max-height:92px;
+  object-fit:contain;
+  object-position:left center;
+}
+.gbest-footer-standard .gbest-footer-nav{
+  justify-content:flex-end;
+  gap:13px clamp(14px,2.1vw,28px);
+  padding:12px 0;
+  border:0;
+}
+.gbest-footer-standard .gbest-footer-nav a{
+  color:#cbd5ca!important;
+  font:700 8px 'DM Mono',monospace;
+  letter-spacing:.09em;
+  white-space:nowrap;
+}
+.gbest-footer-standard .gbest-footer-nav a:hover{color:#d8f36b!important}
+.gbest-footer-standard .gbest-footer-bottom{
+  grid-column:1/-1;
+  width:100%;
+  margin-top:4px;
+  padding:18px 0 0;
+  border-top:1px solid rgba(223,236,218,.16);
+  justify-content:space-between;
+}
+@media(max-width:760px){
+  .gbest-main-footer{padding:28px 18px 20px!important}
+  .gbest-footer-standard{grid-template-columns:1fr;gap:12px;text-align:center}
+  .gbest-footer-standard .gbest-footer-logo{justify-content:center}
+  .gbest-footer-standard .gbest-footer-logo img{max-width:190px;max-height:74px;object-position:center}
+  .gbest-footer-standard .gbest-footer-nav{justify-content:center;gap:12px 18px;padding:10px 0 14px}
+  .gbest-footer-standard .gbest-footer-nav a{font-size:7px}
+  .gbest-footer-standard .gbest-footer-bottom{justify-content:center;text-align:center;gap:8px;flex-direction:column;margin-top:0;padding-top:15px}
+}
