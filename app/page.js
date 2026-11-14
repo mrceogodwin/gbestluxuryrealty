@@ -99,11 +99,13 @@ return <><div className="topline" style={{display:homepage.announcement?.visible
 <section className="property-orbit-placement" aria-label="Featured properties" style={{backgroundImage:'linear-gradient(115deg,rgba(4,18,10,.78),rgba(4,18,10,.48)),url('+(properties[0]?.img||P[0].img)+')',backgroundSize:'cover',backgroundPosition:'center'}}><div className="footer-property-orbit"><div className="footer-property-orbit-heading"><p className="eyebrow">G-BEST / PROPERTY COLLECTION</p><h2>FIND YOUR NEXT<br/>PLACE TO BELONG.</h2><span>CURATED HOMES · LAND · INVESTMENTS</span></div><div className="footer-property-orbit-window" aria-label="Featured G-BEST properties sliding carousel"><div className="footer-property-orbit-track">{[...properties,...properties].map((item,i)=><button className="footer-property-orbit-item" type="button" key={String(item.id)+'-'+i} onClick={()=>SD(item)} tabIndex={i>=properties.length?-1:0} aria-label={'View '+item.name}><span className="footer-property-orbit-image"><img src={propertyImages(item)[0]||item.img} alt="" loading="lazy"/></span><b>{item.name}</b><small>{item.loc}</small><strong>{item.price||'Price on request'}</strong></button>)}</div></div></div></section>
 <div className="gbest-footer-ticker" aria-label="G-BEST services"><div className="gbest-footer-ticker-track"><span>BUY WITH CONFIDENCE</span><i aria-hidden="true">·</i><span>SELL WITH EASE</span><i aria-hidden="true">·</i><span>PROPERTY · PEOPLE · POSSIBILITIES</span><i aria-hidden="true">·</i><span>YOUR INVESTMENT, OUR PRIORITY</span><i aria-hidden="true">·</i><span>BUY WITH CONFIDENCE</span><i aria-hidden="true">·</i><span>SELL WITH EASE</span><i aria-hidden="true">·</i><span>PROPERTY · PEOPLE · POSSIBILITIES</span><i aria-hidden="true">·</i><span>YOUR INVESTMENT, OUR PRIORITY</span><i aria-hidden="true">·</i></div></div><footer className="gbest-main-footer" style={{display:homepage.footer?.visible===false?'none':undefined,...cmsBackground(homepage,'footer')}}>
  <div className="gbest-footer-standard">
- <a className="gbest-footer-logo" href="#top" aria-label="G-BEST Luxury Realty home"><img src="/gbest-footer-logo.webp" alt="G-BEST Luxury Realty" loading="lazy"/></a>
- <nav className="gbest-footer-nav" aria-label="Footer navigation">
-  <a href="#top">HOME</a><a href="#properties">PROPERTIES</a><a href="#inspection">BOOK AN INSPECTION</a><a href="#contact">CONTACT</a>
-  <a href="/privacy-policy">PRIVACY POLICY</a><a href="/terms-and-conditions">TERMS &amp; CONDITIONS</a><a href="/cookie-policy">COOKIE POLICY</a>
- </nav>
+ <a className="gbest-footer-logo" href="#top" aria-label="G-BEST Luxury Realty home">
+   <svg className="gbest-footer-mark" viewBox="0 0 88 76" aria-hidden="true"><path d="M5 68 20 59V31l10-7v32l10-6V13l12-8v45l10 6V28l9 7v31l7 4" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="square" strokeLinejoin="miter"/><path d="M3 70h82" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="square"/></svg>
+   <span className="gbest-footer-wordmark"><b>G-BEST</b><small>Luxury Realty</small></span>
+  </a>
+  <nav className="gbest-footer-nav" aria-label="Footer navigation">
+   <a href="#top">HOME</a><a href="#properties">PROPERTIES</a><a href="#inspection">BOOK AN INSPECTION</a><a href="#contact">CONTACT</a>
+  </nav>
  <div className="gbest-footer-bottom"><span>© {new Date().getFullYear()} G-BEST Luxury Realty. All rights reserved.</span><span>YOUR INVESTMENT, OUR PRIORITY.</span></div>
 </div></footer></section></>;
 }
