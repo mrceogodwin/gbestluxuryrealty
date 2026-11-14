@@ -220,7 +220,7 @@ test('media library records and object storage keys are company isolated', async
   const page = await source('app/admin/super/media/page.js');
   assert.match(api, /admin_media_assets ADD COLUMN IF NOT EXISTS tenant_id/);
   assert.match(api, /WHERE tenant_id=\$1 ORDER BY created_at DESC/);
-  assert.match(api, /website\/\+tenant\.id\+\//);
+  assert.ok(api.includes("prefix='website/'+tenant.id+'/"));
   assert.match(api, /WHERE id=\$1 AND tenant_id=\$2/);
   assert.match(page, /COMPANY WORKSPACE/);
   assert.match(page, /tenant_id:body\.tenant_id\|\|activeTenantId/);
@@ -233,7 +233,7 @@ test('company hero videos are isolated by tenant and served by the requesting do
   const publicRoute = await source('app/api/company-video/route.js');
   const page = await source('app/admin/super/company-video/page.js');
   assert.match(tenants, /company_profile_video_tenants/);
-  assert.match(admin, /company-video\/\+tenant\.id\+\//);
+  assert.ok(admin.includes("prefix='company-video/'+tenant.id+'/"));
   assert.match(admin, /ON CONFLICT\(tenant_id\)/);
   assert.match(publicRoute, /resolveSiteTenant/);
   assert.match(publicRoute, /WHERE tenant_id=\$1/);
