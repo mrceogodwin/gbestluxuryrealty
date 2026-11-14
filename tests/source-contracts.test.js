@@ -175,3 +175,30 @@ test('public property data includes all gallery images for the detail view', asy
   assert.match(route, /COALESCE\(images, ARRAY\[\]::text\[\]\) AS images/);
   assert.match(route, /images: Array\.isArray\(x\.images\)/);
 });
+
+
+test('staff accounts, invitations and audit events are isolated by company', async () => {
+  const tenants = await source('lib/site-tenants.js');
+  const staffApi = await source('app/api/admin/staff/route.js');
+  const staffAuth = await source('lib/staff-auth.js');
+  const login = await source('app/api/staff/session/route.js');
+  assert.match(tenants, /staff_accounts ADD COLUMN IF NOT EXISTS tenant_id/);
+  assert.match(tenants, /staff_audit_events ADD COLUMN IF NOT EXISTS tenant_id/);
+  assert.match(staffApi, /WHERE s\.tenant_id=\$1/);
+  assert.match(staffApi, /WHERE tenant_id=\$1 FOR UPDATE/);
+  assert.match(staffApi, /INSERT INTO public\.staff_accounts\(tenant_id,/);
+  assert.match(staffAuth, /a\.tenant_id/);
+  assert.match(login, /tenant_id:staff\.tenant_id/);
+});
+
+test('staff access to property and client operations follows assigned workspace', async () => {
+  const properties = await source('app/api/admin/properties/route.js');
+  const inspections = await source('app/api/admin/inspection-requests/route.js');
+  const schedule = await source('app/api/admin/inspection-schedule/route.js');
+  const registrations = await source('app/api/admin/client-registrations/route.js');
+  const receipt = await source('app/api/admin/client-registrations/[id]/receipt/route.js');
+  for (const content of [properties,inspections,schedule,registrations,receipt]) assert.match(content,/getStaffSession/);
+  assert.match(properties,/staff\?\.tenant_id/);
+  assert.match(inspections,/staff\?\.tenant_id/);
+  assert.match(registrations,/staff\?\.tenant_id/);
+});
