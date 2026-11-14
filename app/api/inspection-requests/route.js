@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDatabasePool } from '../../../lib/db';
 import { queueInspectionEmails, deliverInspectionEmails } from '../../../lib/inspection-email-outbox';
 import {getSchedule,slotIsAvailable,validClock} from '../../../lib/inspection-schedule';
+import {resolveSiteTenant} from '../../../lib/site-tenants';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 
@@ -18,6 +19,9 @@ export async function POST(req){
   // Demo cards are for presentation only and must never create real inspection records.
   if(/^GB-00[1-8]$/.test(pid))return NextResponse.json({error:'This is a sample property, not a live listing. Please choose a published property before requesting an inspection.'},{status:400});
   const pool=getDatabasePool();
+  const host=req.headers.get('x-forwarded-host')||req.headers.get('host')||'';
+  const tenant=await resolveSiteTenant(pool,host);
+  if(!tenant)return NextResponse.json({error:'This domain is not connected to an active company workspace.'},{status:404});
   // Only clients whose manual bank transfer has been checked and approved
   // by G-BEST staff may request an inspection.
   const registrationTable=await pool.query("SELECT to_regclass('public.client_registrations') AS table_name");
@@ -26,12 +30,12 @@ export async function POST(req){
   if(!registration.rowCount||registration.rows[0].payment_status!=='approved')return NextResponse.json({error:'Your client registration or payment is not yet approved. Please complete registration and wait for G-BEST to verify your bank transfer before booking an inspection.'},{status:403});
   let propertyLabel=pid;
   const listing=await pool.query(`SELECT id,title FROM public.properties
-    WHERE status IN ('published','available')
+    WHERE tenant_id=$2 AND status IN ('published','available')
       AND ('GB-' || CASE
         WHEN id::text ~ '^[0-9]+$' THEN lpad(id::text,8,'0')
         ELSE right(upper(replace(id::text,'-','')),8)
       END)=$1
-    LIMIT 1`,[pid]);
+    LIMIT 1`,[pid,tenant.id]);
   if(!listing.rowCount)return NextResponse.json({error:'That property is no longer available. Refresh the listings and try again.'},{status:400});
   propertyLabel=listing.rows[0].title;
   const client=await pool.connect();
@@ -51,7 +55,7 @@ export async function POST(req){
     await client.query('ROLLBACK');
     return NextResponse.json({error:'That inspection slot has just been taken. Please choose another available time.'},{status:409});
    }
-   q=await client.query("INSERT INTO public.inspection_requests(full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',$6,$7,$8,'pending','Africa/Lagos') RETURNING id",[name,contact,email,date,time,duration,String(listing.rows[0].id),message]);
+   q=await client.query("INSERT INTO public.inspection_requests(tenant_id,full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',$6,$7,$8,$9,'pending','Africa/Lagos') RETURNING id",[tenant.id,name,contact,email,date,time,duration,String(listing.rows[0].id),message]);
    await client.query('COMMIT');
   } catch(insertError) {
    await client.query('ROLLBACK').catch(()=>{});
