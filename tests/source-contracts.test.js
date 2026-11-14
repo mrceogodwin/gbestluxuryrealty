@@ -185,7 +185,7 @@ test('staff accounts, invitations and audit events are isolated by company', asy
   assert.match(tenants, /staff_accounts ADD COLUMN IF NOT EXISTS tenant_id/);
   assert.match(tenants, /staff_audit_events ADD COLUMN IF NOT EXISTS tenant_id/);
   assert.match(staffApi, /WHERE s\.tenant_id=\$1/);
-  assert.match(staffApi, /WHERE tenant_id=\$1 FOR UPDATE/);
+  assert.match(staffApi, /WHERE id=\$1 AND tenant_id=\$2 FOR UPDATE/);
   assert.match(staffApi, /INSERT INTO public\.staff_accounts\(tenant_id,/);
   assert.match(staffAuth, /a\.tenant_id/);
   assert.match(login, /tenant_id:staff\.tenant_id/);
