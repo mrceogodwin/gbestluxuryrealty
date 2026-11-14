@@ -86,3 +86,27 @@ test('media uploads enforce supported image and audio MIME types and file sizes'
   assert.match(code, /actualSize/);
   assert.match(code, /25\*1024\*1024/);
 });
+
+test('white-label company registry resolves published branding by domain', async () => {
+  const tenants = await source('lib/site-tenants.js');
+  const publicRoute = await source('app/api/homepage/route.js');
+  const registry = await source('app/api/admin/companies/route.js');
+  assert.match(tenants, /CREATE TABLE IF NOT EXISTS public\.site_tenants/);
+  assert.match(tenants, /resolveSiteTenant/);
+  assert.match(tenants, /primary_domain/);
+  assert.match(publicRoute, /resolveSiteTenant/);
+  assert.match(publicRoute, /tenant\.brand_config/);
+  assert.match(registry, /isAdminRequest/);
+  assert.match(registry, /cleanTenantBrand/);
+  assert.match(registry, /status IN \('active','suspended'\)/);
+});
+
+test('company workspace management is reserved for Super Admin', async () => {
+  const page = await source('app/admin/super/companies/page.js');
+  const layout = await source('app/admin/layout.js');
+  assert.match(page, /Company workspaces/);
+  assert.match(page, /tenantKey/);
+  assert.match(page, /primaryDomain/);
+  assert.match(page, /still shared by the current application data model/);
+  assert.match(layout, /__super_admin_only__/);
+});
