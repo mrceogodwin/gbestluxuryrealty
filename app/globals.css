@@ -2533,3 +2533,33 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   .property-card,.photo-wrap img{transition:none!important}
   .hero,.hero *{backface-visibility:hidden}
 }
+
+
+/* G-BEST experience carousel: reliable two-axis touch scrolling on iOS and Android. */
+.marketing-card-track{
+  -webkit-overflow-scrolling:touch!important;
+  touch-action:pan-x pan-y!important;
+  overscroll-behavior-x:contain!important;
+  overscroll-behavior-y:auto!important;
+  scroll-snap-type:x proximity!important;
+  scroll-snap-stop:normal!important;
+  scroll-behavior:smooth!important;
+  cursor:grab;
+}
+.marketing-card-track:active{cursor:grabbing}
+.marketing-image-card{scroll-snap-stop:normal!important}
+.marketing-card-image{position:relative}
+.marketing-card-image img{object-fit:cover;object-position:center;width:100%;height:100%}
+@media(max-width:680px){
+  .marketing-card-track{
+    touch-action:pan-x pan-y!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior-x:contain!important;
+    scroll-snap-type:x proximity!important;
+    scroll-padding-inline:8px!important;
+    scroll-behavior:smooth!important;
+    padding-left:2px!important;
+    padding-right:18px!important;
+  }
+  .marketing-image-card{scroll-snap-align:start!important;scroll-snap-stop:normal!important}
+}
