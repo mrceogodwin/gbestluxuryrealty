@@ -1970,3 +1970,142 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .property-collection-controls button{width:38px;height:38px;font-size:20px}
  .property-collection-track{scroll-margin-inline:5vw}
 }
+
+
+/* Reference-matched legal footer: full-bleed forest green, brand lockup and one clean divider */
+.gbest-main-footer{
+  width:calc(100% + 10vw)!important;
+  max-width:none!important;
+  margin:0 -5vw!important;
+  padding:clamp(30px,4vw,48px) 5vw 22px!important;
+  box-sizing:border-box!important;
+  background:transparent!important;
+  color:#f7f3e8!important;
+}
+.gbest-footer-standard{
+  width:100%;
+  max-width:1320px;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:minmax(210px,280px) minmax(0,1fr);
+  align-items:center;
+  column-gap:clamp(24px,4vw,52px);
+  row-gap:0;
+}
+.gbest-footer-standard .gbest-footer-logo{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:12px;
+  min-width:0;
+  color:#d8f36b!important;
+  text-decoration:none;
+}
+.gbest-footer-standard .gbest-footer-mark{
+  display:block;
+  flex:0 0 76px;
+  width:76px;
+  height:68px;
+}
+.gbest-footer-wordmark{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+.gbest-footer-wordmark b{
+  color:#f7f3e8;
+  font:800 clamp(21px,2.4vw,31px)/1 Inter,Arial,sans-serif;
+  letter-spacing:-.045em;
+}
+.gbest-footer-wordmark small{
+  margin-top:5px;
+  color:#f7f3e8;
+  font:500 clamp(13px,1.55vw,19px)/1.05 Inter,Arial,sans-serif;
+  letter-spacing:-.02em;
+}
+.gbest-footer-standard .gbest-footer-nav{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:clamp(13px,2.1vw,28px);
+  flex-wrap:wrap;
+  min-width:0;
+  min-height:64px;
+  padding:8px 0 8px clamp(22px,3.2vw,42px);
+  border:0;
+  border-left:1px solid rgba(223,236,218,.34);
+}
+.gbest-footer-standard .gbest-footer-nav a{
+  color:#f0f2e9!important;
+  font:700 clamp(8px,.9vw,11px) 'DM Mono',monospace;
+  letter-spacing:.075em;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.gbest-footer-standard .gbest-footer-nav a:hover{color:#d8f36b!important}
+.gbest-footer-standard .gbest-footer-bottom{
+  grid-column:1/-1;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px 24px;
+  width:100%;
+  margin-top:30px;
+  padding:20px 0 0;
+  border-top:1px solid rgba(223,236,218,.32);
+  color:#c5d0c5;
+  font:500 10px 'DM Mono',monospace;
+  letter-spacing:.09em;
+}
+.gbest-footer-standard .gbest-footer-bottom span:last-child{
+  color:#d8f36b;
+  font-weight:700;
+  letter-spacing:.14em;
+}
+@media(max-width:760px){
+  .gbest-main-footer{
+    width:calc(100% + 32px)!important;
+    margin:0 -16px!important;
+    padding:28px 18px 20px!important;
+  }
+  .gbest-footer-standard{
+    grid-template-columns:minmax(118px,.78fr) minmax(0,1.22fr);
+    column-gap:12px;
+    row-gap:0;
+    text-align:left;
+  }
+  .gbest-footer-standard .gbest-footer-logo{gap:7px}
+  .gbest-footer-standard .gbest-footer-mark{flex-basis:42px;width:42px;height:48px}
+  .gbest-footer-wordmark b{font-size:18px}
+  .gbest-footer-wordmark small{font-size:12px;margin-top:4px}
+  .gbest-footer-standard .gbest-footer-nav{
+    justify-content:flex-end;
+    align-content:center;
+    gap:12px 13px;
+    min-height:52px;
+    padding:6px 0 6px 12px;
+    border-left:1px solid rgba(223,236,218,.3);
+  }
+  .gbest-footer-standard .gbest-footer-nav a{font-size:7px;letter-spacing:.045em}
+  .gbest-footer-standard .gbest-footer-bottom{
+    grid-column:1/-1;
+    flex-direction:row;
+    justify-content:space-between;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:9px 16px;
+    margin-top:22px;
+    padding-top:15px;
+    font-size:7px;
+    line-height:1.6;
+    letter-spacing:.045em;
+  }
+  .gbest-footer-standard .gbest-footer-bottom span:last-child{letter-spacing:.08em}
+}
+@media(max-width:370px){
+  .gbest-footer-standard{grid-template-columns:1fr;gap:14px}
+  .gbest-footer-standard .gbest-footer-logo{justify-content:center}
+  .gbest-footer-standard .gbest-footer-nav{
+    justify-content:center;
+    border-left:0;
+    border-top:1px solid rgba(223,236,218,.2);
+    padding:14px 0 0;
+  }
+  .gbest-footer-standard .gbest-footer-bottom{justify-content:center;text-align:center}
+}
