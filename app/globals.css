@@ -2258,3 +2258,174 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   .gbest-main-footer .gbest-footer-nav{gap:12px 17px!important;padding:15px 4px!important}
   .gbest-main-footer .gbest-footer-nav a{font-size:7px!important;letter-spacing:.045em!important}
 }
+
+
+/* Final G-BEST logo lockups: full emblem + wordmark in both site bars. */
+.gbest-brand-lockup{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:10px!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:0!important;
+  padding:0!important;
+  margin:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  text-decoration:none!important;
+}
+.gbest-lockup-mark{
+  display:block!important;
+  flex:0 0 48px!important;
+  width:48px!important;
+  height:44px!important;
+  color:#d8f36b!important;
+  overflow:visible;
+}
+.gbest-lockup-type{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  gap:4px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+.gbest-lockup-type b{
+  display:block!important;
+  margin:0!important;
+  color:#f7f3e8!important;
+  font:800 clamp(21px,2vw,28px)/.95 Inter,Arial,sans-serif!important;
+  letter-spacing:-.045em!important;
+}
+.gbest-lockup-type small{
+  display:block!important;
+  margin:0!important;
+  color:#d8f36b!important;
+  font:700 8px/1.2 'DM Mono',monospace!important;
+  letter-spacing:.14em!important;
+  text-transform:uppercase!important;
+}
+.gbest-main-footer{
+  display:block!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:36px 18px 24px!important;
+  box-sizing:border-box!important;
+  background:transparent!important;
+  text-align:center!important;
+}
+.gbest-footer-standard{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:20px!important;
+  width:100%!important;
+  max-width:1120px!important;
+  margin:0 auto!important;
+  padding:0!important;
+  text-align:center!important;
+  background:transparent!important;
+}
+.gbest-main-footer .gbest-footer-brand-lockup{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:12px!important;
+  width:auto!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0 auto!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  text-decoration:none!important;
+}
+.gbest-footer-brand-lockup .gbest-lockup-mark{
+  flex-basis:58px!important;
+  width:58px!important;
+  height:54px!important;
+}
+.gbest-footer-brand-lockup .gbest-lockup-type b{
+  font-size:27px!important;
+}
+.gbest-footer-brand-lockup .gbest-lockup-type small{
+  color:#f7f3e8!important;
+  font:500 16px/1.05 Inter,Arial,sans-serif!important;
+  letter-spacing:-.02em!important;
+  text-transform:none!important;
+}
+.gbest-main-footer .gbest-footer-nav{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  align-content:center!important;
+  flex-wrap:wrap!important;
+  gap:14px 28px!important;
+  width:100%!important;
+  max-width:760px!important;
+  min-height:0!important;
+  height:auto!important;
+  margin:0 auto!important;
+  padding:18px 8px!important;
+  border:0!important;
+  border-top:1px solid rgba(223,236,218,.2)!important;
+  border-bottom:1px solid rgba(223,236,218,.2)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  outline:0!important;
+  position:static!important;
+}
+.gbest-main-footer .gbest-footer-nav a{
+  display:inline-block!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  color:#f0f2e9!important;
+  font:700 9px 'DM Mono',monospace!important;
+  letter-spacing:.08em!important;
+  line-height:1.5!important;
+  text-align:center!important;
+  text-decoration:none!important;
+  white-space:nowrap!important;
+}
+.gbest-main-footer .gbest-footer-bottom{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  width:100%!important;
+  margin:0!important;
+  padding:16px 0 0!important;
+  border:0!important;
+  background:transparent!important;
+  text-align:center!important;
+  font-size:8px!important;
+  line-height:1.6!important;
+}
+@media(max-width:760px){
+  .gbest-lockup-mark{flex-basis:38px!important;width:38px!important;height:36px!important}
+  .gbest-lockup-type b{font-size:20px!important}
+  .gbest-lockup-type small{font-size:6.5px!important;letter-spacing:.1em!important}
+  .gbest-main-footer{padding:30px 18px 22px!important}
+  .gbest-footer-standard{gap:16px!important}
+  .gbest-footer-brand-lockup .gbest-lockup-mark{flex-basis:46px!important;width:46px!important;height:44px!important}
+  .gbest-footer-brand-lockup .gbest-lockup-type b{font-size:23px!important}
+  .gbest-footer-brand-lockup .gbest-lockup-type small{font-size:14px!important}
+  .gbest-main-footer .gbest-footer-nav{gap:12px 17px!important;padding:15px 4px!important}
+  .gbest-main-footer .gbest-footer-nav a{font-size:7px!important;letter-spacing:.045em!important}
+}
