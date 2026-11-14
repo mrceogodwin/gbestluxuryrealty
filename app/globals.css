@@ -2648,3 +2648,117 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   .social-reels-section .social-reel-controls{gap:9px!important;margin-top:18px!important}
   .social-reels-section .social-reel-controls button{width:46px!important;min-width:46px!important;height:46px!important;min-height:46px!important;flex-basis:46px!important}
 }
+
+
+/* Featured property carousel: warm cream treatment and compact circular listings */
+.footer-details-section>.property-orbit-placement{
+  min-height:0!important;
+  padding:24px clamp(18px,4vw,52px) 28px!important;
+  margin:18px 0 0!important;
+  background:#f3f0e5!important;
+  background-image:none!important;
+  color:#173d2b!important;
+  border-top:1px solid #d5ddcf!important;
+  border-bottom:1px solid #d5ddcf!important;
+}
+.footer-details-section>.property-orbit-placement>.footer-property-orbit{
+  max-width:1180px;
+  margin:0 auto;
+  padding:0;
+  background:transparent!important;
+}
+.footer-details-section>.property-orbit-placement .footer-property-orbit-heading{
+  display:grid!important;
+  grid-template-columns:1fr auto!important;
+  align-items:center!important;
+  gap:6px 14px!important;
+  margin:0 0 12px!important;
+  text-shadow:none!important;
+}
+.footer-details-section>.property-orbit-placement .footer-property-orbit-heading h2{
+  display:none!important;
+}
+.footer-details-section>.property-orbit-placement .footer-property-orbit-heading .eyebrow{
+  grid-column:1!important;
+  color:#587044!important;
+  font-size:9px!important;
+  margin:0!important;
+}
+.footer-details-section>.property-orbit-placement .footer-property-orbit-heading>span{
+  grid-column:2!important;
+  color:#657468!important;
+  font-size:8px!important;
+  text-align:right!important;
+}
+.footer-details-section>.property-orbit-placement .footer-property-orbit-window{
+  background:transparent!important;
+  mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);
+}
+.footer-details-section>.property-orbit-placement .footer-property-orbit-track{
+  gap:16px!important;
+  padding:4px 6px 12px!important;
+  animation-duration:64s!important;
+}
+.footer-details-section>.property-orbit-placement .footer-property-orbit-item{
+  width:112px!important;
+  flex:0 0 112px!important;
+  gap:5px!important;
+  color:#173d2b!important;
+  text-shadow:none!important;
+}
+.footer-details-section>.property-orbit-placement .footer-property-orbit-image{
+  width:88px!important;
+  height:88px!important;
+  padding:3px!important;
+  border:1px solid #aebba5!important;
+  background:#fffdf5!important;
+  box-shadow:0 4px 12px rgba(23,61,43,.12)!important;
+}
+.footer-details-section>.property-orbit-placement .footer-property-orbit-image img{
+  border:2px solid #f3f0e5!important;
+}
+.footer-details-section>.property-orbit-placement .footer-property-orbit-item>b{
+  color:#173d2b!important;
+  font-size:10px!important;
+}
+.footer-details-section>.property-orbit-placement .footer-property-orbit-item>small{
+  color:#657468!important;
+  font-size:8px!important;
+}
+.footer-details-section>.property-orbit-placement .footer-property-orbit-item>strong{
+  color:#587a35!important;
+  font-size:9px!important;
+}
+@media(max-width:680px){
+  .footer-details-section>.property-orbit-placement{
+    min-height:0!important;
+    margin-top:14px!important;
+    padding:18px 12px 20px!important;
+  }
+  .footer-details-section>.property-orbit-placement .footer-property-orbit-heading{
+    grid-template-columns:1fr!important;
+    gap:5px!important;
+    margin-bottom:10px!important;
+  }
+  .footer-details-section>.property-orbit-placement .footer-property-orbit-heading .eyebrow,
+  .footer-details-section>.property-orbit-placement .footer-property-orbit-heading>span{
+    grid-column:1!important;
+    text-align:left!important;
+  }
+  .footer-details-section>.property-orbit-placement .footer-property-orbit-track{
+    gap:12px!important;
+    animation-duration:58s!important;
+  }
+  .footer-details-section>.property-orbit-placement .footer-property-orbit-item{
+    width:96px!important;
+    flex-basis:96px!important;
+  }
+  .footer-details-section>.property-orbit-placement .footer-property-orbit-image{
+    width:72px!important;
+    height:72px!important;
+    padding:3px!important;
+  }
+  .footer-details-section>.property-orbit-placement .footer-property-orbit-item>b{font-size:9px!important}
+  .footer-details-section>.property-orbit-placement .footer-property-orbit-item>small{font-size:7px!important}
+  .footer-details-section>.property-orbit-placement .footer-property-orbit-item>strong{font-size:8px!important}
+}
