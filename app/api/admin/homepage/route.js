@@ -62,7 +62,7 @@ export async function PATCH(req){
   const body=await req.json(),key=String(body.sectionKey||'').trim();
   if(!/^[a-z_]{2,60}$/.test(key))return NextResponse.json({error:'Invalid homepage section.'},{status:400});
   const pool=await ensureHomepageTables(),{tenant,admin}=await chooseTenant(req,pool,body.tenant_id);
-  if(['site_settings','site_audio'].includes(key)&&!admin)return NextResponse.json({error:'Only the Super Admin can change company-wide brand and audio settings.'},{status:403});
+  if(key==='site_settings'&&!admin)return NextResponse.json({error:'Only the Super Admin can change company-wide brand and audio settings.'},{status:403});
   const content=cleanContent(body.content);
   const q=await pool.query('UPDATE public.homepage_tenant_sections SET draft_content=draft_content || $3::jsonb,updated_at=now() WHERE tenant_id=$1 AND section_key=$2 RETURNING tenant_id,section_key,label,draft_content,published_content,updated_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[tenant.id,key,JSON.stringify(content)]);
   if(!q.rowCount)return NextResponse.json({error:'Homepage section not found.'},{status:404});
