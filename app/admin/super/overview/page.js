@@ -9,7 +9,7 @@ const catalog=[
  {key:'media',permission:'media',title:'Media library',description:'Manage property photos and company assets',href:'/admin/super/media',icon:'▧'},
  {key:'finance',permission:'finance',title:'Company finance',description:'Review income, expenses and ledger',href:'/admin/super/finance',icon:'₦'},
  {key:'staff',permission:'staff',title:'Staff & permissions',description:'Invite employees and assign access',href:'/admin/super/staff',icon:'♧'},
- {key:'homepage',permission:'homepage',title:'Website content',description:'Update the public website',href:'/admin/super/homepage',icon:'▤'},
+ {key:'homepage',permission:'homepage',title:'Website content',description:'Update homepage sections and media',href:'/admin/super/homepage',icon:'▤'},\n {key:'modification',permission:'modification',title:'Modification Engine',description:'White-label brand, design, SEO and audio settings',href:'/admin/super/modification-engine',icon:'⚙'},
  {key:'activity',permission:'audit',title:'Activity & audit',description:'Review changes made across the system',href:'/admin/super/activity',icon:'≋'}
 ];
 function Stat({label,value,detail,href}){return <Link href={href} className="stat"><span>{label}</span><strong>{value??0}</strong><small>{detail}</small></Link>}
@@ -18,7 +18,7 @@ export default function AdminOverview(){
  const load=useCallback(async()=>{setBusy(true);setError('');try{const r=await fetch('/api/admin/overview',{cache:'no-store'}),d=await r.json();if(!r.ok)throw Error(d.error||'Could not load your workspace.');setData(d)}catch(e){setError(e.message||'Unable to load your workspace.')}finally{setBusy(false)}},[]);
  useEffect(()=>{load()},[load]);
  const permissions=new Set(data?.permissions||[]);
- const cards=catalog.filter(x=>x.key==='staff'?data?.isSuperAdmin: x.key==='homepage'?data?.isSuperAdmin: x.key==='activity'?data?.isSuperAdmin: x.key==='contacts'?data?.isSuperAdmin:permissions.has(x.permission));
+ const cards=catalog.filter(x=>x.key==='staff'?data?.isSuperAdmin: x.key==='homepage'?data?.isSuperAdmin: x.key==='activity'?data?.isSuperAdmin: x.key==='contacts'?data?.isSuperAdmin:x.key==='modification'?data?.isSuperAdmin:permissions.has(x.permission));
  const stats=[];
  if(data?.properties)stats.push({label:'PROPERTIES',value:data.properties.total,detail:(data.properties.published||0)+' published',href:'/admin/super'});
  if(data?.clients)stats.push({label:'CLIENTS',value:data.clients.total,detail:(data.clients.pending||0)+' payment reviews pending',href:'/admin/clients'});
