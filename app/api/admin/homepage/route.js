@@ -67,7 +67,6 @@ export async function PATCH(req){
   const content=cleanContent(body.content);
   const q=await pool.query('UPDATE public.homepage_tenant_sections SET draft_content=draft_content || $3::jsonb,updated_at=now() WHERE tenant_id=$1 AND section_key=$2 RETURNING tenant_id,section_key,label,draft_content,published_content,updated_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[tenant.id,key,JSON.stringify(content)]);
   if(!q.rowCount)return NextResponse.json({error:'Homepage section not found.'},{status:404});
-  if(key==='site_settings'){const brand=cleanTenantBrand(content);await pool.query('UPDATE public.site_tenants SET brand_config=brand_config || $2::jsonb,updated_at=now() WHERE id=$1',[tenant.id,JSON.stringify(brand)]);}
   return NextResponse.json({section:q.rows[0],message:'Draft saved. Public homepage is unchanged until you publish.'},{headers:{'Cache-Control':'no-store'}});
  }catch(e){const validation=!e.code;console.error('Homepage CMS draft save failed',e.code||e.message);return NextResponse.json({error:validation?e.message:'Could not save homepage draft.'},{status:validation?400:500});}
 }
@@ -90,6 +89,7 @@ export async function POST(req){
     if(!current.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Homepage section not found.'},{status:404});}
     await client.query('INSERT INTO public.homepage_tenant_section_revisions(tenant_id,section_key,content,action) VALUES($1,$2,$3::jsonb,$4)',[tenant.id,key,JSON.stringify(current.rows[0].published_content||{}),'before_restore']);
     const restored=await client.query('UPDATE public.homepage_tenant_sections SET draft_content=$3::jsonb,published_content=$3::jsonb,published_at=now(),updated_at=now() WHERE tenant_id=$1 AND section_key=$2 RETURNING tenant_id,section_key,label,draft_content,published_content,published_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[tenant.id,key,JSON.stringify(revision.rows[0].content||{})]);
+    if(key==='site_settings'){const brand=cleanTenantBrand(restored.rows[0].published_content||{});await client.query('UPDATE public.site_tenants SET brand_config=brand_config || $2::jsonb,updated_at=now() WHERE id=$1',[tenant.id,JSON.stringify(brand)]);}
     await client.query('COMMIT');return NextResponse.json({section:restored.rows[0],message:'Previous version restored and published.'},{headers:{'Cache-Control':'no-store'}});
    }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
   }
@@ -101,6 +101,7 @@ export async function POST(req){
     await client.query('BEGIN');
     await client.query('INSERT INTO public.homepage_tenant_section_revisions(tenant_id,section_key,content,action) VALUES($1,$2,$3::jsonb,$4)',[tenant.id,key,JSON.stringify(current.rows[0].published_content||{}),'before_publish']);
     const updated=await client.query('UPDATE public.homepage_tenant_sections SET published_content=draft_content,published_at=now(),updated_at=now() WHERE tenant_id=$1 AND section_key=$2 RETURNING tenant_id,section_key,label,draft_content,published_content,published_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[tenant.id,key]);
+    if(key==='site_settings'){const brand=cleanTenantBrand(updated.rows[0].published_content||{});await client.query('UPDATE public.site_tenants SET brand_config=brand_config || $2::jsonb,updated_at=now() WHERE id=$1',[tenant.id,JSON.stringify(brand)]);}
     await client.query('COMMIT');return NextResponse.json({section:updated.rows[0],message:'Homepage section published.'},{headers:{'Cache-Control':'no-store'}});
    }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
   }
