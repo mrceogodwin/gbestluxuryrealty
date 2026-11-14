@@ -9,7 +9,8 @@ const ROLES=['administrator','moderator'];
 const clean=(v,n=180)=>String(v??'').trim().slice(0,n);
 async function selectedTenant(pool,requested){
  const id=String(requested||'');
- const validId=id!==''&&Number.isSafeInteger(Number(id))&&Number(id)>0;\n const q=validId
+ const validId=id!==''&&Number.isSafeInteger(Number(id))&&Number(id)>0;
+ const q=validId
   ?await pool.query('SELECT id,tenant_key,display_name,status FROM public.site_tenants WHERE id=$1',[id])
   :await pool.query("SELECT id,tenant_key,display_name,status FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");
  if(!q.rowCount)throw new Error('Company workspace not found.');
