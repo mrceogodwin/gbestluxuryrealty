@@ -1410,3 +1410,24 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
     overflow-wrap:anywhere;
   }
 }
+
+
+/* Footer logo is optional and only appears after Super Admin uploads one */
+.gbest-footer-main.no-logo{
+  grid-template-columns:minmax(0,1fr) auto;
+}
+@media(max-width:850px){
+  .gbest-footer-main.no-logo{
+    grid-template-columns:minmax(0,1fr) auto;
+  }
+}
+@media(max-width:600px){
+  .gbest-footer-main.no-logo{
+    grid-template-columns:minmax(0,1fr);
+  }
+  .gbest-footer-main.no-logo .gbest-footer-cta{
+    grid-column:1;
+    justify-self:stretch;
+    width:100%;
+  }
+}
