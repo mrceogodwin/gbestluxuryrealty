@@ -2563,3 +2563,88 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   }
   .marketing-image-card{scroll-snap-align:start!important;scroll-snap-stop:normal!important}
 }
+
+
+/* Social Spotlight — requested black media block, white headline, balanced arrows */
+.social-reels-section{
+  background:#030504!important;
+  color:#f8f6ec!important;
+  border-top:1px solid #17251c!important;
+  border-bottom:1px solid #17251c!important;
+}
+.social-reels-section:before{color:#fff!important;opacity:.025!important}
+.social-reels-section .social-reels-heading h2{
+  color:#fff!important;
+  text-shadow:none!important;
+}
+.social-reels-section .social-reels-heading .eyebrow{
+  color:#d8f36b!important;
+}
+.social-reels-section .social-reel-controls{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  flex-wrap:nowrap!important;
+  gap:10px!important;
+  width:100%!important;
+  margin:22px 0 0!important;
+  min-height:52px!important;
+}
+.social-reels-section .social-reel-controls>span{
+  color:#d8f36b!important;
+  margin:0 auto 0 0!important;
+  white-space:nowrap!important;
+  flex:0 1 auto!important;
+}
+.social-reels-section .social-reel-controls>span i{color:#819486!important}
+.social-reels-section .social-reel-controls button{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:48px!important;
+  min-width:48px!important;
+  height:48px!important;
+  min-height:48px!important;
+  flex:0 0 48px!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid #d8f36b!important;
+  border-radius:2px!important;
+  background:#102b1d!important;
+  color:#d8f36b!important;
+  box-shadow:0 4px 0 #456b36!important;
+  font:500 25px/1 Arial,sans-serif!important;
+  opacity:1!important;
+  transform:none!important;
+}
+.social-reels-section .social-reel-controls button:hover:not(:disabled){
+  background:#d8f36b!important;
+  color:#07170f!important;
+  transform:translateY(-1px)!important;
+}
+.social-reels-section .social-reel-controls button:disabled{
+  background:#102b1d!important;
+  color:#d8f36b!important;
+  border-color:#78934b!important;
+  opacity:.48!important;
+  box-shadow:none!important;
+  cursor:not-allowed!important;
+}
+.social-reels-section .social-video-screen{
+  background:#000!important;
+  border:1px solid #29372d!important;
+}
+.social-reels-section .social-video-empty,
+.social-reels-section .social-video-link{
+  background:#000!important;
+  color:#fff!important;
+}
+@media(max-width:760px){
+  .social-reels-section{padding:44px 5vw 50px!important}
+  .social-reels-section .social-reels-inner{grid-template-columns:1fr!important;gap:22px!important}
+  .social-reels-section .social-reels-heading h2{color:#fff!important;font-size:clamp(38px,10vw,54px)!important}
+  .social-reels-section .social-reel-controls{gap:9px!important;margin-top:18px!important}
+  .social-reels-section .social-reel-controls button{width:46px!important;min-width:46px!important;height:46px!important;min-height:46px!important;flex-basis:46px!important}
+}
