@@ -2,6 +2,8 @@ import {NextResponse} from 'next/server';
 import {getDatabasePool} from '../../../../lib/db';
 import {isAdminRequest} from '../../../../lib/admin-auth';
 import {ensureSiteTenants,normalizeHostname,cleanTenantBrand} from '../../../../lib/site-tenants';
+import {ensureHomepageTables} from '../../../../lib/homepage-cms';
+import {ensureTenantHomepageTables} from '../../../../lib/tenant-homepage';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 async function admin(req){return isAdminRequest(req)}
@@ -20,6 +22,7 @@ export async function POST(req){
   if(key==='gbest')return NextResponse.json({error:'The default G-BEST company already exists.'},{status:409});
   const pool=getDatabasePool();await ensureSiteTenants(pool);
   const q=await pool.query('INSERT INTO public.site_tenants(tenant_key,display_name,primary_domain,brand_config) VALUES($1,$2,$3,$4::jsonb) RETURNING id,tenant_key,display_name,primary_domain,status,brand_config,created_at,updated_at',[key,name,domain,JSON.stringify(brand)]);
+  await ensureHomepageTables();await ensureTenantHomepageTables(pool,q.rows[0].id);
   return NextResponse.json({company:q.rows[0],message:'Company workspace created.'},{status:201,headers:{'Cache-Control':'no-store'}});
  }catch(e){
   if(e.code==='23505')return NextResponse.json({error:'That company key or domain is already registered.'},{status:409});
@@ -43,6 +46,8 @@ export async function PATCH(req){
   const brand=body.brandConfig===undefined?old.brand_config: {...old.brand_config,...cleanTenantBrand(body.brandConfig)};
   if(body.displayName!==undefined&&body.brandConfig===undefined)brand.siteName=name;
   const q=await pool.query('UPDATE public.site_tenants SET display_name=$2,primary_domain=$3,status=$4,brand_config=$5::jsonb,updated_at=now() WHERE id=$1 RETURNING id,tenant_key,display_name,primary_domain,status,brand_config,created_at,updated_at',[id,name,domain,status,JSON.stringify(brand)]);
+  await ensureHomepageTables();await ensureTenantHomepageTables(pool,id);
+  await pool.query(`UPDATE public.homepage_tenant_sections SET draft_content=draft_content || $2::jsonb,published_content=published_content || $2::jsonb,updated_at=now() WHERE tenant_id=$1 AND section_key='site_settings'`,[id,JSON.stringify(brand)]);
   return NextResponse.json({company:q.rows[0],message:'Company settings saved.'},{headers:{'Cache-Control':'no-store'}});
  }catch(e){
   if(e.code==='23505')return NextResponse.json({error:'That domain is already assigned to another company.'},{status:409});
