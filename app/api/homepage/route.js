@@ -15,7 +15,7 @@ export async function GET(req){
   await ensureTenantHomepageTables(pool,tenant.id);
   const q=await pool.query('SELECT section_key,published_content FROM public.homepage_tenant_sections WHERE tenant_id=$1 ORDER BY sort_order',[tenant.id]);
   const sections=Object.fromEntries(q.rows.map(x=>[x.section_key,x.published_content||{}]));
-  sections.site_settings={...(sections.site_settings||{}),...(tenant.brand_config||{}),siteName:tenant.brand_config?.siteName||tenant.display_name};
+  sections.site_settings={...(tenant.brand_config||{}),...(sections.site_settings||{}),siteName:sections.site_settings?.siteName||tenant.brand_config?.siteName||tenant.display_name};
   return NextResponse.json({tenant:{key:tenant.tenant_key,name:tenant.display_name},sections},{headers:{'Cache-Control':'no-store'}});
  }catch(e){console.error('Homepage CMS public read failed',e.code||e.message);return NextResponse.json({error:'Could not load homepage content.'},{status:500,headers:{'Cache-Control':'no-store'}});}
 }
