@@ -248,9 +248,21 @@ test('homepage drafts, published sections and revision history are isolated by t
   const page = await source('app/admin/super/homepage/page.js');
   assert.match(helper, /homepage_tenant_sections/);
   assert.match(helper, /homepage_tenant_section_revisions/);
+  assert.match(helper, /legacy_revision_id/);
   assert.match(admin, /WHERE tenant_id=\$1 AND section_key=\$2/);
   assert.match(admin, /homepage_tenant_section_revisions WHERE tenant_id=\$1/);
   assert.match(publicRoute, /homepage_tenant_sections WHERE tenant_id=\$1/);
   assert.match(page, /COMPANY WORKSPACE/);
   assert.match(admin, /key==='site_settings'&&!admin/);
+});
+
+
+test('company brand settings stay aligned with the tenant homepage template', async () => {
+  const companies = await source('app/api/admin/companies/route.js');
+  const homepage = await source('app/api/admin/homepage/route.js');
+  const page = await source('app/admin/super/homepage/page.js');
+  assert.match(companies, /ensureTenantHomepageTables/);
+  assert.match(companies, /homepage_tenant_sections SET draft_content/);
+  assert.match(homepage, /key==='site_settings'/);
+  assert.match(page, /tenant_id:activeTenantId,objectKey:p\.objectKey/);
 });
