@@ -1431,3 +1431,56 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
     width:100%;
   }
 }
+
+
+/* Responsive property rails: prevent grid tracks from shrinking into letter-wide cards */
+.property-collection-track{
+  display:flex!important;
+  align-items:stretch;
+  width:100%;
+  min-width:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.property-collection-track>.collection-property-card{
+  flex:0 0 calc((100% - 28px)/3);
+  width:calc((100% - 28px)/3);
+  min-width:0;
+}
+.property-collection-track-large>.collection-property-card{
+  flex-basis:calc((100% - 14px)/2);
+  width:calc((100% - 14px)/2);
+}
+.collection-property-card,
+.collection-property-copy{min-width:0}
+.collection-property-copy h3{
+  word-break:normal;
+  overflow-wrap:break-word;
+}
+@media(max-width:680px){
+  .property-collection-track{
+    display:flex!important;
+    gap:12px;
+    width:100%;
+    min-width:0;
+  }
+  .property-collection-track>.collection-property-card{
+    flex:0 0 min(84%,360px);
+    width:min(84%,360px);
+    min-width:min(84%,360px);
+  }
+  .property-collection-track-large>.collection-property-card{
+    flex-basis:min(88%,420px);
+    width:min(88%,420px);
+    min-width:min(88%,420px);
+  }
+  .collection-property-copy h3{
+    font-size:17px;
+    line-height:1.2;
+    word-break:normal;
+    overflow-wrap:break-word;
+  }
+}
