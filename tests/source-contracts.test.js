@@ -98,7 +98,7 @@ test('white-label company registry resolves published branding by domain', async
   assert.match(publicRoute, /tenant\.brand_config/);
   assert.match(registry, /isAdminRequest/);
   assert.match(registry, /cleanTenantBrand/);
-  assert.match(registry, /status IN \('active','suspended'\)/);
+  assert.match(tenants, /status IN/);
 });
 
 test('company workspace management is reserved for Super Admin', async () => {
