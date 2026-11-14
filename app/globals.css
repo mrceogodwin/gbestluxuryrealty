@@ -1638,3 +1638,19 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .gbest-midpage-cta .gbest-footer-promise>p:last-child{font-size:12px;line-height:1.6;margin-top:17px}
  .gbest-midpage-cta .gbest-footer-cta{min-height:76px;width:100%;font-size:10px;padding:16px 18px}
 }
+
+
+/* G-BEST compact global updates ticker — positioned between navigation and hero */
+.market-ticker{height:46px;min-height:46px;box-sizing:border-box;display:flex;align-items:center;gap:0;padding:0 0 0 clamp(14px,3vw,34px);margin:0;overflow:hidden;background:#071b12;color:#f6f4e9;border:0;border-top:1px solid #294b35;border-bottom:1px solid #294b35;position:relative;z-index:5}
+.market-ticker-window{min-width:0;flex:1;height:100%;display:flex;align-items:center;overflow:hidden;mask-image:linear-gradient(90deg,#000 0%,#000 96%,transparent 100%)}
+.market-ticker-track{height:100%;display:flex;align-items:center;gap:0;width:max-content;padding:0;animation:marketTickerMove 48s linear infinite}
+.market-ticker:hover .market-ticker-track,.market-ticker:focus-within .market-ticker-track{animation-play-state:paused}
+.market-ticker-item{width:auto;min-height:0;height:100%;flex:0 0 auto;display:inline-flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;padding:0 30px 0 0;margin:0;background:transparent!important;border:0!important;color:#f7f3e8!important;text-decoration:none;white-space:nowrap}
+.market-ticker-item>span{font:800 8px 'DM Mono',monospace;letter-spacing:.13em;color:#d8f36b}
+.market-ticker-item>b{font:600 11px/1.2 'DM Sans',Arial,sans-serif;letter-spacing:.01em;color:#f7f3e8}
+.market-ticker-item>i{font-style:normal;font-size:15px;color:#c6e76a}
+.market-ticker-cta{height:100%;min-width:112px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:9px;padding:0 20px;background:#d72f2b;color:#fff!important;border-left:1px solid #f16a62;text-decoration:none;font:900 10px 'DM Mono',monospace;letter-spacing:.14em;transition:background .2s}
+.market-ticker-cta:hover{background:#b92220}
+.market-ticker-cta span{font-size:13px}
+@media(max-width:680px){.market-ticker{height:42px;min-height:42px;padding-left:13px}.market-ticker-item{gap:8px;padding-right:22px}.market-ticker-item>span{font-size:7px}.market-ticker-item>b{font-size:10px}.market-ticker-cta{min-width:86px;padding:0 12px;font-size:9px;letter-spacing:.1em}}
+@media(prefers-reduced-motion:reduce){.market-ticker-track{animation:none;overflow-x:auto}.market-ticker-window{mask-image:none}}
