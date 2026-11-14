@@ -1364,3 +1364,49 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
     letter-spacing:.06em;
   }
 }
+
+
+/* Keep the inspection form and native controls inside the mobile viewport */
+@media(max-width:680px){
+  .booking,
+  .booking-copy,
+  .booking .formbox,
+  .booking .formbox form,
+  .booking .formbox label,
+  .booking .formbox .two{
+    min-width:0;
+    max-width:100%;
+  }
+  .booking .formbox{
+    width:100%;
+    box-sizing:border-box;
+    overflow:hidden;
+  }
+  .booking .formbox *,
+  .booking .formbox *::before,
+  .booking .formbox *::after{
+    box-sizing:border-box;
+  }
+  .booking .formbox input:not([type=checkbox]),
+  .booking .formbox select,
+  .booking .formbox textarea{
+    display:block;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+  .booking .formbox .two{
+    grid-template-columns:minmax(0,1fr);
+  }
+  .booking .formbox .consent{
+    min-width:0;
+    overflow-wrap:anywhere;
+  }
+  .booking .formbox .submit{
+    width:100%;
+    max-width:100%;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+}
