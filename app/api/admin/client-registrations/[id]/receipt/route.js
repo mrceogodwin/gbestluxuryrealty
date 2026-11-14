@@ -3,6 +3,7 @@ import {getDatabasePool} from '../../../../../../lib/db';
 import {authorizeAdminRequest} from '../../../../../../lib/admin-permissions';
 import {isAdminRequest} from '../../../../../../lib/admin-auth';
 import {ensureSiteTenants} from '../../../../../../lib/site-tenants';
+import {getStaffSession} from '../../../../../../lib/staff-auth';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 export async function GET(req,{params}){
@@ -10,11 +11,10 @@ export async function GET(req,{params}){
  try{
   const {id}=await params;
   if(!/^[0-9a-f-]{36}$/i.test(id))return NextResponse.json({error:'Invalid ID'},{status:400});
-  const pool=getDatabasePool();await ensureSiteTenants(pool);const admin=await isAdminRequest(req);
+  const pool=getDatabasePool();await ensureSiteTenants(pool);const admin=await isAdminRequest(req),staff=admin?null:await getStaffSession(req);
   const q=await pool.query('SELECT tenant_id,receipt_name,receipt_type,receipt_data FROM public.client_registrations WHERE id=$1',[id]);
   if(q.rowCount&&!admin){
-   const owner=await pool.query('SELECT id FROM public.site_tenants WHERE tenant_key=$1 LIMIT 1',['gbest']);
-   if(Number(q.rows[0].tenant_id)!==Number(owner.rows[0]?.id))return NextResponse.json({error:'You cannot access another company’s receipt.'},{status:403});
+   if(Number(q.rows[0].tenant_id)!==Number(staff?.tenant_id))return NextResponse.json({error:'You cannot access another company’s receipt.'},{status:403});
   }
   if(!q.rowCount||!q.rows[0].receipt_data)return NextResponse.json({error:'Receipt not found'},{status:404});
   const row=q.rows[0];
