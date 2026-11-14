@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDatabasePool } from '../../../lib/db';
 import { sendClientRegistrationEmail, escapeHtml } from '../../../lib/client-registration-email';
+import {resolveSiteTenant,ensureSiteTenants} from '../../../lib/site-tenants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -77,7 +78,7 @@ export async function POST(req) {
     if(!allowed.includes(file.type)) return NextResponse.json({error:'Receipt must be JPG, PNG, WEBP or PDF.'},{status:400});
     const reference=clean(form.get('payment_reference'),120);
     if(!reference) return NextResponse.json({error:'Enter your transfer reference.'},{status:400});
-    const pool=getDatabasePool(); await ensureTable(pool);
+    const pool=getDatabasePool();const host=req.headers.get('x-forwarded-host')||req.headers.get('host')||'';const tenant=await resolveSiteTenant(pool,host);if(!tenant)return NextResponse.json({error:'This domain is not connected to an active company workspace.'},{status:404});await ensureTable(pool);await ensureSiteTenants(pool);
     const bytes=Buffer.from(await file.arrayBuffer());
     const signatures={
       'image/jpeg':bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff,
@@ -91,7 +92,7 @@ export async function POST(req) {
     try {
       await dbClient.query('BEGIN');
       await dbClient.query("SELECT pg_advisory_xact_lock(hashtext(lower($1)),hashtext('client-registration'))",[fields.email]);
-      const duplicate=await dbClient.query("SELECT id FROM public.client_registrations WHERE lower(email)=lower($1) AND payment_status='pending' ORDER BY created_at DESC LIMIT 1",[fields.email]);
+      const duplicate=await dbClient.query("SELECT id FROM public.client_registrations WHERE tenant_id=$2 AND lower(email)=lower($1) AND payment_status='pending' ORDER BY created_at DESC LIMIT 1",[fields.email,tenant.id]);
       if(duplicate.rowCount) {
         await dbClient.query('ROLLBACK');
         return NextResponse.json({error:'A registration for this email is already awaiting payment verification. Contact G-BEST if you need to update the submitted details.'},{status:409});
@@ -100,13 +101,13 @@ export async function POST(req) {
       q=await dbClient.query(`INSERT INTO public.client_registrations
         (full_name,email,email_normalized,phone,registration_fee_kobo,payment_status,client_status,
          surname,other_names,address,nationality,state_of_origin,lga,occupation,property_type,price_range,
-         preferred_location,property_description,terms_accepted,fee_amount,payment_reference,receipt_name,receipt_type,receipt_data)
+         preferred_location,property_description,terms_accepted,fee_amount,payment_reference,receipt_name,receipt_type,receipt_data,tenant_id)
         VALUES ($1,$2,lower($2),$3,1500000,'pending','pending',
-         $4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,true,15000,$15,$16,$17,$18)
+         $4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,true,15000,$15,$16,$17,$18,$19)
         RETURNING id,client_id,payment_status,created_at`,
         [fullName,fields.email,fields.phone,fields.surname,fields.other_names,fields.address,fields.nationality,
          fields.state_of_origin,fields.lga,fields.occupation,fields.property_type,fields.price_range,
-         fields.preferred_location,fields.property_description,reference,file.name.slice(0,255),file.type,bytes]);
+         fields.preferred_location,fields.property_description,reference,file.name.slice(0,255),file.type,bytes,tenant.id]);
       await dbClient.query('COMMIT');
     } catch(registrationError) {
       await dbClient.query('ROLLBACK').catch(()=>{});
