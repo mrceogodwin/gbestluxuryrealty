@@ -4,6 +4,8 @@ export const runtime='nodejs';
 export const dynamic='force-dynamic';
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
 import {isAdminRequest} from '../../../../lib/admin-auth';
+import {getStaffSession} from '../../../../lib/staff-auth';
+import {ensureTenantHomepageTables} from '../../../../lib/tenant-homepage';
 const allowed=new Set(['eyebrow','title','description','buttonText','buttonUrl','imageUrl','videoUrl','extraText','visible','imageAlt','logoUrl','logoAlt','mobileImageUrl','imagePosition','layout','alignment','fontFamily','backgroundColor','textColor','accentColor','overlayOpacity','padding','slides','autoplay','autoplayInterval','transition','showArrows','showDots','columns','itemsPerView','cards','videoUrls','siteName','tagline','primaryColor','pageBackgroundColor','buttonRadius','seoTitle','seoDescription','seoImage','faviconUrl','navigationItems','footerLinks','sectionOrder','audioUrl','audioTitle','audioEnabled','audioLoop','audioVolume','propertyTypes','propertyIdLabel','nameLabel','phoneLabel','emailLabel','dateLabel','timeLabel','messageLabel','consentText','propertyIdPlaceholder','namePlaceholder','phonePlaceholder','emailPlaceholder','dateHelp','timeHelp']);
 function cleanContent(value){
  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Section content must be an object.');
@@ -27,39 +29,81 @@ function cleanContent(value){
  }
  return out;
 }
+async function chooseTenant(req,pool,requested){
+ const admin=await isAdminRequest(req);let id=requested;
+ if(!admin){const staff=await getStaffSession(req);id=staff?.tenant_id;}
+ else if(id===undefined||id===null||id===''){const owner=await pool.query("SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");id=owner.rows[0]?.id;}
+ if(!Number.isSafeInteger(Number(id))||Number(id)<1)throw new Error('Choose a valid company workspace.');
+ const q=await pool.query("SELECT id,tenant_key,display_name,status FROM public.site_tenants WHERE id=$1",[id]);
+ if(!q.rowCount||q.rows[0].status!=='active')throw new Error('Company workspace is unavailable.');
+ await ensureTenantHomepageTables(pool,q.rows[0].id);
+ return {tenant:q.rows[0],admin};
+}
 export async function GET(req){
  if(!await authorizeAdminRequest(req,'homepage.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
  if(!process.env.DATABASE_URL)return NextResponse.json({error:'Database is not configured'},{status:503});
- try{const pool=await ensureHomepageTables();const url=new URL(req.url);const historyKey=url.searchParams.get('history');if(historyKey){if(!/^[a-z_]{2,60}$/.test(historyKey))return NextResponse.json({error:'Invalid homepage section.'},{status:400});const revisions=await pool.query('SELECT id,section_key,content,action,changed_at FROM public.homepage_section_revisions WHERE section_key=$1 ORDER BY changed_at DESC,id DESC LIMIT 50',[historyKey]);return NextResponse.json({revisions:revisions.rows},{headers:{'Cache-Control':'no-store'}});}const q=await pool.query('SELECT section_key,label,sort_order,draft_content,published_content,updated_at,published_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes FROM public.homepage_sections ORDER BY sort_order');return NextResponse.json({sections:q.rows},{headers:{'Cache-Control':'no-store'}});}
- catch(e){console.error('Homepage CMS admin GET failed',e.code||e.message);return NextResponse.json({error:'Could not load homepage controls.'},{status:500});}
+ try{
+  const pool=await ensureHomepageTables(),url=new URL(req.url),{tenant,admin}=await chooseTenant(req,pool,url.searchParams.get('tenantId'));
+  const historyKey=url.searchParams.get('history');
+  if(historyKey){
+   if(!/^[a-z_]{2,60}$/.test(historyKey))return NextResponse.json({error:'Invalid homepage section.'},{status:400});
+   const revisions=await pool.query('SELECT id,section_key,content,action,changed_at FROM public.homepage_tenant_section_revisions WHERE tenant_id=$1 AND section_key=$2 ORDER BY changed_at DESC,id DESC LIMIT 50',[tenant.id,historyKey]);
+   return NextResponse.json({revisions:revisions.rows,tenant,activeTenantId:tenant.id},{headers:{'Cache-Control':'no-store'}});
+  }
+  const q=await pool.query('SELECT tenant_id,section_key,label,sort_order,draft_content,published_content,updated_at,published_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes FROM public.homepage_tenant_sections WHERE tenant_id=$1 ORDER BY sort_order',[tenant.id]);
+  const tenants=admin?(await pool.query('SELECT id,tenant_key,display_name,status FROM public.site_tenants ORDER BY created_at ASC')).rows:[];
+  return NextResponse.json({sections:q.rows,tenant,tenants,activeTenantId:tenant.id},{headers:{'Cache-Control':'no-store'}});
+ }catch(e){console.error('Homepage CMS admin GET failed',e.code||e.message);return NextResponse.json({error:'Could not load homepage controls.'},{status:500});}
 }
 export async function PATCH(req){
  if(!await authorizeAdminRequest(req,'homepage.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
  if(!process.env.DATABASE_URL)return NextResponse.json({error:'Database is not configured'},{status:503});
- try{const body=await req.json();const key=String(body.sectionKey||'').trim();if(!/^[a-z_]{2,60}$/.test(key))return NextResponse.json({error:'Invalid homepage section.'},{status:400});if(['site_settings','site_audio'].includes(key)&&!await isAdminRequest(req))return NextResponse.json({error:'Only the Super Admin can change global brand and audio settings.'},{status:403});const content=cleanContent(body.content);const pool=await ensureHomepageTables();const q=await pool.query('UPDATE public.homepage_sections SET draft_content=draft_content || $2::jsonb,updated_at=now() WHERE section_key=$1 RETURNING section_key,label,draft_content,published_content,updated_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[key,JSON.stringify(content)]);if(!q.rowCount)return NextResponse.json({error:'Homepage section not found.'},{status:404});return NextResponse.json({section:q.rows[0],message:'Draft saved. Public homepage is unchanged until you publish.'},{headers:{'Cache-Control':'no-store'}});}
- catch(e){const validation=!e.code;console.error('Homepage CMS draft save failed',e.code||e.message);return NextResponse.json({error:validation?e.message:'Could not save homepage draft.'},{status:validation?400:500});}
+ try{
+  const body=await req.json(),key=String(body.sectionKey||'').trim();
+  if(!/^[a-z_]{2,60}$/.test(key))return NextResponse.json({error:'Invalid homepage section.'},{status:400});
+  const pool=await ensureHomepageTables(),{tenant,admin}=await chooseTenant(req,pool,body.tenant_id);
+  if(['site_settings','site_audio'].includes(key)&&!admin)return NextResponse.json({error:'Only the Super Admin can change company-wide brand and audio settings.'},{status:403});
+  const content=cleanContent(body.content);
+  const q=await pool.query('UPDATE public.homepage_tenant_sections SET draft_content=draft_content || $3::jsonb,updated_at=now() WHERE tenant_id=$1 AND section_key=$2 RETURNING tenant_id,section_key,label,draft_content,published_content,updated_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[tenant.id,key,JSON.stringify(content)]);
+  if(!q.rowCount)return NextResponse.json({error:'Homepage section not found.'},{status:404});
+  return NextResponse.json({section:q.rows[0],message:'Draft saved. Public homepage is unchanged until you publish.'},{headers:{'Cache-Control':'no-store'}});
+ }catch(e){const validation=!e.code;console.error('Homepage CMS draft save failed',e.code||e.message);return NextResponse.json({error:validation?e.message:'Could not save homepage draft.'},{status:validation?400:500});}
 }
 export async function POST(req){
  if(!await authorizeAdminRequest(req,'homepage.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
  if(!process.env.DATABASE_URL)return NextResponse.json({error:'Database is not configured'},{status:503});
  try{
-  const body=await req.json();const key=String(body.sectionKey||'').trim();const action=String(body.action||'');
+  const body=await req.json(),key=String(body.sectionKey||'').trim(),action=String(body.action||'');
   if(!/^[a-z_]{2,60}$/.test(key)||!['publish','discard','restore'].includes(action))return NextResponse.json({error:'Invalid homepage action.'},{status:400});
-  if(['site_settings','site_audio'].includes(key)&&!await isAdminRequest(req))return NextResponse.json({error:'Only the Super Admin can change global brand and audio settings.'},{status:403});
-  const pool=await ensureHomepageTables();
+  const pool=await ensureHomepageTables(),{tenant,admin}=await chooseTenant(req,pool,body.tenant_id);
+  if(['site_settings','site_audio'].includes(key)&&!admin)return NextResponse.json({error:'Only the Super Admin can change company-wide brand and audio settings.'},{status:403});
   if(action==='restore'){
    const revisionId=Number(body.revisionId);if(!Number.isSafeInteger(revisionId)||revisionId<1)return NextResponse.json({error:'Invalid revision.'},{status:400});
-   const client=await pool.connect();try{await client.query('BEGIN');const revision=await client.query('SELECT content FROM public.homepage_section_revisions WHERE id=$1 AND section_key=$2',[revisionId,key]);if(!revision.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Revision not found.'},{status:404});}const current=await client.query('SELECT published_content FROM public.homepage_sections WHERE section_key=$1 FOR UPDATE',[key]);if(!current.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Homepage section not found.'},{status:404});}await client.query('INSERT INTO public.homepage_section_revisions(section_key,content,action) VALUES($1,$2::jsonb,$3)',[key,JSON.stringify(current.rows[0].published_content||{}),'before_restore']);const restored=await client.query('UPDATE public.homepage_sections SET draft_content=$2::jsonb,published_content=$2::jsonb,published_at=now(),updated_at=now() WHERE section_key=$1 RETURNING section_key,label,draft_content,published_content,published_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[key,JSON.stringify(revision.rows[0].content||{})]);await client.query('COMMIT');return NextResponse.json({section:restored.rows[0],message:'Previous version restored and published.'},{headers:{'Cache-Control':'no-store'}});}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+   const client=await pool.connect();
+   try{
+    await client.query('BEGIN');
+    const revision=await client.query('SELECT content FROM public.homepage_tenant_section_revisions WHERE tenant_id=$1 AND id=$2 AND section_key=$3',[tenant.id,revisionId,key]);
+    if(!revision.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Revision not found.'},{status:404});}
+    const current=await client.query('SELECT published_content FROM public.homepage_tenant_sections WHERE tenant_id=$1 AND section_key=$2 FOR UPDATE',[tenant.id,key]);
+    if(!current.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Homepage section not found.'},{status:404});}
+    await client.query('INSERT INTO public.homepage_tenant_section_revisions(tenant_id,section_key,content,action) VALUES($1,$2,$3::jsonb,$4)',[tenant.id,key,JSON.stringify(current.rows[0].published_content||{}),'before_restore']);
+    const restored=await client.query('UPDATE public.homepage_tenant_sections SET draft_content=$3::jsonb,published_content=$3::jsonb,published_at=now(),updated_at=now() WHERE tenant_id=$1 AND section_key=$2 RETURNING tenant_id,section_key,label,draft_content,published_content,published_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[tenant.id,key,JSON.stringify(revision.rows[0].content||{})]);
+    await client.query('COMMIT');return NextResponse.json({section:restored.rows[0],message:'Previous version restored and published.'},{headers:{'Cache-Control':'no-store'}});
+   }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
   }
   if(action==='publish'){
-   const q=await pool.query('SELECT section_key,published_content FROM public.homepage_sections WHERE section_key=$1',[key]);
-   if(!q.rowCount)return NextResponse.json({error:'Homepage section not found.'},{status:404});
+   const current=await pool.query('SELECT section_key,published_content FROM public.homepage_tenant_sections WHERE tenant_id=$1 AND section_key=$2',[tenant.id,key]);
+   if(!current.rowCount)return NextResponse.json({error:'Homepage section not found.'},{status:404});
    const client=await pool.connect();
-   try{await client.query('BEGIN');await client.query('INSERT INTO public.homepage_section_revisions(section_key,content,action) VALUES($1,$2::jsonb,$3)',[key,JSON.stringify(q.rows[0].published_content||{}),'before_publish']);const updated=await client.query('UPDATE public.homepage_sections SET published_content=draft_content,published_at=now(),updated_at=now() WHERE section_key=$1 RETURNING section_key,label,draft_content,published_content,published_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[key]);await client.query('COMMIT');return NextResponse.json({section:updated.rows[0],message:'Homepage section published.'},{headers:{'Cache-Control':'no-store'}});}
-   catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+   try{
+    await client.query('BEGIN');
+    await client.query('INSERT INTO public.homepage_tenant_section_revisions(tenant_id,section_key,content,action) VALUES($1,$2,$3::jsonb,$4)',[tenant.id,key,JSON.stringify(current.rows[0].published_content||{}),'before_publish']);
+    const updated=await client.query('UPDATE public.homepage_tenant_sections SET published_content=draft_content,published_at=now(),updated_at=now() WHERE tenant_id=$1 AND section_key=$2 RETURNING tenant_id,section_key,label,draft_content,published_content,published_at,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[tenant.id,key]);
+    await client.query('COMMIT');return NextResponse.json({section:updated.rows[0],message:'Homepage section published.'},{headers:{'Cache-Control':'no-store'}});
+   }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
   }
-  const q=await pool.query('UPDATE public.homepage_sections SET draft_content=published_content,updated_at=now() WHERE section_key=$1 RETURNING section_key,label,draft_content,published_content,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[key]);
-  if(!q.rowCount)return NextResponse.json({error:'Homepage section not found.'},{status:404});
-  return NextResponse.json({section:q.rows[0],message:'Draft changes discarded.'},{headers:{'Cache-Control':'no-store'}});
+  const discarded=await pool.query('UPDATE public.homepage_tenant_sections SET draft_content=published_content,updated_at=now() WHERE tenant_id=$1 AND section_key=$2 RETURNING tenant_id,section_key,label,draft_content,published_content,(draft_content IS DISTINCT FROM published_content) AS has_unpublished_changes',[tenant.id,key]);
+  if(!discarded.rowCount)return NextResponse.json({error:'Homepage section not found.'},{status:404});
+  return NextResponse.json({section:discarded.rows[0],message:'Draft changes discarded.'},{headers:{'Cache-Control':'no-store'}});
  }catch(e){console.error('Homepage CMS action failed',e.code||e.message);return NextResponse.json({error:'Could not complete homepage action.'},{status:500});}
 }
