@@ -3,6 +3,7 @@ import {getDatabasePool} from '../../../../lib/db';
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
 import {isAdminRequest} from '../../../../lib/admin-auth';
 import {ensureSiteTenants} from '../../../../lib/site-tenants';
+import {getStaffSession} from '../../../../lib/staff-auth';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 const propertyCode=id=>{const value=String(id??'');if(/^\\d+$/.test(value))return 'GB-'+value.padStart(8,'0');return 'GB-'+value.replace(/[^a-z0-9]/gi,'').toUpperCase().slice(-8).padStart(8,'0');};
@@ -36,7 +37,7 @@ async function targetTenant(pool,req,requested){
  await ensureSiteTenants(pool);
  const admin=await isAdminRequest(req);
  let id=requested;
- if(!admin){const q=await pool.query("SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");id=q.rows[0]?.id;}
+ if(!admin){const staff=await getStaffSession(req);id=staff?.tenant_id;}
  else if(id===undefined||id===null||id===''){const q=await pool.query("SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");id=q.rows[0]?.id;}
  const tenantId=Number(id);
  if(!Number.isSafeInteger(tenantId)||tenantId<1)throw new ValidationError('Choose a valid company workspace.');
