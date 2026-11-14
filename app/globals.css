@@ -1311,3 +1311,56 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .gbest-footer-nav a{font-size:8px}
  .gbest-footer-bottom{justify-content:center;text-align:center;flex-direction:column;gap:8px;padding:17px 0 20px}
 }
+
+
+/* Mobile property collection: show complete cards and readable listing details */
+@media(max-width:680px){
+  .property-collection-track{
+    grid-auto-columns:minmax(0,84%);
+    gap:12px;
+    padding:4px 4px 18px;
+    scroll-padding-inline:4px;
+  }
+  .property-collection-track-large{
+    grid-auto-columns:minmax(0,88%);
+    gap:12px;
+  }
+  .collection-property-card{
+    width:100%;
+    min-width:0;
+    overflow:hidden;
+  }
+  .collection-property-image{
+    height:190px;
+  }
+  .collection-property-track-large .collection-property-image,
+  .property-collection-track-large .collection-property-image{
+    height:210px;
+  }
+  .collection-property-copy{
+    padding:14px 15px 16px;
+  }
+  .collection-property-copy>small{
+    font-size:10px;
+    line-height:1.45;
+    white-space:normal;
+    overflow:visible;
+    text-overflow:clip;
+  }
+  .collection-property-copy h3{
+    font-size:17px;
+    line-height:1.2;
+    margin:8px 0 10px;
+    overflow-wrap:anywhere;
+  }
+  .collection-property-copy p{
+    font-size:13px;
+    line-height:1.4;
+    overflow-wrap:anywhere;
+  }
+  .collection-property-copy>button{
+    font-size:9px;
+    padding-top:12px;
+    letter-spacing:.06em;
+  }
+}
