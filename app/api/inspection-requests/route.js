@@ -52,7 +52,7 @@ export async function POST(req){
     await client.query('ROLLBACK');
     return NextResponse.json({error:'That inspection slot has just been taken. Please choose another available time.'},{status:409});
    }
-   q=await client.query("INSERT INTO public.inspection_requests(tenant_id,full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4::date,$5::time,'physical_inspection',$6,$7,$8,$9,'pending','Africa/Lagos') RETURNING id",[tenant.id,name,contact,email,date,time,duration,String(listing.rows[0].id),message]);
+   q=await client.query("INSERT INTO public.inspection_requests(tenant_id,full_name,contact,client_email,preferred_date,preferred_time,preference,duration_minutes,property_id,message,status,client_timezone) VALUES($1,$2,$3,$4,$5::date,$6::time,'physical_inspection',$7,$8,$9,'pending','Africa/Lagos') RETURNING id",[tenant.id,name,contact,email,date,time,duration,String(listing.rows[0].id),message]);
    await client.query('COMMIT');
   } catch(insertError) {
    await client.query('ROLLBACK').catch(()=>{});
