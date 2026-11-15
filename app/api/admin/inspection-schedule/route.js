@@ -30,7 +30,7 @@ export async function PUT(req){
   const blockedDates=[...new Set((Array.isArray(d.blockedDates)?d.blockedDates:[]).map(String))];
   const settings={timezone:ZONE,workingDays,startTime:String(d.startTime||''),endTime:String(d.endTime||''),slotMinutes:Number(d.slotMinutes),blockedDates};
   const minutes=t=>Number(t.slice(0,2))*60+Number(t.slice(3));
-  if(workingDays.join(',')!=='1,2,3,4,5,6'||settings.startTime!=='08:00'||settings.endTime!=='18:00'||settings.slotMinutes!==30||blockedDates.length>180||blockedDates.some(x=>!/^\\d{4}-\\d{2}-\\d{2}$/.test(x)))return NextResponse.json({error:'Check working days, opening hours, slot length and blocked dates.'},{status:400});
+  if(workingDays.join(',')!=='1,2,3,4,5,6'||settings.startTime!=='08:00'||settings.endTime!=='18:00'||settings.slotMinutes!==30||blockedDates.length>180||blockedDates.some(x=>!/^\d{4}-\d{2}-\d{2}$/.test(x)))return NextResponse.json({error:'Check working days, opening hours, slot length and blocked dates.'},{status:400});
   await pool.query("CREATE TABLE IF NOT EXISTS public.inspection_schedule_tenant_settings (tenant_id bigint PRIMARY KEY REFERENCES public.site_tenants(id) ON DELETE RESTRICT,settings jsonb NOT NULL,updated_at timestamptz NOT NULL DEFAULT now())");
   await pool.query('INSERT INTO public.inspection_schedule_tenant_settings(tenant_id,settings) VALUES($1,$2::jsonb) ON CONFLICT(tenant_id) DO UPDATE SET settings=EXCLUDED.settings,updated_at=now()',[tenant.id,JSON.stringify(settings)]);
   return NextResponse.json({ok:true,settings,tenant},{headers:{'Cache-Control':'no-store'}});
