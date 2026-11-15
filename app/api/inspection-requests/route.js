@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createHash } from 'node:crypto';
 import { getDatabasePool } from '../../../lib/db';
 import { queueInspectionEmails, deliverInspectionEmails } from '../../../lib/inspection-email-outbox';
 import {getSchedule,slotIsAvailable,validClock} from '../../../lib/inspection-schedule';
