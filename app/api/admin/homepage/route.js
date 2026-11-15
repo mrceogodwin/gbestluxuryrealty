@@ -77,7 +77,7 @@ export async function POST(req){
   const body=await req.json(),key=String(body.sectionKey||'').trim(),action=String(body.action||'');
   if(!/^[a-z_]{2,60}$/.test(key)||!['publish','discard','restore'].includes(action))return NextResponse.json({error:'Invalid homepage action.'},{status:400});
   const pool=await ensureHomepageTables(),{tenant,admin}=await chooseTenant(req,pool,body.tenant_id);
-  if(['site_settings','site_audio'].includes(key)&&!admin)return NextResponse.json({error:'Only the Super Admin can change company-wide brand and audio settings.'},{status:403});
+  if(key==='site_settings'&&!admin&&!await authorizeAdminRequest(req,'settings.manage'))return NextResponse.json({error:'Company brand settings require the settings.manage permission.'},{status:403});
   if(action==='restore'){
    const revisionId=Number(body.revisionId);if(!Number.isSafeInteger(revisionId)||revisionId<1)return NextResponse.json({error:'Invalid revision.'},{status:400});
    const client=await pool.connect();
