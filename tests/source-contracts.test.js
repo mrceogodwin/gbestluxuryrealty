@@ -268,6 +268,15 @@ test('company brand settings stay aligned with the tenant homepage template', as
   assert.match(page, /tenant_id:activeTenantId,objectKey:p\.objectKey/);
 });
 
+
+test('inspection schedule always enforces the agreed 30-minute duration', async () => {
+  const schedule = await source('lib/inspection-schedule.js');
+  const adminSchedule = await source('app/api/admin/inspection-schedule/route.js');
+  assert.match(schedule, /timezone:ZONE,slotMinutes:30/);
+  assert.match(schedule, /slotMinutes:30/);
+  assert.match(adminSchedule, /settings\.slotMinutes!==30/);
+});
+
 test('inspection approval revalidates schedule and slot conflicts inside the booking lock', async () => {
   const inspections = await source('app/api/admin/inspection-requests/route.js');
   assert.match(inspections, /pg_advisory_xact_lock\(hashtext\(\$1\),hashtext\('inspection-booking'\)\)/);
