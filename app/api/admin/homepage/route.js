@@ -56,6 +56,7 @@ export async function GET(req){
   return NextResponse.json({sections:q.rows,tenant,tenants,activeTenantId:tenant.id},{headers:{'Cache-Control':'no-store'}});
  }catch(e){console.error('Homepage CMS admin GET failed',e.code||e.message);return NextResponse.json({error:'Could not load homepage controls.'},{status:500});}
 }
+// site_audio remains editable by tenant homepage managers; only site_settings needs settings.manage.
 export async function PATCH(req){
  if(!await authorizeAdminRequest(req,'homepage.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
  if(!process.env.DATABASE_URL)return NextResponse.json({error:'Database is not configured'},{status:503});
