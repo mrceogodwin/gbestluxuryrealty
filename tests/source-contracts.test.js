@@ -274,7 +274,10 @@ test('inspection schedule always enforces the agreed 30-minute duration', async 
   const adminSchedule = await source('app/api/admin/inspection-schedule/route.js');
   assert.match(schedule, /workingDays:\[1,2,3,4,5,6\],startTime:'08:00',endTime:'18:00',slotMinutes:30/);
   assert.match(schedule, /slotMinutes:30/);
-  assert.match(adminSchedule, /workingDays\.join\(','\)!=='1,2,3,4,5,6'/);\n  assert.match(adminSchedule, /settings\.startTime!=='08:00'/);\n  assert.match(adminSchedule, /settings\.endTime!=='18:00'/);\n  assert.match(adminSchedule, /settings\.slotMinutes!==30/);
+  assert.match(adminSchedule, /workingDays\.join\(','\)!=='1,2,3,4,5,6'/);
+  assert.match(adminSchedule, /settings\.startTime!=='08:00'/);
+  assert.match(adminSchedule, /settings\.endTime!=='18:00'/);
+  assert.match(adminSchedule, /settings\.slotMinutes!==30/);
 });
 
 test('inspection approval revalidates schedule and slot conflicts inside the booking lock', async () => {
