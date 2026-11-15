@@ -267,3 +267,14 @@ test('company brand settings stay aligned with the tenant homepage template', as
   assert.match(homepage, /key==='site_settings'/);
   assert.match(page, /tenant_id:activeTenantId,objectKey:p\.objectKey/);
 });
+
+test('inspection approval revalidates schedule and slot conflicts inside the booking lock', async () => {
+  const inspections = await source('app/api/admin/inspection-requests/route.js');
+  assert.match(inspections, /pg_advisory_xact_lock\(hashtext\(\$1\),hashtext\('inspection-booking'\)\)/);
+  assert.match(inspections, /SELECT id,tenant_id,status[\s\S]*FOR UPDATE/);
+  assert.match(inspections, /getSchedule\(currentRow\.tenant_id\)/);
+  assert.match(inspections, /duration===Number\(schedule\.slotMinutes\)/);
+  assert.match(inspections, /id<>\$5/);
+  assert.match(inspections, /Another request is holding the time/);
+  assert.match(inspections, /client\.query\('COMMIT'\)/);
+});
