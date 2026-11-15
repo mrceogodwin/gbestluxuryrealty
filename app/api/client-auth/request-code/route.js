@@ -1,5 +1,5 @@
 import {NextResponse} from 'next/server';
-import {createHash,createHmac,randomInt} from 'node:crypto';
+import {createHmac,randomInt} from 'node:crypto';
 import {getDatabasePool} from '../../../../lib/db';
 import {ensureSiteTenants,resolveSiteTenant} from '../../../../lib/site-tenants';
 
@@ -16,8 +16,9 @@ async function schema(pool){
  await pool.query(`CREATE TABLE IF NOT EXISTS public.client_auth_challenges(
   id bigserial PRIMARY KEY,registration_id text NOT NULL,tenant_id bigint NOT NULL REFERENCES public.site_tenants(id) ON DELETE CASCADE,
   email_normalized text NOT NULL,code_hash text NOT NULL,attempts integer NOT NULL DEFAULT 0,
-  expires_at timestamptz NOT NULL,used_at timestamptz,created_at timestamptz NOT NULL DEFAULT now()
+  expires_at timestamptz NOT NULL,used_at timestamptz,client_ip text,created_at timestamptz NOT NULL DEFAULT now()
  )`);
+ await pool.query('ALTER TABLE public.client_auth_challenges ADD COLUMN IF NOT EXISTS client_ip text');
  await pool.query('CREATE INDEX IF NOT EXISTS client_auth_challenges_email_created_idx ON public.client_auth_challenges(email_normalized,created_at DESC)');
  await pool.query(`CREATE TABLE IF NOT EXISTS public.client_sessions(
   id bigserial PRIMARY KEY,registration_id text NOT NULL,token_hash text NOT NULL UNIQUE,
