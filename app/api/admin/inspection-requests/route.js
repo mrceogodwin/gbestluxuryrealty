@@ -33,9 +33,9 @@ export async function PATCH(req) {
   try {
     const pool=getDatabasePool();await ensureSiteTenants(pool);const admin=await isAdminRequest(req);
     const id=String(d.id||''), status=String(d.status||'');
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({error:'Invalid request ID'},{status:400});
     const ownership=await pool.query('SELECT tenant_id FROM public.inspection_requests WHERE id=$1',[id]);if(!ownership.rowCount)return NextResponse.json({error:'Request not found'},{status:404});
     if(!admin){const staff=await getStaffSession(req);if(Number(ownership.rows[0].tenant_id)!==Number(staff?.tenant_id))return NextResponse.json({error:'You cannot manage another company’s inspection request.'},{status:403});}
-    if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({error:'Invalid request ID'},{status:400});
     const allowedPrevious={confirmed:['pending','contacted'],declined:['pending','contacted'],contacted:['pending','confirmed'],completed:['confirmed'],cancelled:['pending','confirmed','contacted']};
     if(!Object.hasOwn(allowedPrevious,status)) return NextResponse.json({error:'Invalid action'},{status:400});
     const initial=await pool.query('SELECT preferred_date FROM public.inspection_requests WHERE id=$1',[id]);
@@ -50,7 +50,7 @@ export async function PATCH(req) {
       currentRow=current.rows[0];
       if(!allowedPrevious[status].includes(currentRow.status)&&currentRow.status!==status){await client.query('ROLLBACK');return NextResponse.json({error:'This status change is not allowed from '+currentRow.status+'. Refresh the request and choose a valid next action.',currentStatus:currentRow.status},{status:409});}
       if(status==='confirmed'&&currentRow.status!=='confirmed'){
-        const eligibility=await client.query("SELECT id FROM public.client_registrations WHERE tenant_id=$2 AND lower(email)=lower($1) AND payment_status='approved' ORDER BY updated_at DESC,created_at DESC LIMIT 1",[currentRow.client_email,currentRow.tenant_id]);
+        const eligibility=await client.query("SELECT id FROM public.client_registrations WHERE tenant_id=$2 AND lower(email)=lower($1) AND payment_status='approved' AND client_status='active' ORDER BY updated_at DESC,created_at DESC LIMIT 1",[currentRow.client_email,currentRow.tenant_id]);
         if(!eligibility.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'This client does not have an approved registration and verified payment. Do not confirm this inspection.'},{status:403});}
         const schedule=await getSchedule(currentRow.tenant_id),date=String(currentRow.preferred_date).slice(0,10),time=String(currentRow.preferred_time||'').slice(0,5);
         const [year,month,day]=date.split('-').map(Number),weekday=new Date(Date.UTC(year,month-1,day,12)).getUTCDay(),duration=Number(currentRow.duration_minutes||schedule.slotMinutes||30);
