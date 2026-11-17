@@ -12,7 +12,7 @@ async function context(req,pool,requested){
  const admin=await isAdminRequest(req);let staff=null,tenantId=requested;
  if(!admin){staff=await getStaffSession(req);tenantId=staff?.tenant_id;}
  else if(!tenantId){const q=await pool.query("SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");tenantId=q.rows[0]?.id;}
- if(!/^\\d+$/.test(String(tenantId||'')))throw new Error('Choose a valid company workspace.');
+ if(!/^\d+$/.test(String(tenantId||'')))throw new Error('Choose a valid company workspace.');
  const tenant=await pool.query('SELECT id FROM public.site_tenants WHERE id=$1',[tenantId]);
  if(!tenant.rowCount)throw new Error('Company workspace not found.');
  return {admin,staff,tenantId:Number(tenant.rows[0].id)};
