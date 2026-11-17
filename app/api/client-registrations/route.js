@@ -28,6 +28,7 @@ export async function POST(req) {
     if(!reference) return NextResponse.json({error:'Enter your transfer reference.'},{status:400});
     const pool=getDatabasePool();const host=req.headers.get('x-forwarded-host')||req.headers.get('host')||'';const tenant=await resolveSiteTenant(pool,host);if(!tenant)return NextResponse.json({error:'This domain is not connected to an active company workspace.'},{status:404});
     let selectedProperty=null;
+    if(String(form.get('has_seen_property')||'no')==='yes'&&!fields.property_id)return NextResponse.json({error:'Enter the Property ID you have seen, or choose “Not yet / still exploring”.'},{status:400});
     if(String(form.get('has_seen_property')||'no')==='yes'&&fields.property_id){
       const listings=await pool.query(`SELECT id::text AS id,
         CASE WHEN id::text ~ '^[0-9]+
