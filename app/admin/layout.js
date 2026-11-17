@@ -60,6 +60,27 @@ export default function SuperAdminLayout({children}){
  .gb-navicon{width:22px;flex:0 0 22px;text-align:center;font-size:16px;color:#d1f27a}
  .gb-navlink.active .gb-navicon{color:#1a270e}
  .gb-sidefoot{border-top:1px solid #ffffff18;color:#87928a}
+
+ /* Mobile control-room drawer polish: prevent browser/global link styles leaking into navigation. */
+ .gb-console .gb-sidebar{box-sizing:border-box!important;width:300px!important;max-width:84vw!important;overflow-x:hidden!important}
+ .gb-console .gb-sidebar nav .gb-navlink,
+ .gb-console .gb-sidebar nav .gb-navlink:visited,
+ .gb-console .gb-sidebar nav .gb-navlink:hover,
+ .gb-console .gb-sidebar nav .gb-navlink:focus{
+  display:flex!important;align-items:center!important;width:100%!important;box-sizing:border-box!important;
+  color:#c5cec8!important;text-decoration:none!important;border-bottom:1px solid transparent!important;
+  line-height:1.3!important;white-space:normal!important;overflow-wrap:anywhere!important;
+ }
+ .gb-console .gb-sidebar nav .gb-navlink.active{color:#18200e!important;text-decoration:none!important}
+ .gb-console .gb-sidebar nav .gb-navgroup{min-width:0!important}
+ .gb-console .gb-sidebar .gb-navlabel{display:block!important;line-height:1.4!important}
+ .gb-console .gb-sidefoot{position:static!important;flex:0 0 auto!important;margin-top:24px!important;padding:16px 9px calc(18px + env(safe-area-inset-bottom))!important;background:#0d120f!important;border-radius:10px 10px 0 0!important}
+ @media(max-width:850px){
+  .gb-console .gb-sidebar{width:min(300px,84vw)!important;max-width:84vw!important;height:100dvh!important;padding:16px 13px calc(18px + env(safe-area-inset-bottom))!important}
+  .gb-console .gb-sidebar nav .gb-navlink{min-height:44px!important;margin:3px 0!important;padding:10px 11px!important;font-size:12px!important}
+  .gb-console .gb-sidefoot{margin-top:20px!important}
+ }
+
  .gb-main{background:#111312}
  .gb-topbar{background:linear-gradient(180deg,#252a27,#1a1e1b)!important;border-bottom:1px solid #ffffff18!important;box-shadow:0 8px 24px #0005!important;color:#f2f4f0}
  .gb-crumb{color:#aab4ad}.gb-crumb b{color:#f2f4ed}.gb-topright{color:#aab4ad}
