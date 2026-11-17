@@ -37,15 +37,16 @@ export async function GET(req){
    media:admin||granted.has('media.manage'),
    finance:admin,staff:admin,homepage:admin,audit:admin
   };
-  const safeQuery=async(sql,fallback,key)=>{
-   try{return (await pool.query(sql)).rows[0]||fallback;}
+  const tenantId=staff?.tenant_id??null;
+  const safeQuery=async(sql,params,fallback,key)=>{
+   try{return (await pool.query(sql,params)).rows[0]||fallback;}
    catch(e){console.error('Overview metric '+key+' failed',e.code||e.message);return fallback;}
   };
   const [properties,clients,inspections,media,finance]=await Promise.all([
-   can.properties?safeQuery("SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE status='published')::int AS published,COUNT(*) FILTER(WHERE status='draft')::int AS drafts FROM public.properties",{total:0,published:0,drafts:0},'properties'):null,
-   can.clients?safeQuery("SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE payment_status='pending')::int AS pending,COUNT(*) FILTER(WHERE payment_status='approved')::int AS approved FROM public.client_registrations",{total:0,pending:0,approved:0},'clients'):null,
-   can.inspections?safeQuery("SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE status='pending')::int AS pending,COUNT(*) FILTER(WHERE status='confirmed')::int AS confirmed FROM public.inspection_requests",{total:0,pending:0,confirmed:0},'inspections'):null,
-   can.media?safeQuery("SELECT COUNT(*)::int AS total FROM public.admin_media_assets",{total:0},'media'):null,
+   can.properties?safeQuery("SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE status='published')::int AS published,COUNT(*) FILTER(WHERE status='draft')::int AS drafts FROM public.properties WHERE ($1::bigint IS NULL OR tenant_id=$1)",[tenantId],{total:0,published:0,drafts:0},'properties'):null,
+   can.clients?safeQuery("SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE payment_status='pending')::int AS pending,COUNT(*) FILTER(WHERE payment_status='approved')::int AS approved FROM public.client_registrations WHERE ($1::bigint IS NULL OR tenant_id=$1)",[tenantId],{total:0,pending:0,approved:0},'clients'):null,
+   can.inspections?safeQuery("SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE status='pending')::int AS pending,COUNT(*) FILTER(WHERE status='confirmed')::int AS confirmed FROM public.inspection_requests WHERE ($1::bigint IS NULL OR tenant_id=$1)",[tenantId],{total:0,pending:0,confirmed:0},'inspections'):null,
+   can.media?safeQuery("SELECT COUNT(*)::int AS total FROM public.admin_media_assets WHERE ($1::bigint IS NULL OR tenant_id=$1)",[tenantId],{total:0},'media'):null,
    can.finance?safeQuery("SELECT COUNT(*) FILTER(WHERE payment_status='pending')::int AS pending_count,COUNT(*) FILTER(WHERE payment_status='approved')::int AS approved_count,COALESCE(SUM(fee_amount) FILTER(WHERE payment_status='approved'),0)::numeric(14,2)::text AS approved_amount,COALESCE(SUM(fee_amount) FILTER(WHERE payment_status='pending'),0)::numeric(14,2)::text AS pending_amount,COUNT(*) FILTER(WHERE payment_status='rejected')::int AS rejected_count FROM public.client_registrations",{pending_count:0,approved_count:0,approved_amount:'0.00',pending_amount:'0.00',rejected_count:0},'finance'):null
   ]);
   return NextResponse.json({isSuperAdmin:admin,permissions:Object.entries(can).filter(([,v])=>v).map(([k])=>k),properties,clients,inspections,media,finance,generatedAt:new Date().toISOString()},{headers:{'Cache-Control':'no-store'}});
