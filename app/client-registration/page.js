@@ -1,7 +1,7 @@
 'use client';
 
 import './registration.css';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 
 const PHONE='+2348131627273';
 const socials=[
@@ -12,7 +12,7 @@ const socials=[
 
 export default function ClientRegistrationPage(){
  const [step,setStep]=useState(1),[busy,setBusy]=useState(false),[error,setError]=useState(''),[result,setResult]=useState(''),[copied,setCopied]=useState(false),[properties,setProperties]=useState([]),[propertyLoadError,setPropertyLoadError]=useState('');
- useState(()=>{fetch('/api/properties',{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not load properties');setProperties(Array.isArray(d.properties)?d.properties:[])}).catch(()=>setPropertyLoadError('Property listings could not be loaded. You can enter a Property ID manually.'))});
+ useEffect(()=>{let active=true;fetch('/api/properties',{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not load properties');if(active)setProperties(Array.isArray(d.properties)?d.properties:[])}).catch(()=>{if(active)setPropertyLoadError('Property listings could not be loaded. You can enter a Property ID manually.')});return()=>{active=false}},[]);
  async function copyAccount(){try{await navigator.clipboard.writeText('5601035351');setCopied(true);window.setTimeout(()=>setCopied(false),2200)}catch{setError('Please copy the account number manually.')}}
  function continueToPayment(){const form=document.getElementById('client-registration-form');if(!form.reportValidity())return;setError('');setStep(2);window.scrollTo({top:0,behavior:'smooth'})}
  async function submit(e){e.preventDefault();setBusy(true);setError('');try{const form=new FormData(e.currentTarget);const r=await fetch('/api/client-registrations',{method:'POST',body:form});const d=await r.json();if(!r.ok)throw new Error(d.error||'Submission failed');setResult('Registration reference: '+d.registration.id+'. Your transfer is awaiting manual verification.');setStep(3);window.scrollTo({top:0,behavior:'smooth'})}catch(err){setError(err.message)}finally{setBusy(false)}}
