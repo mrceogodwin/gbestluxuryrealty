@@ -33,8 +33,8 @@
 .registration-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px}
 .registration-grid label{display:grid;gap:8px;color:#334638;font-size:11px;font-weight:750;line-height:1.4;min-width:0}
 .registration-grid label.wide{grid-column:1/-1}
-.registration-grid input{width:100%;min-width:0;min-height:52px;border:1px solid #d5ded2;border-radius:2px;background:#f9faf5;padding:14px;color:var(--reg-ink);font:500 15px 'DM Sans',sans-serif;outline:none}
-.registration-grid input:focus{border-color:#789b75;box-shadow:0 0 0 3px #173b2b12}
+.registration-grid input,.registration-grid select,.registration-grid textarea{width:100%;min-width:0;min-height:52px;border:1px solid #d5ded2;border-radius:2px;background:#f9faf5;padding:14px;color:var(--reg-ink);font:500 15px 'DM Sans',sans-serif;outline:none}
+.registration-grid input:focus,.registration-grid select:focus,.registration-grid textarea:focus{border-color:#789b75;box-shadow:0 0 0 3px #173b2b12}
 .registration-privacy{font-size:11px;color:#7a8679;line-height:1.7;margin:18px 0 0;max-width:680px}
 .registration-terms{background:#f7f8f1}
 .registration-terms h3,.registration-payment h3,.registration-panel>h3{margin:0 0 10px;color:var(--reg-deep);font-family:'Playfair Display',serif;font-size:25px;font-weight:500}
@@ -77,3 +77,8 @@
 .registration-footer>a{color:var(--reg-green);font-size:11px;font-weight:800;text-decoration:none}
 .registration-footer nav{display:flex;gap:13px;flex-wrap:wrap}.registration-footer nav a{color:#647466;font-size:10px;font-weight:700;text-decoration:none}
 @media(max-width:700px){.client-registration-shell{padding:14px 14px 22px}.registration-topbar{margin-bottom:16px}.registration-topbar>span{font-size:7px}.registration-header{min-height:350px;padding:27px 22px}.registration-header:after{right:-12%;top:-4%;font-size:270px}.registration-header h1{font-size:clamp(42px,11vw,62px)}.registration-eyebrow{margin-top:32px}.registration-intro{font-size:12px}.registration-hero-meta{gap:7px;font-size:7px;letter-spacing:.1em;flex-wrap:wrap}.registration-progress{gap:9px;margin:22px 4px 26px}.registration-progress>div{gap:6px}.registration-progress>div b{font-size:9px}.registration-progress>div span{width:25px;height:25px;font-size:9px}.registration-stage-heading{align-items:flex-start}.registration-stage-heading h2{font-size:29px}.registration-stage-heading p{font-size:11px}.registration-stage-count{font-size:8px}.registration-grid{grid-template-columns:1fr;gap:14px}.registration-grid label.wide{grid-column:auto}.registration-panel{padding:18px}.registration-fee-top{align-items:flex-start;flex-direction:column;gap:5px}.registration-account-row{flex-wrap:wrap;align-items:flex-start}.registration-account-row>strong{text-align:left;margin-left:auto}.registration-account-row .registration-account-number{font-size:20px}.registration-copy{margin-left:auto}.registration-actions{align-items:stretch;flex-direction:column-reverse}.registration-primary,.registration-secondary{width:100%}.registration-footer{align-items:flex-start;flex-direction:column;gap:12px}.registration-footer nav{gap:16px}}
+
+.registration-grid select,.registration-grid textarea{min-height:52px;border:1px solid #d5ded2;border-radius:2px;background:#f9faf5;padding:14px;color:var(--reg-ink);font:500 14px 'DM Sans',sans-serif;outline:none}
+.registration-grid textarea{resize:vertical;line-height:1.6}
+.registration-grid label small{font-size:10px;font-weight:500;color:#7a8679;line-height:1.55}
+.registration-listing-count{font-weight:500;color:#7a8679;letter-spacing:0}
