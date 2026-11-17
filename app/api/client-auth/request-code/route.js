@@ -21,7 +21,7 @@ async function sendCode(email,code,fullName){
 export async function POST(req){
  try{
   if(!SECRET())return NextResponse.json({error:'Client sign-in is temporarily unavailable.'},{status:503});
-  if(req.headers.get('origin')&&req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
+  if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
   const body=await req.json().catch(()=>null),email=normalize(body?.email);
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)return NextResponse.json({error:'Enter a valid email address.'},{status:400});
   const pool=getDatabasePool();
