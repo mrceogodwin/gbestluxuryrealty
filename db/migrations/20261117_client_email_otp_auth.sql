@@ -1,5 +1,6 @@
 -- G-BEST client email OTP authentication
--- Apply once to the Neon database before enabling client sign-in.
+-- Existing client_sessions table is retained and already has UUID registration_id,
+-- unique token_hash, expiry/revocation fields, and a registration/expiry index.
 CREATE TABLE IF NOT EXISTS public.client_auth_challenges (
   id bigserial PRIMARY KEY,
   registration_id text NOT NULL,
@@ -17,15 +18,3 @@ CREATE INDEX IF NOT EXISTS client_auth_challenges_email_created_idx
   ON public.client_auth_challenges(email_normalized, created_at DESC);
 CREATE INDEX IF NOT EXISTS client_auth_challenges_ip_created_idx
   ON public.client_auth_challenges(client_ip, created_at DESC);
-CREATE TABLE IF NOT EXISTS public.client_sessions (
-  id bigserial PRIMARY KEY,
-  registration_id text NOT NULL,
-  token_hash text NOT NULL UNIQUE,
-  expires_at timestamptz NOT NULL,
-  revoked_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE UNIQUE INDEX IF NOT EXISTS client_sessions_token_hash_uidx
-  ON public.client_sessions(token_hash);
-CREATE INDEX IF NOT EXISTS client_sessions_registration_idx
-  ON public.client_sessions(registration_id, expires_at DESC);
