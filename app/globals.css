@@ -3087,3 +3087,81 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
     font-size:26px!important;
   }
 }
+
+
+/* Refined G-BEST primary action palette: forest green, warm ivory and restrained sage.
+   Intentionally scoped to site/header/content actions; platform footer is untouched. */
+.gbest-site-root .gbest-lockup-type{
+ display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+ gap:0!important;line-height:.94!important;min-width:0!important;
+}
+.gbest-site-root .gbest-lockup-type b{
+ display:block!important;color:#f7f4e9!important;
+ font:800 21px/.96 Inter,Arial,sans-serif!important;letter-spacing:-.045em!important;
+}
+.gbest-site-root .gbest-lockup-type b.gbest-lockup-line{
+ font-size:19px!important;font-weight:750!important;
+}
+.gbest-site-root .gbest-lockup-type small{
+ display:block!important;max-width:180px!important;margin-top:7px!important;
+ color:#d5bd78!important;font:700 7px/1.25 'DM Mono',monospace!important;
+ letter-spacing:.09em!important;white-space:normal!important;
+}
+.gbest-site-root nav .gbest-brand-lockup{
+ align-items:center!important;gap:10px!important;
+}
+.gbest-site-root nav .gbest-lockup-mark{
+ flex:0 0 46px!important;width:46px!important;height:48px!important;
+ color:#d8e89a!important;
+}
+.gbest-site-root .navbtn,
+.gbest-site-root .hero .goldbtn,
+.gbest-site-root .booking .formbox .submit,
+.gbest-site-root .searchbutton,
+.gbest-site-root .marketing-intro-actions .goldbtn{
+ background:#174b35!important;
+ color:#f7f4e9!important;
+ border:1px solid #52765b!important;
+ border-bottom:3px solid #0c3021!important;
+ box-shadow:3px 3px 0 rgba(12,48,33,.28)!important;
+ border-radius:2px!important;
+}
+.gbest-site-root .navbtn:hover,
+.gbest-site-root .hero .goldbtn:hover,
+.gbest-site-root .booking .formbox .submit:hover:not(:disabled),
+.gbest-site-root .searchbutton:hover,
+.gbest-site-root .marketing-intro-actions .goldbtn:hover{
+ background:#226344!important;color:#fffdf5!important;
+}
+.gbest-site-root nav>div>a.nav-register{
+ background:transparent!important;color:#dce9bd!important;
+ border:1px solid #829b70!important;box-shadow:none!important;
+}
+.gbest-site-root nav>div>a.nav-register:hover{
+ background:#173d2b!important;color:#fff!important;
+}
+@media(max-width:680px){
+ .gbest-site-root nav .gbest-brand-lockup{
+  flex:0 1 34%!important;width:34%!important;max-width:34%!important;
+  min-width:0!important;gap:7px!important;
+ }
+ .gbest-site-root nav .gbest-lockup-mark{
+  flex-basis:31px!important;width:31px!important;height:39px!important;
+ }
+ .gbest-site-root .gbest-lockup-type b{font-size:17px!important}
+ .gbest-site-root .gbest-lockup-type b.gbest-lockup-line{font-size:16px!important}
+ .gbest-site-root .gbest-lockup-type small{font-size:5.5px!important;max-width:105px!important;letter-spacing:.04em!important;margin-top:5px!important}
+ .gbest-site-root nav>div>a.navbtn{
+  background:#174b35!important;color:#f7f4e9!important;
+  border:1px solid #52765b!important;box-shadow:2px 2px 0 #0c3021!important;
+ }
+ .gbest-site-root .hero .goldbtn{
+  background:#174b35!important;color:#f7f4e9!important;
+  border:1px solid #829b70!important;box-shadow:3px 3px 0 #0c3021!important;
+ }
+}
+@media(max-width:360px){
+ .gbest-site-root nav .gbest-brand-lockup{flex-basis:33%!important;width:33%!important;max-width:33%!important}
+ .gbest-site-root .gbest-lockup-type b{font-size:15px!important}
+ .gbest-site-root .gbest-lockup-type b.gbest-lockup-line{font-size:14px!important}
+}
