@@ -24,9 +24,13 @@ export async function POST(req){
   // A submitted email address alone must never authorize an inspection booking.
   const sessionToken=req.cookies.get('gbest_client_session')?.value;
   if(!sessionToken)return NextResponse.json({error:'Please sign in with your approved G-BEST client account before booking an inspection.'},{status:401});
-  const session=await pool.query("SELECT r.id,r.email FROM public.client_sessions s JOIN public.client_registrations r ON r.id::text=s.registration_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND r.payment_status='approved' AND r.client_status='active' AND r.tenant_id=$2 LIMIT 1",[createHash('sha256').update(sessionToken).digest('hex'),tenant.id]);
+  const session=await pool.query("SELECT r.id,r.email,r.full_name,r.phone FROM public.client_sessions s JOIN public.client_registrations r ON r.id::text=s.registration_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND r.payment_status='approved' AND r.client_status='active' AND r.tenant_id=$2 LIMIT 1",[createHash('sha256').update(sessionToken).digest('hex'),tenant.id]);
   if(!session.rowCount)return NextResponse.json({error:'Your client session is expired or your registration/payment is not approved. Please sign in again after approval.'},{status:401});
   if(session.rows[0].email.toLowerCase()!==email.toLowerCase())return NextResponse.json({error:'The booking email must match your approved client account.'},{status:403});
+  // Identity and contact details must come from the approved registration, never the browser payload.
+  name=String(session.rows[0].full_name||'').trim();
+  contact=String(session.rows[0].phone||'').trim();
+  if(name.length<2||name.length>120||contact.length<5||contact.length>160)return NextResponse.json({error:'Your approved client profile is missing a valid name or phone number. Contact G-BEST to update it before booking.'},{status:409});
   const registration={rows:[{id:session.rows[0].id}]};
   let propertyLabel=pid;
   const listing=await pool.query(`SELECT id,title,description FROM public.properties
