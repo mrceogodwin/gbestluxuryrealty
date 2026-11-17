@@ -35,7 +35,9 @@ export async function GET(req) {
         description,
         video_url
       FROM public.properties
-      WHERE tenant_id=$1 AND status IN ('published', 'available')
+      WHERE tenant_id=$1
+        AND status IN ('published', 'available')
+        AND COALESCE(description,'') !~* '(sample showcase listing|illustrative|design preview|test listing)'
       ORDER BY updated_at DESC, id DESC
     `,[tenant.id]);
 
