@@ -3040,3 +3040,50 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 @media(prefers-reduced-motion:reduce){
   .gbest-market-grid{scroll-behavior:auto}
 }
+
+
+/* Property collection carousel controls: clear, balanced touch targets */
+.property-orbit-placement .footer-property-orbit-controls{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:10px!important;
+  flex-shrink:0!important;
+}
+.property-orbit-placement .footer-property-orbit-controls button{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  display:grid!important;
+  place-items:center!important;
+  width:46px!important;
+  height:46px!important;
+  min-width:46px!important;
+  min-height:46px!important;
+  padding:0!important;
+  border:1.5px solid #647b50!important;
+  border-radius:50%!important;
+  background:#10251a!important;
+  color:#d8f36b!important;
+  box-shadow:0 3px 0 rgba(16,37,26,.16)!important;
+  font-family:Arial,sans-serif!important;
+  font-size:27px!important;
+  font-weight:500!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  transition:background .18s ease,transform .18s ease,border-color .18s ease!important;
+}
+.property-orbit-placement .footer-property-orbit-controls button:active{
+  transform:scale(.94)!important;
+  background:#244a31!important;
+}
+.property-orbit-placement .footer-property-orbit-controls button:focus-visible{
+  outline:3px solid #a7ca59!important;
+  outline-offset:3px!important;
+}
+@media(max-width:700px){
+  .property-orbit-placement .footer-property-orbit-controls{gap:9px!important}
+  .property-orbit-placement .footer-property-orbit-controls button{
+    width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;
+    font-size:26px!important;
+  }
+}
