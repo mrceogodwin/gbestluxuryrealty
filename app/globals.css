@@ -3234,7 +3234,7 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 
 
 /* Floating Agent assistant */
-.gb-agent-root{position:fixed;z-index:9998;display:flex;flex-direction:column;align-items:flex-start;gap:12px;max-width:calc(100vw - 16px);touch-action:pan-y}
+.gb-agent-root{position:fixed;z-index:9998;display:flex;flex-direction:column;align-items:flex-end;gap:12px;max-width:calc(100vw - 16px);touch-action:pan-y}
 .gb-agent-launcher{display:flex;align-items:center;gap:11px;min-height:62px;padding:8px 17px 8px 9px;border:1px solid rgba(220,237,218,.28);border-radius:999px;background:linear-gradient(135deg,#173f2b,#0d2b1c);color:#fff;box-shadow:0 12px 38px #102f2360;cursor:pointer;transition:transform .2s,box-shadow .2s}
 .gb-agent-launcher:hover{transform:translateY(-2px);box-shadow:0 16px 42px #102f2370}
 .gb-agent-launch-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:#e6c77b;color:#173b29;font:800 20px Georgia,serif;box-shadow:inset 0 0 0 1px #fff7}
