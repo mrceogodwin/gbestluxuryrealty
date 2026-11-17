@@ -2951,3 +2951,36 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   border-radius:0!important;
  }
 }
+
+
+/* Featured property carousel: clean light backdrop and readable card labels */
+.property-orbit-placement{
+  background:#f3f1e7!important;
+  background-image:none!important;
+  color:#173b2b!important;
+}
+.property-orbit-placement .footer-property-orbit-heading .eyebrow{color:#789b32!important}
+.property-orbit-placement .footer-property-orbit-heading>div:first-child>span{color:#66745f!important}
+.property-orbit-placement .footer-property-orbit-item{color:#173b2b!important}
+.property-orbit-placement .footer-property-orbit-item>b{
+  color:#173b2b!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  line-height:1.3!important;
+  text-shadow:none!important;
+}
+.property-orbit-placement .footer-property-orbit-item>small{
+  color:#657260!important;
+  font-size:8px!important;
+  font-weight:700!important;
+  text-shadow:none!important;
+}
+.property-orbit-placement .footer-property-orbit-item>strong{
+  color:#719b22!important;
+  font-size:9px!important;
+  font-weight:900!important;
+  text-shadow:none!important;
+}
+.property-orbit-placement .footer-property-orbit-image{
+  box-shadow:0 5px 14px rgba(23,59,43,.12)!important;
+}
