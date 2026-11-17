@@ -55,10 +55,10 @@ test('public contact submissions are validated and stored using parameterized SQ
 
 test('business contact administration is protected and supports status updates', async () => {
   const code = await source('app/api/admin/business-contacts/route.js');
-  assert.match(code, /authorizeAdminRequest/);
-  assert.match(code, /contacts\.view/);
-  assert.match(code, /contacts\.manage/);
+  assert.match(code, /isAdminRequest/);
+  assert.match(code, /Only the Super Admin/);
   assert.match(code, /UPDATE public\.business_contact_submissions/);
+  assert.match(code, /status=\$2/);
 });
 
 test('global brand settings are restricted while tenant audio remains editable', async () => {
@@ -92,7 +92,9 @@ test('white-label company registry resolves published branding by domain', async
   const tenants = await source('lib/site-tenants.js');
   const publicRoute = await source('app/api/homepage/route.js');
   const registry = await source('app/api/admin/companies/route.js');
-  assert.match(tenants, /CREATE TABLE IF NOT EXISTS public\.site_tenants/);
+  assert.match(tenants, /SELECT id FROM public\.site_tenants WHERE tenant_key='gbest'/);
+  assert.match(tenants, /Apply the tenant schema migration/);
+  assert.doesNotMatch(tenants, /CREATE TABLE IF NOT EXISTS public\.site_tenants/);
   assert.match(tenants, /resolveSiteTenant/);
   assert.match(tenants, /primary_domain/);
   assert.match(publicRoute, /resolveSiteTenant/);
@@ -219,7 +221,8 @@ test('company staff managers can administer only their own workspace team', asyn
 test('media library records and object storage keys are company isolated', async () => {
   const api = await source('app/api/admin/media/route.js');
   const page = await source('app/admin/super/media/page.js');
-  assert.match(api, /admin_media_assets ADD COLUMN IF NOT EXISTS tenant_id/);
+  assert.match(api, /Schema is provisioned by database migrations/);
+  assert.doesNotMatch(api, /ALTER TABLE public\.admin_media_assets/);
   assert.match(api, /WHERE tenant_id=\$1 ORDER BY created_at DESC/);
   assert.ok(api.includes("prefix='website/'+tenant.id+'/"));
   assert.match(api, /WHERE id=\$1 AND tenant_id=\$2/);
