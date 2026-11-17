@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createHash } from 'node:crypto';
 import { getDatabasePool } from '../../../lib/db';
 import { queueInspectionEmails, deliverInspectionEmails } from '../../../lib/inspection-email-outbox';
 import {getSchedule,slotIsAvailable,validClock} from '../../../lib/inspection-schedule';
@@ -19,12 +20,14 @@ export async function POST(req){
   const when=new Date(date+'T'+time+':00+01:00');const weekday=new Date(date+'T12:00:00Z').getUTCDay();if(Number.isNaN(when.getTime())||when.toISOString().slice(0,10)!==date||when.getTime()<Date.now())return NextResponse.json({error:'Choose a future date and time.'},{status:400});const schedule=await getSchedule(tenant.id);let slotAvailable=false;try{slotAvailable=await slotIsAvailable(date,time,schedule,undefined,tenant.id)}catch(e){return NextResponse.json({error:e.message||'Could not verify inspection availability. Please try again later.'},{status:503})}if(!slotAvailable)return NextResponse.json({error:'That date or time is not available in this company’s current schedule. Please choose one of the available slots.'},{status:409});
   // Demo cards are for presentation only and must never create real inspection records.
   if(/^GB-00[1-8]$/.test(pid))return NextResponse.json({error:'This is a sample property, not a live listing. Please choose a published property before requesting an inspection.'},{status:400});
-  // Only clients whose manual bank transfer has been checked and approved
-  // by G-BEST staff may request an inspection.
-  const registrationTable=await pool.query("SELECT to_regclass('public.client_registrations') AS table_name");
-  if(!registrationTable.rows[0]?.table_name)return NextResponse.json({error:'Complete client registration and payment verification before requesting an inspection.'},{status:403});
-  const registration=await pool.query("SELECT id,payment_status FROM public.client_registrations WHERE tenant_id=$2 AND lower(email)=lower($1) ORDER BY updated_at DESC,created_at DESC LIMIT 1",[email,tenant.id]);
-  if(!registration.rowCount||registration.rows[0].payment_status!=='approved')return NextResponse.json({error:'Your client registration or payment is not yet approved. Please complete registration and wait for G-BEST to verify your bank transfer before booking an inspection.'},{status:403});
+  // Require a real, active client session as well as manual payment approval.
+  // A submitted email address alone must never authorize an inspection booking.
+  const sessionToken=req.cookies.get('gbest_client_session')?.value;
+  if(!sessionToken)return NextResponse.json({error:'Please sign in with your approved G-BEST client account before booking an inspection.'},{status:401});
+  const session=await pool.query("SELECT r.id,r.email FROM public.client_sessions s JOIN public.client_registrations r ON r.id::text=s.registration_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND r.payment_status='approved' AND r.client_status='active' AND r.tenant_id=$2 LIMIT 1",[createHash('sha256').update(sessionToken).digest('hex'),tenant.id]);
+  if(!session.rowCount)return NextResponse.json({error:'Your client session is expired or your registration/payment is not approved. Please sign in again after approval.'},{status:401});
+  if(session.rows[0].email.toLowerCase()!==email.toLowerCase())return NextResponse.json({error:'The booking email must match your approved client account.'},{status:403});
+  const registration={rows:[{id:session.rows[0].id}]};
   let propertyLabel=pid;
   const listing=await pool.query(`SELECT id,title FROM public.properties
     WHERE tenant_id=$2 AND status IN ('published','available')
