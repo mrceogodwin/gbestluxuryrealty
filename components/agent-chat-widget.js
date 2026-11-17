@@ -28,7 +28,7 @@ export default function AgentChatWidget(){
    <form className="gb-agent-compose" onSubmit={send}><input aria-label="Message Agent" value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Ask Agent anything…" maxLength={1200}/><button type="submit" disabled={!draft.trim()||busy} aria-label="Send message">➤</button></form>
    <footer className="gb-agent-foot">PRIVATE PROPERTY ENQUIRIES · G-BEST LUXURY REALTY</footer>
   </section>}
-  {minimized&&<button className="gb-agent-minimized" onClick={()=>{setMinimized(false);setOpen(true)}}>Agent <span>↗</span></button>}
+  {minimized&&<button className="gb-agent-minimized" aria-label="Reopen Agent chat" title="Reopen Agent" onClick={()=>{setMinimized(false);setOpen(true)}}><span>G</span></button>}
   {!minimized&&<button className={'gb-agent-launcher '+(open?'is-open':'')} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} aria-label={open?'Close Agent assistant':'Open Agent assistant'} onClick={()=>{setOpen(v=>!v);setMinimized(false)}}><span className="gb-agent-launch-icon">{open?'×':'G'}</span>{!open&&<><span className="gb-agent-launch-copy"><b>Agent</b><small>ASK US ANYTHING</small></span><span className="gb-agent-spark">✦</span></>}</button>}
  </div>
 }
