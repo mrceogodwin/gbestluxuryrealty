@@ -35,7 +35,7 @@ export async function POST(req){
     ON CONFLICT(attempt_key) DO UPDATE SET
       failed_attempts=CASE WHEN public.staff_login_attempts.window_started_at<now()-interval '${WINDOW_MINUTES} minutes' THEN 1 ELSE public.staff_login_attempts.failed_attempts+1 END,
       window_started_at=CASE WHEN public.staff_login_attempts.window_started_at<now()-interval '${WINDOW_MINUTES} minutes' THEN now() ELSE public.staff_login_attempts.window_started_at END,
-      locked_until=CASE WHEN (CASE WHEN public.staff_login_attempts.window_started_at<now()-interval '${WINDOW_MINUTES} minutes' THEN 1 ELSE public.staff_login_attempts.failed_attempts+1 END)>=CASE WHEN public.staff_login_attempts.attempt_key=$1 THEN $3 ELSE $4 END THEN now()+interval '${LOCK_MINUTES} minutes' ELSE NULL END,
+      locked_until=CASE WHEN (CASE WHEN public.staff_login_attempts.window_started_at<now()-interval '${WINDOW_MINUTES} minutes' THEN 1 ELSE public.staff_login_attempts.failed_attempts+1 END)>=CASE WHEN public.staff_login_attempts.attempt_key=$1 THEN $3::integer ELSE $4::integer END THEN now()+interval '${LOCK_MINUTES} minutes' ELSE NULL END,
       updated_at=now()
     RETURNING attempt_key,locked_until`,[keys.email,keys.ip,EMAIL_MAX_FAILURES,IP_MAX_FAILURES]);
    const locked=attempts.rows.some(row=>row.locked_until);
