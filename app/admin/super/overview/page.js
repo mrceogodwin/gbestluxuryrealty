@@ -13,7 +13,7 @@ const catalog=[
  {key:'modification',permission:'modification',title:'Modification Engine',description:'White-label brand, design, SEO and audio settings',href:'/admin/super/modification-engine',icon:'⚙'},
  {key:'activity',permission:'audit',title:'Activity & audit',description:'Review changes made across the system',href:'/admin/super/activity',icon:'≋'}
 ];
-function Stat({label,value,detail,href}){return <Link href={href} className="stat"><span>{label}</span><strong>{value??0}</strong><small>{detail}</small></Link>}
+function Stat({label,value,detail,href}){return <Link href={href} className="stat"><span className="stat-label">{label}</span><strong className="stat-value">{Number(value??0).toLocaleString('en-NG')}</strong><small className="stat-detail">{detail}</small></Link>}
 export default function AdminOverview(){
  const [data,setData]=useState(null),[busy,setBusy]=useState(true),[error,setError]=useState('');
  const load=useCallback(async()=>{setBusy(true);setError('');try{const r=await fetch('/api/admin/overview',{cache:'no-store'}),d=await r.json();if(!r.ok)throw Error(d.error||'Could not load your workspace.');setData(d)}catch(e){setError(e.message||'Unable to load your workspace.')}finally{setBusy(false)}},[]);
@@ -68,10 +68,20 @@ export default function AdminOverview(){
 
  /* Mobile layout hardening: isolate this workspace from legacy admin/global styles. */
  .dash .stats{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:stretch!important}
- .dash .stat{display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:7px!important;min-height:84px!important;box-sizing:border-box!important;overflow:hidden!important;padding:13px!important;border:1px solid #ffffff22!important;border-radius:11px!important;background:#1b231e!important;color:#f2f5ef!important;white-space:normal!important;line-height:1.35!important}
- .dash .stat span{display:block!important;width:100%!important;color:#b7c5b8!important;font-size:9px!important;line-height:1.3!important;letter-spacing:.13em!important;font-weight:800!important}
- .dash .stat strong{display:block!important;width:100%!important;color:#e9f4df!important;font-size:25px!important;line-height:1!important;font-weight:800!important}
- .dash .stat small{display:block!important;width:100%!important;color:#9eaaa1!important;font-size:10px!important;line-height:1.35!important;white-space:normal!important}
+ .dash .stats{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;align-items:stretch!important}
+ .dash a.stat{display:grid!important;grid-template-rows:auto auto 1fr!important;grid-template-columns:minmax(0,1fr)!important;align-content:start!important;justify-items:start!important;gap:7px!important;min-width:0!important;min-height:104px!important;box-sizing:border-box!important;overflow:hidden!important;padding:14px!important;border:1px solid #ffffff24!important;border-radius:12px!important;background:linear-gradient(145deg,#242d26,#19201b)!important;color:#f2f5ef!important;text-decoration:none!important;white-space:normal!important;line-height:1.35!important}
+ .dash a.stat .stat-label{display:block!important;grid-row:1!important;grid-column:1!important;width:100%!important;margin:0!important;color:#b7c5b8!important;font-size:9px!important;line-height:1.3!important;letter-spacing:.13em!important;font-weight:850!important}
+ .dash a.stat .stat-value{display:block!important;grid-row:2!important;grid-column:1!important;width:100%!important;margin:0!important;color:#e9f4df!important;font-size:27px!important;line-height:1.05!important;font-weight:850!important;letter-spacing:-.04em!important}
+ .dash a.stat .stat-detail{display:block!important;grid-row:3!important;grid-column:1!important;width:100%!important;margin:0!important;color:#aab7ac!important;font-size:10px!important;line-height:1.35!important;white-space:normal!important;overflow-wrap:anywhere!important}
+ .dash .finance{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;margin:0 0 24px!important;padding:15px!important;border:1px solid #ffffff20!important;border-radius:13px!important;background:linear-gradient(145deg,#202821,#171d19)!important}
+ .dash .finance div{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:8px!important;min-width:0!important}
+ .dash .finance span{display:block!important;color:#aab9ac!important;font-size:9px!important;line-height:1.35!important;letter-spacing:.12em!important;font-weight:850!important}
+ .dash .finance strong{display:block!important;color:#d7f49b!important;font-size:clamp(15px,2.2vw,21px)!important;line-height:1.15!important;overflow-wrap:anywhere!important;white-space:normal!important}
+ .dash .department{display:grid!important;grid-template-columns:42px minmax(0,1fr) 20px!important;align-items:center!important;gap:12px!important;min-width:0!important;min-height:88px!important;box-sizing:border-box!important;padding:14px!important;border:1px solid #ffffff24!important;border-radius:13px!important;background:linear-gradient(145deg,#242d26,#191f1b)!important;color:#f2f5ef!important;text-decoration:none!important;box-shadow:0 8px 22px #0003!important}
+ .dash .department .copy{display:flex!important;flex-direction:column!important;gap:5px!important;min-width:0!important}
+ .dash .department .copy strong{display:block!important;font-size:13px!important;line-height:1.3!important;color:#f2f5ef!important}
+ .dash .department .copy small{display:block!important;font-size:10px!important;line-height:1.4!important;color:#aab5ad!important;white-space:normal!important}
+ .dash .department .arrow{display:block!important;text-align:right!important;color:#c9ed70!important;font-size:20px!important}
  .dash .sectionhead{display:flex!important;align-items:flex-end!important;justify-content:space-between!important;gap:12px!important;margin:0 0 12px!important;padding:0!important;background:transparent!important}
  .dash .sectionhead h2{display:block!important;margin:5px 0 0!important;color:#f2f5ef!important;font-size:22px!important;line-height:1.15!important;font-weight:800!important;letter-spacing:-.03em!important;visibility:visible!important;opacity:1!important}
  .dash .sectionhead small{color:#aab5ad!important;font-size:10px!important}
@@ -84,6 +94,6 @@ export default function AdminOverview(){
  .dash .department .arrow{display:block!important;flex:0 0 auto!important;margin-left:auto!important;color:#c9ed70!important;font-size:19px!important}
  .dash .empty{display:block!important;margin:0!important;padding:16px!important;background:#1a201c!important;border:1px solid #ffffff20!important;border-radius:11px!important;color:#b8c4ba!important;font-size:12px!important;line-height:1.5!important}
  .dash footer{min-height:88px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:12px!important;padding:20px 12px!important;background:#080a08!important;border:1px solid #ffffff13!important;border-radius:10px!important;color:#b7c1b8!important;text-align:center!important;line-height:1.6!important}
- @media(max-width:720px){.dash .head{align-items:flex-start!important}.dash .head h1{font-size:clamp(27px,8vw,36px)!important}.dash .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dash .stat{min-height:88px!important;padding:11px!important}.dash .section{margin-top:24px!important}.dash .sectionhead h2{font-size:21px!important}.dash .department{min-height:76px!important}}
+ @media(max-width:720px){.dash{padding:18px 14px 30px!important}.dash .head{align-items:flex-start!important}.dash .head h1{font-size:clamp(27px,8vw,36px)!important}.dash .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}.dash a.stat{min-height:100px!important;padding:12px!important}.dash .finance{gap:8px!important;padding:12px!important}.dash .finance span{font-size:8px!important}.dash .finance strong{font-size:clamp(13px,3.6vw,17px)!important}.dash .section{margin-top:24px!important}.dash .sectionhead h2{font-size:21px!important}.dash .departments{grid-template-columns:1fr!important;gap:9px!important}.dash .department{min-height:82px!important;padding:13px!important}}
  `}</style></main>;
 }
