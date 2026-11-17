@@ -19,7 +19,7 @@ export default function ClientRegistrationPage(){
  return <main className="client-registration-shell">
   <div className="registration-topbar"><a href="/" className="registration-back">← G-BEST LUXURY REALTY</a><span>PRIVATE CLIENT REGISTRATION</span></div>
   <header className="registration-header">
-   <div className="registration-brandline"><span className="registration-monogram">G</span><span>G-BEST <small>LUXURY REALTY</small></span></div>
+   <a className="registration-brandline registration-brand-lockup" href="/" aria-label="G-BEST Luxury Realty home"><svg className="registration-brand-mark" viewBox="0 0 72 64" aria-hidden="true"><path d="M5 58V25l13-8v41M23 58V8l14-7v57M42 58V30l12-9v37M2 58h66" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="square" strokeLinejoin="miter"/></svg><span className="registration-brand-type"><b>G-BEST</b><small>LUXURY REALTY</small></span></a>
    <p className="registration-eyebrow">A MORE CONSIDERED PROPERTY JOURNEY</p>
    <h1>YOUR NEXT MOVE.<br/><i>BEGINS HERE.</i></h1>
    <p className="registration-intro">A simple introduction is all we need. Share your name and contact details; we’ll take care of the rest with discretion.</p>
