@@ -7,18 +7,6 @@ import {ensureSiteTenants} from '../../../../lib/site-tenants';
 import {getStaffSession} from '../../../../lib/staff-auth';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
-async function ready(pool){
- await pool.query(`CREATE TABLE IF NOT EXISTS public.client_registrations (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),surname varchar(100) NOT NULL,other_names varchar(160) NOT NULL,
-  address text NOT NULL,email varchar(254) NOT NULL,phone varchar(40) NOT NULL,nationality varchar(80) NOT NULL,
-  state_of_origin varchar(100) NOT NULL,lga varchar(100) NOT NULL,occupation varchar(120) NOT NULL,
-  property_type varchar(100) NOT NULL,price_range varchar(160) NOT NULL,preferred_location varchar(180) NOT NULL,
-  property_description text,terms_accepted boolean NOT NULL DEFAULT false,fee_amount numeric(12,2),payment_reference varchar(120),
-  receipt_name varchar(255),receipt_type varchar(100),receipt_data bytea,payment_status varchar(24) NOT NULL DEFAULT 'pending',
-  admin_note text,created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now())`);
- await pool.query(`ALTER TABLE public.client_registrations ADD COLUMN IF NOT EXISTS full_name varchar(260),ADD COLUMN IF NOT EXISTS client_id varchar(40),ADD COLUMN IF NOT EXISTS email_normalized varchar(254),ADD COLUMN IF NOT EXISTS registration_fee_kobo bigint,ADD COLUMN IF NOT EXISTS client_status varchar(24) NOT NULL DEFAULT 'pending',ADD COLUMN IF NOT EXISTS approved_at timestamptz,ADD COLUMN IF NOT EXISTS approved_by varchar(120),ADD COLUMN IF NOT EXISTS fee_amount numeric(12,2),ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now()`);
- await pool.query(`CREATE TABLE IF NOT EXISTS public.client_registration_audit (id bigserial PRIMARY KEY,registration_id uuid NOT NULL REFERENCES public.client_registrations(id) ON DELETE CASCADE,old_status varchar(24),new_status varchar(24) NOT NULL,admin_note text,changed_at timestamptz NOT NULL DEFAULT now())`);
-}
 async function tenantFor(req,pool,requested){
  await ensureSiteTenants(pool);
  const admin=await isAdminRequest(req);let id=requested;
@@ -31,7 +19,7 @@ async function tenantFor(req,pool,requested){
 export async function GET(req){
  if(!await authorizeAdminRequest(req,['clients.view','clients.manage','payments.review']))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
-  const pool=getDatabasePool();await ready(pool);await ensureSiteTenants(pool);
+  const pool=getDatabasePool();await ensureSiteTenants(pool);
   const url=new URL(req.url),{id,admin}=await tenantFor(req,pool,url.searchParams.get('tenantId'));
   const q=await pool.query(`SELECT id,tenant_id,surname,other_names,address,email,phone,nationality,state_of_origin,lga,occupation,property_type,price_range,preferred_location,property_description,terms_accepted,fee_amount,payment_reference,receipt_name,receipt_type,payment_status,admin_note,created_at,
    COALESCE((SELECT json_agg(json_build_object('old_status',a.old_status,'new_status',a.new_status,'admin_note',a.admin_note,'changed_at',a.changed_at) ORDER BY a.changed_at DESC) FROM public.client_registration_audit a WHERE a.registration_id=public.client_registrations.id),'[]'::json) AS audit_history
@@ -45,7 +33,7 @@ export async function PATCH(req){
  try{
   const d=await req.json();
   if(!/^[0-9a-f-]{36}$/i.test(String(d.id||''))||!['approved','rejected'].includes(d.payment_status))return NextResponse.json({error:'Invalid payment decision'},{status:400});
-  const note=String(d.admin_note||'').trim().slice(0,1000),pool=getDatabasePool();await ready(pool);await ensureSiteTenants(pool);
+  const note=String(d.admin_note||'').trim().slice(0,1000),pool=getDatabasePool();await ensureSiteTenants(pool);
   const admin=await isAdminRequest(req),staff=admin?null:await getStaffSession(req),dbClient=await pool.connect();let q;
   try{
    await dbClient.query('BEGIN');
