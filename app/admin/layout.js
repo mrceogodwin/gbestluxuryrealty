@@ -120,6 +120,74 @@ export default function SuperAdminLayout({children}){
  .gb-content .ops button,.gb-content .staff button,.gb-content .audit button,.gb-content .finance button,.gb-content .super-shell button{background:linear-gradient(145deg,#d9ff70,#a9d82a)!important;color:#17210f!important;border:1px solid #edffb8!important;border-radius:9px!important;font-weight:850!important;box-shadow:0 8px 18px #0008,inset 0 2px 2px #fff9,inset 0 -3px 6px #668c1c66!important}
  .gb-content .ops a,.gb-content .staff a,.gb-content .audit a,.gb-content .finance a,.gb-content .super-shell a{color:#d9f79b}
 
+
+ /* Consistent mobile department surfaces and contrast. */
+ .gb-console .gb-content{min-width:0!important;max-width:100%!important;overflow-x:clip!important}
+ .gb-console .gb-content>main{min-width:0!important;max-width:100%!important;overflow-x:clip!important}
+ .gb-console .gb-content .audit,
+ .gb-console .gb-content .finance,
+ .gb-console .gb-content .staff,
+ .gb-console .gb-content .media-room{box-sizing:border-box!important;width:100%!important;max-width:100%!important}
+ .gb-console .gb-content .audit{background:radial-gradient(ellipse at 90% 0%,#252f28,transparent 36%),#111512!important;color:#edf3ec!important;padding:clamp(14px,3vw,30px)!important}
+ .gb-console .gb-content .audit .hero,
+ .gb-console .gb-content .audit .panel{background:linear-gradient(145deg,#242d27,#191f1b)!important;border:1px solid #ffffff1b!important;color:#edf3ec!important;box-shadow:0 14px 28px #0006!important}
+ .gb-console .gb-content .audit .hero{padding:clamp(16px,3vw,26px)!important}
+ .gb-console .gb-content .audit .hero h1,
+ .gb-console .gb-content .audit .panel b{color:#f2f5ef!important}
+ .gb-console .gb-content .audit .hero p,
+ .gb-console .gb-content .audit .muted,
+ .gb-console .gb-content .audit .empty{color:#aab5ad!important}
+ .gb-console .gb-content .audit .event{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important;min-width:0!important;color:#edf3ec!important;border-color:#ffffff1b!important;overflow-wrap:anywhere!important}
+ .gb-console .gb-content .audit .event>*{min-width:0!important;overflow-wrap:anywhere!important}
+ .gb-console .gb-content .audit .tag{background:#263b29!important;color:#c9edb1!important}
+ .gb-console .gb-content .audit .tools input,
+ .gb-console .gb-content .audit .tools select{min-width:0!important;max-width:100%!important;background:#111713!important;border:1px solid #465248!important;color:#f1f4ef!important}
+ .gb-console .gb-content .media-room{background:radial-gradient(ellipse at 90% 0%,#252f28,transparent 36%),#111512!important;color:#edf3ec!important;padding:clamp(14px,3vw,30px)!important;font-family:inherit!important}
+ .gb-console .gb-content .media-room .media-title{color:#f2f5ef!important}
+ .gb-console .gb-content .media-room .media-sub,
+ .gb-console .gb-content .media-room .media-note,
+ .gb-console .gb-content .media-room .media-count,
+ .gb-console .gb-content .media-room .media-meta small{color:#aab5ad!important}
+ .gb-console .gb-content .media-room .media-panel,
+ .gb-console .gb-content .media-room .media-card{background:linear-gradient(145deg,#242d27,#191f1b)!important;border:1px solid #ffffff1b!important;color:#edf3ec!important;box-shadow:0 14px 28px #0006!important;transform:none!important}
+ .gb-console .gb-content .media-room .media-meta b{color:#f2f5ef!important}
+ .gb-console .gb-content .media-room .media-drop{background:#171e19!important;border:2px dashed #758c6c!important;color:#edf3ec!important;box-shadow:none!important}
+ .gb-console .gb-content .media-room .media-drop p{color:#aab5ad!important}
+ .gb-console .gb-content .media-room input{background:#111713!important;border:1px solid #465248!important;color:#f1f4ef!important;max-width:100%!important;box-sizing:border-box!important}
+ .gb-console .gb-content .media-room button{background:#c9ed70!important;color:#17210f!important;border:1px solid #e4ffad!important}
+ .gb-console .gb-content .media-room .media-alert{background:#402722!important;color:#ffd0c5!important}
+ .gb-console .gb-content .homepage-cms,
+ .gb-console .gb-content .homepage-cms section,
+ .gb-console .gb-content .homepage-cms article,
+ .gb-console .gb-content .homepage-cms .homepage-cms-preview,
+ .gb-console .gb-content .homepage-cms .homepage-cms-history{max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+ .gb-console .gb-content .homepage-cms input:not([type=checkbox]):not([type=color]),
+ .gb-console .gb-content .homepage-cms select,
+ .gb-console .gb-content .homepage-cms textarea{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;background:#111713!important;color:#f1f4ef!important;border:1px solid #59665b!important;border-radius:9px!important;padding:11px!important}
+ .gb-console .gb-content .homepage-cms label{min-width:0!important;color:#dce6dc!important}
+ .gb-console .gb-content .homepage-cms p,
+ .gb-console .gb-content .homepage-cms small{color:#b7c2b9!important}
+ .gb-console .gb-content .homepage-cms .wide{min-width:0!important;max-width:100%!important}
+ .gb-console .gb-content .homepage-cms .homepage-cms-actions{display:flex!important;gap:8px!important;flex-wrap:wrap!important;max-width:100%!important}
+ .gb-console .gb-content .homepage-cms .homepage-cms-actions>*{min-width:0!important;max-width:100%!important}
+ .gb-console .gb-content .homepage-cms button{max-width:100%!important;overflow-wrap:anywhere!important}
+ @media(max-width:700px){
+  .gb-console .gb-content .audit .event{grid-template-columns:1fr 1fr!important;gap:8px!important;padding:12px 0!important}
+  .gb-console .gb-content .audit .event .details{grid-column:1/-1!important}
+  .gb-console .gb-content .audit .tools{display:grid!important;grid-template-columns:minmax(0,1fr)!important}
+  .gb-console .gb-content .audit .tools>*{width:100%!important;min-width:0!important;box-sizing:border-box!important}
+  .gb-console .gb-content .media-room .media-top{align-items:flex-start!important;flex-wrap:wrap!important}
+  .gb-console .gb-content .media-room .media-login{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:stretch!important}
+  .gb-console .gb-content .media-room .media-login label{min-width:0!important;width:100%!important}
+  .gb-console .gb-content .media-room .media-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+  .gb-console .gb-content .media-room .media-card{min-width:0!important}
+  .gb-console .gb-content .media-room .media-card img{height:112px!important}
+  .gb-console .gb-content .homepage-cms{padding:12px!important}
+  .gb-console .gb-content .homepage-cms .homepage-cms-actions{display:grid!important;grid-template-columns:1fr!important}
+  .gb-console .gb-content .homepage-cms .homepage-cms-actions>*{width:100%!important;text-align:center!important}
+  .gb-console .gb-content .homepage-cms article{grid-template-columns:minmax(0,1fr)!important}
+ }
+
  `}</style>
  <div className="gb-shell">
  <aside className={'gb-sidebar'+(open?' open':'')}>
