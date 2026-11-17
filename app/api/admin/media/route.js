@@ -6,7 +6,6 @@ import {getDatabasePool} from '../../../../lib/db';
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
 import {isAdminRequest} from '../../../../lib/admin-auth';
 import {getStaffSession} from '../../../../lib/staff-auth';
-import {ensureSiteTenants} from '../../../../lib/site-tenants';
 export const runtime='nodejs';export const dynamic='force-dynamic';
 function storage(){
  const endpoint=process.env.NEON_STORAGE_ENDPOINT,region=process.env.NEON_STORAGE_REGION,bucket=process.env.NEON_STORAGE_BUCKET;
@@ -16,16 +15,8 @@ function storage(){
 }
 const publicUrl=(endpoint,bucket,key)=>(process.env.NEON_STORAGE_PUBLIC_BASE_URL||endpoint.replace(/\/$/,'')+'/'+bucket).replace(/\/$/,'')+'/'+key.split('/').map(encodeURIComponent).join('/');
 async function ensure(){
- const pool=getDatabasePool();await ensureSiteTenants(pool);
- await pool.query(`CREATE TABLE IF NOT EXISTS public.admin_media_assets(id bigserial primary key,object_key text unique not null,public_url text not null,file_name text not null,mime_type text not null,file_size bigint not null,alt_text text not null default '',created_at timestamptz not null default now())`);
- await pool.query('ALTER TABLE public.admin_media_assets ADD COLUMN IF NOT EXISTS tenant_id bigint');
- const owner=await pool.query("SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");
- await pool.query('UPDATE public.admin_media_assets SET tenant_id=$1 WHERE tenant_id IS NULL',[owner.rows[0].id]);
- await pool.query(`DO $$ BEGIN IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='admin_media_assets_tenant_id_fkey' AND conrelid='public.admin_media_assets'::regclass) THEN ALTER TABLE public.admin_media_assets ADD CONSTRAINT admin_media_assets_tenant_id_fkey FOREIGN KEY(tenant_id) REFERENCES public.site_tenants(id) ON DELETE RESTRICT; END IF; END $$`);
- const nullable=await pool.query("SELECT is_nullable FROM information_schema.columns WHERE table_schema='public' AND table_name='admin_media_assets' AND column_name='tenant_id'");
- if(nullable.rows[0]?.is_nullable==='YES')await pool.query('ALTER TABLE public.admin_media_assets ALTER COLUMN tenant_id SET NOT NULL');
- await pool.query('CREATE INDEX IF NOT EXISTS admin_media_assets_tenant_created_idx ON public.admin_media_assets(tenant_id,created_at DESC)');
- return pool;
+ // Schema is provisioned by database migrations; request handlers must never run DDL.
+ return getDatabasePool();
 }
 async function chooseTenant(req,pool,requested){
  const admin=await isAdminRequest(req);let id=requested;
