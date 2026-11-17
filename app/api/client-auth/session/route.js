@@ -23,7 +23,7 @@ export async function GET(req){
     if(!tenant)return unauthenticated();
 
     const tokenHash=createHash('sha256').update(token).digest('hex');
-    const result=await pool.query(`SELECT r.id,r.client_id,r.full_name,r.email
+    const result=await pool.query(`SELECT r.id,r.client_id,r.full_name,r.email,r.phone
       FROM public.client_sessions s
       JOIN public.client_registrations r ON r.id::text=s.registration_id
       WHERE s.token_hash=$1
@@ -53,6 +53,7 @@ export async function GET(req){
         id:String(client.id),
         clientId:client.client_id||null,
         fullName:client.full_name,
+        phone:client.phone||'',
         email:client.email
       }
     },{headers:{'Cache-Control':'no-store','Pragma':'no-cache'}});
