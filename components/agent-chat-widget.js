@@ -28,6 +28,6 @@ export default function AgentChatWidget(){
    <footer className="gb-agent-foot">PRIVATE PROPERTY ENQUIRIES · G-BEST LUXURY REALTY</footer>
   </section>}
   {minimized&&<button className="gb-agent-minimized" onClick={()=>{setMinimized(false);setOpen(true)}}>Agent <span>↗</span></button>}
-  {!minimized&&<button className={'gb-agent-launcher '+(open?'is-open':'')} aria-label={open?'Close Agent assistant':'Open Agent assistant'} onClick={()=>{setOpen(v=>!v);setMinimized(false)}}><span className="gb-agent-launch-icon">{open?'×':'G'}</span>{!open&&<><span className="gb-agent-launch-copy"><b>Agent</b><small>ASK US ANYTHING</small></span><span className="gb-agent-spark">✦</span></>}</button>}
+  {!minimized&&<button className={'gb-agent-launcher '+(open?'is-open':'')} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} aria-label={open?'Close Agent assistant':'Open Agent assistant'} onClick={()=>{setOpen(v=>!v);setMinimized(false)}}><span className="gb-agent-launch-icon">{open?'×':'G'}</span>{!open&&<><span className="gb-agent-launch-copy"><b>Agent</b><small>ASK US ANYTHING</small></span><span className="gb-agent-spark">✦</span></>}</button>}
  </div>
 }
