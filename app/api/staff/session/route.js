@@ -2,6 +2,7 @@ import {NextResponse} from 'next/server';
 import {createHmac} from 'node:crypto';
 import {isIP} from 'node:net';
 import {getDatabasePool} from '../../../../lib/db';
+import {ensureSiteTenants} from '../../../../lib/site-tenants';
 import {hashToken,verifyPassword,newOpaqueToken,STAFF_COOKIE,STAFF_SESSION_SECONDS,staffCookieOptions,getStaffSession} from '../../../../lib/staff-auth';
 export const runtime='nodejs';export const dynamic='force-dynamic';
 const WINDOW_MINUTES=15, LOCK_MINUTES=15, EMAIL_MAX_FAILURES=5, IP_MAX_FAILURES=20;
@@ -16,17 +17,17 @@ function loginAttemptKeys(req,email){
  const digest=value=>createHmac('sha256',secret).update(value).digest('hex');
  return {email:digest('email:'+email),ip:digest('ip:'+ip)};
 }
-export async function GET(req){try{const staff=await getStaffSession(req);if(!staff)return NextResponse.json({authenticated:false,staff:null},{headers:{'Cache-Control':'no-store'}});const q=await getDatabasePool().query(`SELECT rp.permission_key FROM public.staff_role_permissions rp WHERE rp.role=$1 AND rp.enabled=true AND NOT EXISTS(SELECT 1 FROM public.staff_account_permissions ap WHERE ap.staff_id=$2 AND ap.permission_key=rp.permission_key) UNION SELECT permission_key FROM public.staff_account_permissions WHERE staff_id=$2 AND enabled=true`,[staff.role,staff.id]);return NextResponse.json({authenticated:true,staff:{id:staff.id,full_name:staff.full_name,email:staff.email,role:staff.role,permissions:q.rows.map(x=>x.permission_key)}},{headers:{'Cache-Control':'no-store'}})}catch{return NextResponse.json({authenticated:false,staff:null},{headers:{'Cache-Control':'no-store'}})}}
+export async function GET(req){try{const staff=await getStaffSession(req);if(!staff)return NextResponse.json({authenticated:false,staff:null},{headers:{'Cache-Control':'no-store'}});const q=await getDatabasePool().query(`SELECT rp.permission_key FROM public.staff_role_permissions rp WHERE rp.role=$1 AND rp.enabled=true AND NOT EXISTS(SELECT 1 FROM public.staff_account_permissions ap WHERE ap.staff_id=$2 AND ap.permission_key=rp.permission_key) UNION SELECT permission_key FROM public.staff_account_permissions WHERE staff_id=$2 AND enabled=true`,[staff.role,staff.id]);return NextResponse.json({authenticated:true,staff:{id:staff.id,full_name:staff.full_name,email:staff.email,role:staff.role,tenant_id:staff.tenant_id,permissions:q.rows.map(x=>x.permission_key)}},{headers:{'Cache-Control':'no-store'}})}catch{return NextResponse.json({authenticated:false,staff:null},{headers:{'Cache-Control':'no-store'}})}}
 export async function POST(req){
  if(req.headers.get('origin')&&req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
  let body;try{body=await req.json()}catch{return NextResponse.json({error:'Invalid login request.'},{status:400})}
  const email=String(body?.email||'').trim().toLowerCase(),password=String(body?.password||'');
  if(email.length>254||password.length>128||!email||!password)return NextResponse.json({error:'Enter your work email and password.'},{status:400});
  try{
-  const p=getDatabasePool(),keys=loginAttemptKeys(req,email),keyList=[keys.email,keys.ip];
+  const p=getDatabasePool();await ensureSiteTenants(p);const keys=loginAttemptKeys(req,email),keyList=[keys.email,keys.ip];
   const limit=await p.query(`SELECT 1 FROM public.staff_login_attempts WHERE attempt_key=ANY($1::text[]) AND locked_until>now() LIMIT 1`,[keyList]);
   if(limit.rowCount)return NextResponse.json({error:'Too many unsuccessful sign-in attempts. Try again in 15 minutes.'},{status:429});
-  const q=await p.query(`SELECT id,full_name,email,role,status,password_hash FROM public.staff_accounts WHERE email_normalized=$1 LIMIT 1`,[email]),staff=q.rows[0];
+  const q=await p.query(`SELECT id,full_name,email,role,status,password_hash,tenant_id FROM public.staff_accounts WHERE email_normalized=$1 LIMIT 1`,[email]),staff=q.rows[0];
   const valid=!!staff&&staff.status==='active'&&!!staff.password_hash&&await verifyPassword(password,staff.password_hash);
   if(!valid){
    const attempts=await p.query(`INSERT INTO public.staff_login_attempts(attempt_key,failed_attempts,window_started_at,locked_until,updated_at)
@@ -44,8 +45,8 @@ export async function POST(req){
   const token=newOpaqueToken();
   await p.query(`INSERT INTO public.staff_sessions(staff_id,token_hash,expires_at) VALUES($1,$2,now()+interval '8 hours')`,[staff.id,hashToken(token)]);
   await p.query('UPDATE public.staff_accounts SET last_login_at=now(),updated_at=now() WHERE id=$1',[staff.id]);
-  await p.query(`INSERT INTO public.staff_audit_events(actor_type,actor_email,action,target_type,target_id,details) VALUES($1,$2,'staff.login','staff',$3,'{}'::jsonb)`,[staff.role,staff.email,staff.id]);
-  const response=NextResponse.json({ok:true,staff:{id:staff.id,full_name:staff.full_name,email:staff.email,role:staff.role},expiresIn:STAFF_SESSION_SECONDS});
+  await p.query(`INSERT INTO public.staff_audit_events(actor_type,actor_email,action,target_type,target_id,details,tenant_id) VALUES($1,$2,'staff.login','staff',$3,'{}'::jsonb,$4)`,[staff.role,staff.email,staff.id,staff.tenant_id]);
+  const response=NextResponse.json({ok:true,staff:{id:staff.id,full_name:staff.full_name,email:staff.email,role:staff.role,tenant_id:staff.tenant_id},expiresIn:STAFF_SESSION_SECONDS});
   response.cookies.set(STAFF_COOKIE,token,staffCookieOptions);return response;
  }catch(e){console.error('Staff login',e.code||e.message);return NextResponse.json({error:'Staff sign-in is temporarily unavailable.'},{status:500});}
 }
