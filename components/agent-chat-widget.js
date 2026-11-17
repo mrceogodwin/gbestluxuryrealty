@@ -3,13 +3,16 @@ import {useEffect,useRef,useState} from 'react';
 import {usePathname} from 'next/navigation';
 
 const START={x:20,y:null};
-function AgentBrandMark({className=''}) {
- return <svg className={className} viewBox="0 0 64 64" role="img" aria-label="G-BEST Agent">
-  <path d="M32 2.8C16 2.8 3.5 14.7 3.5 30c0 10.2 5.2 18.8 13.2 23.8l-1.3 7.1 10.1-3.4c2.1.5 4.3.8 6.5.8 16 0 28.5-11.9 28.5-27.2S48 2.8 32 2.8Z" fill="#0c2e20" stroke="#d8bd77" strokeWidth="1.7"/>
-  <circle cx="31.5" cy="29.5" r="21.5" fill="#e7cb83" stroke="#fff4d5" strokeWidth="1.1"/>
-  <circle cx="31.5" cy="29.5" r="18.8" fill="none" stroke="#b4934e" strokeWidth=".65" opacity=".8"/>
-  <text x="31.5" y="37.3" textAnchor="middle" fontFamily="Georgia,serif" fontSize="25" fontWeight="700" fill="#153d2b">G</text>
-  <path d="m49 8 1.6 4.1 4.1 1.6-4.1 1.6L49 19.4l-1.6-4.1-4.1-1.6 4.1-1.6L49 8Z" fill="#f1d98e"/>
+function AgentChatMark({className=''}) {
+ return <svg className={className} viewBox="0 0 64 64" role="img" aria-label="Open Agent chat">
+  <circle cx="32" cy="32" r="29" fill="#103b29" stroke="#d8bd77" strokeWidth="1.8"/>
+  <circle cx="32" cy="32" r="25.2" fill="none" stroke="#ffffff" strokeOpacity=".18" strokeWidth=".8"/>
+  <path d="M16 19.5c0-3 2.4-5.5 5.5-5.5h21c3 0 5.5 2.5 5.5 5.5v15c0 3-2.5 5.5-5.5 5.5H29l-8.5 6v-6.4c-2.7-.5-4.5-2.8-4.5-5.1v-15Z" fill="#f7f4e8" stroke="#e4cb8d" strokeWidth="1.1" strokeLinejoin="round"/>
+  <circle cx="25" cy="27.5" r="2.3" fill="#174b32"/>
+  <circle cx="32" cy="27.5" r="2.3" fill="#174b32"/>
+  <circle cx="39" cy="27.5" r="2.3" fill="#174b32"/>
+  <path d="M38 40h8.5c2.5 0 4.5 2 4.5 4.5v3.8l4.2 3v-7c0-4.6-3.4-8.3-8.1-8.3H38" fill="#e5c77f" stroke="#103b29" strokeWidth="1.2" strokeLinejoin="round"/>
+  <circle cx="51.5" cy="12.5" r="5" fill="#c7f36a" stroke="#103b29" strokeWidth="1.8"/>
  </svg>
 }
 export default function AgentChatWidget(){
@@ -28,7 +31,7 @@ export default function AgentChatWidget(){
  return <div className="gb-agent-root" style={{right:position.x,bottom:position.y===null?20:undefined,top:position.y===null?undefined:position.y}}>
   {open&&!minimized&&<section className="gb-agent-panel" ref={panelRef} aria-label="Chat with Agent">
    <header className="gb-agent-head" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
-    <span className="gb-agent-avatar"><AgentBrandMark className="gb-agent-mark"/></span><div><b>Agent</b><small>G-BEST PROPERTY ASSISTANT</small></div><button type="button" aria-label="Minimize Agent chat" onClick={()=>setMinimized(true)}>−</button><button type="button" aria-label="Close Agent chat" onClick={()=>setOpen(false)}>×</button>
+    <span className="gb-agent-avatar"><AgentChatMark className="gb-agent-mark"/></span><div><b>Agent</b><small>G-BEST PROPERTY ASSISTANT</small></div><button type="button" aria-label="Minimize Agent chat" onClick={()=>setMinimized(true)}>−</button><button type="button" aria-label="Close Agent chat" onClick={()=>setOpen(false)}>×</button>
    </header>
    <div className="gb-agent-messages" aria-live="polite">{messages.map(m=><div key={m.id} className={'gb-agent-message '+m.from}>{m.from==='agent'&&<span className="gb-agent-mini"><AgentBrandMark className="gb-agent-mark"/></span>}<p>{m.text}</p></div>)}
     {gate&&<div className="gb-agent-gate"><b>One quick step before we continue</b><p>Create your free client profile, or sign in if you already have an approved account.</p><a href="/client-registration">REGISTER AS A CLIENT <span>↗</span></a><a className="gb-agent-login" href="/client-login">Already registered? Sign in</a></div>}
