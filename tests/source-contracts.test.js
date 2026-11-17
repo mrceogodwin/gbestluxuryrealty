@@ -336,3 +336,9 @@ test('Google Calendar integration never blocks a saved inspection status when th
   assert.match(admin, /Inspection status saved but email queueing failed/);
   assert.match(admin, /status was saved, but notification emails could not be queued/);
 });
+
+test('client login returns approved clients directly to inspection booking', async () => {
+  const login = await source('app/client-login/page.js');
+  assert.match(login, /window\.location\.href='\/#inspection'/);
+  assert.match(login, /api\/client-auth\/verify-code/);
+});
