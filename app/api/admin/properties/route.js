@@ -78,7 +78,43 @@ export async function PATCH(req){
   const d=withLegacyFields(validate(body,true));delete d.tenant_id;
   const keys=Object.keys(d);if(!keys.length&&Number(existing.rows[0].tenant_id)===Number(tenant.id))return NextResponse.json({error:'No listing fields supplied.'},{status:400});
   const sets=keys.map((k,i)=>k+'=$'+(i+1));sets.push('tenant_id=$'+(keys.length+1),'updated_at=now()');
-  const q=await pool.query('UPDATE public.properties SET '+sets.join(',')+' WHERE id=$'+(keys.length+2)+' RETURNING *',[...keys.map(k=>d[k]),tenant.id,id]);
+  const q=await pool.query('UPDATE public.properties SET '+sets.join(',')+' WHERE id=
+  if(!q.rowCount)return NextResponse.json({error:'Listing not found.'},{status:404});
+  return NextResponse.json({property:{...q.rows[0],property_code:propertyCode(q.rows[0].id)}},{headers:{'Cache-Control':'no-store'}});
+ }catch(e){return errorResponse(e,'Properties admin PATCH failed');}
+}
+export async function DELETE(req){
+ if(!await authorizeAdminRequest(req,'properties.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
+ if(!process.env.DATABASE_URL)return NextResponse.json({error:'Database is not configured'},{status:503});
+ try{
+  const body=await readBody(req),id=String(body.id??'').trim();if(!id||id.length>100)return NextResponse.json({error:'Valid listing ID required.'},{status:400});
+  const pool=getDatabasePool(),existing=await pool.query('SELECT tenant_id FROM public.properties WHERE id=$1',[id]);if(!existing.rowCount)return NextResponse.json({error:'Listing not found.'},{status:404});
+  const {tenant}=await targetTenant(pool,req,body.tenant_id??existing.rows[0].tenant_id);
+  if(Number(existing.rows[0].tenant_id)!==Number(tenant.id))return NextResponse.json({error:'Listing does not belong to the selected company.'},{status:404});
+  const q=await pool.query("UPDATE public.properties SET status='archived',updated_at=now() WHERE id=$1 AND tenant_id=$2 RETURNING id,status,tenant_id",[id,tenant.id]);
+  if(!q.rowCount)return NextResponse.json({error:'Listing not found.'},{status:404});
+  return NextResponse.json({ok:true,...q.rows[0],message:'Listing archived. Its record and historical references have been preserved.'});
+ }catch(e){return errorResponse(e,'Properties admin DELETE failed');}
+}
++(keys.length+2)+' AND tenant_id=
+  if(!q.rowCount)return NextResponse.json({error:'Listing not found.'},{status:404});
+  return NextResponse.json({property:{...q.rows[0],property_code:propertyCode(q.rows[0].id)}},{headers:{'Cache-Control':'no-store'}});
+ }catch(e){return errorResponse(e,'Properties admin PATCH failed');}
+}
+export async function DELETE(req){
+ if(!await authorizeAdminRequest(req,'properties.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
+ if(!process.env.DATABASE_URL)return NextResponse.json({error:'Database is not configured'},{status:503});
+ try{
+  const body=await readBody(req),id=String(body.id??'').trim();if(!id||id.length>100)return NextResponse.json({error:'Valid listing ID required.'},{status:400});
+  const pool=getDatabasePool(),existing=await pool.query('SELECT tenant_id FROM public.properties WHERE id=$1',[id]);if(!existing.rowCount)return NextResponse.json({error:'Listing not found.'},{status:404});
+  const {tenant}=await targetTenant(pool,req,body.tenant_id??existing.rows[0].tenant_id);
+  if(Number(existing.rows[0].tenant_id)!==Number(tenant.id))return NextResponse.json({error:'Listing does not belong to the selected company.'},{status:404});
+  const q=await pool.query("UPDATE public.properties SET status='archived',updated_at=now() WHERE id=$1 AND tenant_id=$2 RETURNING id,status,tenant_id",[id,tenant.id]);
+  if(!q.rowCount)return NextResponse.json({error:'Listing not found.'},{status:404});
+  return NextResponse.json({ok:true,...q.rows[0],message:'Listing archived. Its record and historical references have been preserved.'});
+ }catch(e){return errorResponse(e,'Properties admin DELETE failed');}
+}
++(keys.length+3)+' RETURNING *',[...keys.map(k=>d[k]),tenant.id,id,existing.rows[0].tenant_id]);
   if(!q.rowCount)return NextResponse.json({error:'Listing not found.'},{status:404});
   return NextResponse.json({property:{...q.rows[0],property_code:propertyCode(q.rows[0].id)}},{headers:{'Cache-Control':'no-store'}});
  }catch(e){return errorResponse(e,'Properties admin PATCH failed');}
