@@ -2984,3 +2984,59 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 .property-orbit-placement .footer-property-orbit-image{
   box-shadow:0 5px 14px rgba(23,59,43,.12)!important;
 }
+
+
+/* Nigerian market cards: compact horizontal swipe rail instead of tall stacked panels */
+.gbest-market-grid{
+  display:grid!important;
+  grid-auto-flow:column!important;
+  grid-auto-columns:minmax(220px, min(28vw, 310px))!important;
+  grid-template-columns:none!important;
+  grid-template-rows:1fr!important;
+  gap:14px!important;
+  max-width:none!important;
+  width:100%!important;
+  margin:0!important;
+  padding:4px 2px 16px!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scroll-snap-type:x mandatory;
+  scroll-padding-inline:2px;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+  scrollbar-color:#9aac83 transparent;
+  overscroll-behavior-x:contain;
+}
+.gbest-market-tile{
+  min-width:0!important;
+  width:auto!important;
+  min-height:166px!important;
+  height:166px!important;
+  padding:17px 18px!important;
+  gap:9px!important;
+  scroll-snap-align:start;
+  scroll-snap-stop:always;
+}
+.gbest-market-tile b{font-size:clamp(19px,2.4vw,25px)!important}
+.gbest-market-tile span{font-size:12px!important;line-height:1.4!important}
+.gbest-market-tile small,.gbest-market-tile i{font-size:9px!important}
+@media(max-width:700px){
+  .gbest-market-discovery{padding:34px 0 40px 5vw!important;overflow:hidden!important}
+  .gbest-market-heading{padding-right:5vw!important;margin-bottom:18px!important}
+  .gbest-market-heading h2{font-size:clamp(29px,8vw,38px)!important}
+  .gbest-market-heading>span{font-size:15px!important;line-height:1.55!important}
+  .gbest-market-grid{
+    grid-auto-columns: min(72vw, 270px)!important;
+    gap:12px!important;
+    padding-right:5vw!important;
+    padding-bottom:14px!important;
+  }
+  .gbest-market-tile{
+    min-height:154px!important;
+    height:154px!important;
+    padding:15px 16px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .gbest-market-grid{scroll-behavior:auto}
+}
