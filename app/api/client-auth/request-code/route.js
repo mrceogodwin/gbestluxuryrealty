@@ -1,16 +1,23 @@
 import {NextResponse} from 'next/server';
 import {createHmac,randomInt} from 'node:crypto';
 import {getDatabasePool} from '../../../../lib/db';
-import {ensureSiteTenants,resolveSiteTenant} from '../../../../lib/site-tenants';
+import {resolveSiteTenant} from '../../../../lib/site-tenants';
+import {sendClientRegistrationEmail,escapeHtml} from '../../../../lib/client-registration-email';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
-const COOKIE='gbest_client_session';
 const TTL_MINUTES=10;
 const SECRET=()=>process.env.CLIENT_AUTH_SECRET||'';
 const digest=value=>createHmac('sha256',SECRET()).update(value).digest('hex');
 const normalize=value=>String(value||'').trim().toLowerCase();
-const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function sendCode(email,code,fullName){
+ const result=await sendClientRegistrationEmail({
+  to:email,
+  subject:'Your G-BEST client sign-in code',
+  html:'<p>Hello '+escapeHtml(fullName||'Client')+',</p><p>Your G-BEST Luxury Realty sign-in code is:</p><p style="font-size:28px;font-weight:700;letter-spacing:8px">'+code+'</p><p>This code expires in 10 minutes and can only be used once. If you did not request it, you can ignore this email.</p><p>G-BEST Luxury Realty</p>'
+ });
+ if(!result.sent)throw new Error(result.reason||'Email delivery failed.');
+}
 export async function POST(req){
  try{
   if(!SECRET())return NextResponse.json({error:'Client sign-in is temporarily unavailable.'},{status:503});
