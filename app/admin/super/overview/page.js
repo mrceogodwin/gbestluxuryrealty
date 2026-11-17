@@ -4,6 +4,7 @@ import Link from 'next/link';
 const catalog=[
  {key:'properties',permission:'properties',title:'Properties',description:'Manage listings and availability',href:'/admin/super',icon:'⌂'},
  {key:'clients',permission:'clients',title:'Clients & payments',description:'Review client registrations and receipts',href:'/admin/clients',icon:'♙'},
+ {key:'client-chat',permission:'clients',title:'Client messages',description:'Reply to private Agent conversations',href:'/admin/client-chat',icon:'✉'},
  {key:'contacts',permission:'contacts',title:'Business contacts',description:'Review enquiries submitted through the contact page',href:'/admin/super/contacts',icon:'✉'},
  {key:'inspections',permission:'inspections',title:'Inspections',description:'Review requests and manage appointments',href:'/admin',icon:'◷'},
  {key:'media',permission:'media',title:'Media library',description:'Manage property photos and company assets',href:'/admin/super/media',icon:'▧'},
