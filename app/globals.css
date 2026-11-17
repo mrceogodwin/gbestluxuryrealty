@@ -3211,3 +3211,23 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .gbest-site-root nav>div>a.navbtn{background:#d7ff32!important;color:#07140b!important;border:1px solid #d7ff32!important;box-shadow:2px 2px 0 #fff!important}
  .gbest-site-root .hero .goldbtn{background:#d7ff32!important;color:#07140b!important;border:2px solid #07140b!important;box-shadow:5px 5px 0 #d7ff32!important}
 }
+
+
+/* Property collection arrows: match the warm cream rail, not the neon CTA palette.
+   Scoped only to the two carousel navigation controls. */
+.property-orbit-placement .footer-property-orbit-controls button{
+  background:#e8ecdf!important;
+  color:#174b35!important;
+  border:1.5px solid #9aaa86!important;
+  box-shadow:0 2px 0 rgba(23,75,53,.14)!important;
+  text-shadow:none!important;
+}
+.property-orbit-placement .footer-property-orbit-controls button:hover{
+  background:#dce6d2!important;
+  color:#0c3925!important;
+  border-color:#66835e!important;
+}
+.property-orbit-placement .footer-property-orbit-controls button:active{
+  background:#d1dfc8!important;
+  transform:scale(.96)!important;
+}
