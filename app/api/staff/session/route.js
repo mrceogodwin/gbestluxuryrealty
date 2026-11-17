@@ -48,7 +48,7 @@ export async function POST(req){
   await p.query(`INSERT INTO public.staff_audit_events(actor_type,actor_email,action,target_type,target_id,details,tenant_id) VALUES($1,$2,'staff.login','staff',$3,'{}'::jsonb,$4)`,[staff.role,staff.email,staff.id,staff.tenant_id]);
   const response=NextResponse.json({ok:true,staff:{id:staff.id,full_name:staff.full_name,email:staff.email,role:staff.role,tenant_id:staff.tenant_id},expiresIn:STAFF_SESSION_SECONDS});
   response.cookies.set(STAFF_COOKIE,token,staffCookieOptions);return response;
- }catch(e){console.error('Staff login',e.code||e.message);return NextResponse.json({error:'Staff sign-in is temporarily unavailable.'},{status:500});}
+ }catch(e){console.error('Staff login database diagnostic',{code:e.code||null,message:e.message||'Unknown database error',detail:e.detail||null,where:e.where||null,position:e.position||null});return NextResponse.json({error:'Staff sign-in is temporarily unavailable.'},{status:500});}
 }
 export async function DELETE(req){
  const token=req.cookies.get(STAFF_COOKIE)?.value;
