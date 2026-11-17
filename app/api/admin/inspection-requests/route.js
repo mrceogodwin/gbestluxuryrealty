@@ -45,12 +45,14 @@ export async function PATCH(req) {
     try {
       await client.query('BEGIN');
       await client.query("SELECT pg_advisory_xact_lock(hashtext($1),hashtext('inspection-booking'))",[dateKey]);
-      const current=await client.query('SELECT id,tenant_id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1 FOR UPDATE',[id]);
+      const current=await client.query('SELECT id,tenant_id,status,full_name,contact,client_email,client_registration_id,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1 FOR UPDATE',[id]);
       if(!current.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Request not found'},{status:404});}
       currentRow=current.rows[0];
       if(!allowedPrevious[status].includes(currentRow.status)&&currentRow.status!==status){await client.query('ROLLBACK');return NextResponse.json({error:'This status change is not allowed from '+currentRow.status+'. Refresh the request and choose a valid next action.',currentStatus:currentRow.status},{status:409});}
       if(status==='confirmed'&&currentRow.status!=='confirmed'){
-        const eligibility=await client.query("SELECT id FROM public.client_registrations WHERE tenant_id=$2 AND lower(email)=lower($1) AND payment_status='approved' AND client_status='active' ORDER BY updated_at DESC,created_at DESC LIMIT 1",[currentRow.client_email,currentRow.tenant_id]);
+        const eligibility=currentRow.client_registration_id
+          ? await client.query("SELECT id FROM public.client_registrations WHERE id=$1::uuid AND tenant_id=$2 AND lower(email)=lower($3) AND payment_status='approved' AND client_status='active' LIMIT 1",[currentRow.client_registration_id,currentRow.tenant_id,currentRow.client_email])
+          : await client.query("SELECT id FROM public.client_registrations WHERE tenant_id=$2 AND lower(email)=lower($1) AND payment_status='approved' AND client_status='active' ORDER BY updated_at DESC,created_at DESC LIMIT 1",[currentRow.client_email,currentRow.tenant_id]);
         if(!eligibility.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'This client does not have an approved registration and verified payment. Do not confirm this inspection.'},{status:403});}
         const schedule=await getSchedule(currentRow.tenant_id),date=String(currentRow.preferred_date).slice(0,10),time=String(currentRow.preferred_time||'').slice(0,5);
         const [year,month,day]=date.split('-').map(Number),weekday=new Date(Date.UTC(year,month-1,day,12)).getUTCDay(),duration=Number(currentRow.duration_minutes||schedule.slotMinutes||30);
