@@ -15,13 +15,7 @@ export async function POST(req) {
   try {
     const form=await req.formData();
     const fields={
-      surname:clean(form.get('surname'),100), other_names:clean(form.get('other_names'),160),
-      address:clean(form.get('address'),1000), email:clean(form.get('email'),254),
-      phone:clean(form.get('phone'),40), nationality:clean(form.get('nationality'),80),
-      state_of_origin:clean(form.get('state_of_origin'),100), lga:clean(form.get('lga'),100),
-      occupation:clean(form.get('occupation'),120), property_type:clean(form.get('property_type'),100),
-      price_range:clean(form.get('price_range'),160), preferred_location:clean(form.get('preferred_location'),180),
-      property_description:clean(form.get('property_description'),2000)
+      full_name:clean(form.get('full_name'),180), email:clean(form.get('email'),254), phone:clean(form.get('phone'),40)
     };
     if(Object.values(fields).some(v=>!v) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email) || form.get('terms_accepted')!=='true')
       return NextResponse.json({error:'Complete all required fields and accept the terms.'},{status:400});
@@ -51,7 +45,7 @@ export async function POST(req) {
         await dbClient.query('ROLLBACK');
         return NextResponse.json({error:'A registration for this email is already awaiting payment verification. Contact G-BEST if you need to update the submitted details.'},{status:409});
       }
-      const fullName = fields.surname + ' ' + fields.other_names;
+      const fullName = fields.full_name;
       q=await dbClient.query(`INSERT INTO public.client_registrations
         (full_name,email,email_normalized,phone,registration_fee_kobo,payment_status,client_status,
          surname,other_names,address,nationality,state_of_origin,lga,occupation,property_type,price_range,
@@ -59,15 +53,13 @@ export async function POST(req) {
         VALUES ($1,$2,lower($2),$3,1500000,'pending','pending',
          $4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,true,15000,$15,$16,$17,$18,$19)
         RETURNING id,client_id,payment_status,created_at`,
-        [fullName,fields.email,fields.phone,fields.surname,fields.other_names,fields.address,fields.nationality,
-         fields.state_of_origin,fields.lga,fields.occupation,fields.property_type,fields.price_range,
-         fields.preferred_location,fields.property_description,reference,file.name.slice(0,255),file.type,bytes,tenant.id]);
+        [fullName,fields.email,fields.phone,fullName,'','','','','','','','','','',reference,file.name.slice(0,255),file.type,bytes,tenant.id]);
       await dbClient.query('COMMIT');
     } catch(registrationError) {
       await dbClient.query('ROLLBACK').catch(()=>{});
       throw registrationError;
     } finally { dbClient.release(); }
-    const fullName = fields.surname + ' ' + fields.other_names;
+    const fullName = fields.full_name;
     const adminEmail = await sendClientRegistrationEmail({
       to: process.env.ADMIN_EMAIL || 'gbestinnovations@gmail.com',
       subject: 'New client registration awaiting payment verification',
