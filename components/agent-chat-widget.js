@@ -33,14 +33,14 @@ export default function AgentChatWidget(){
    <header className="gb-agent-head" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
     <span className="gb-agent-avatar"><AgentChatMark className="gb-agent-mark"/></span><div><b>Agent</b><small>G-BEST PROPERTY ASSISTANT</small></div><button type="button" aria-label="Minimize Agent chat" onClick={()=>setMinimized(true)}>−</button><button type="button" aria-label="Close Agent chat" onClick={()=>setOpen(false)}>×</button>
    </header>
-   <div className="gb-agent-messages" aria-live="polite">{messages.map(m=><div key={m.id} className={'gb-agent-message '+m.from}>{m.from==='agent'&&<span className="gb-agent-mini"><AgentBrandMark className="gb-agent-mark"/></span>}<p>{m.text}</p></div>)}
+   <div className="gb-agent-messages" aria-live="polite">{messages.map(m=><div key={m.id} className={'gb-agent-message '+m.from}>{m.from==='agent'&&<span className="gb-agent-mini"><AgentChatMark className="gb-agent-mark"/></span>}<p>{m.text}</p></div>)}
     {gate&&<div className="gb-agent-gate"><b>One quick step before we continue</b><p>Create your free client profile, or sign in if you already have an approved account.</p><a href="/client-registration">REGISTER AS A CLIENT <span>↗</span></a><a className="gb-agent-login" href="/client-login">Already registered? Sign in</a></div>}
     {authenticated&&!gate&&<a className="gb-agent-inspect" href="/#inspection">REQUEST A PROPERTY INSPECTION ↗</a>}
    </div>
    <form className="gb-agent-compose" onSubmit={send}><input aria-label="Message Agent" value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Ask Agent anything…" maxLength={1200}/><button type="submit" disabled={!draft.trim()||busy} aria-label="Send message">➤</button></form>
    <footer className="gb-agent-foot">PRIVATE PROPERTY ENQUIRIES · G-BEST LUXURY REALTY</footer>
   </section>}
-  {minimized&&<button className="gb-agent-minimized" aria-label="Reopen Agent chat" title="Reopen Agent" onClick={()=>{setMinimized(false);setOpen(true)}}><AgentBrandMark className="gb-agent-mark"/></button>}
-  {!minimized&&<button className={'gb-agent-launcher '+(open?'is-open':'')} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} aria-label={open?'Close Agent assistant':'Open Agent assistant'} onClick={()=>{setOpen(v=>!v);setMinimized(false)}}>{open?<span className="gb-agent-close-icon">×</span>:<AgentBrandMark className="gb-agent-mark gb-agent-launch-icon"/>}{!open&&<><span className="gb-agent-launch-copy"><b>Agent</b><small>ASK US ANYTHING</small></span><span className="gb-agent-spark">✦</span></>}</button>}
+  {minimized&&<button className="gb-agent-minimized" aria-label="Reopen Agent chat" title="Reopen Agent" onClick={()=>{setMinimized(false);setOpen(true)}}><AgentChatMark className="gb-agent-mark"/></button>}
+  {!minimized&&<button className={'gb-agent-launcher '+(open?'is-open':'')} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} aria-label={open?'Close Agent assistant':'Open Agent assistant'} onClick={()=>{setOpen(v=>!v);setMinimized(false)}}>{open?<span className="gb-agent-close-icon">×</span>:<AgentChatMark className="gb-agent-mark gb-agent-launch-icon"/>}{!open&&<><span className="gb-agent-launch-copy"><b>Agent</b><small>ASK US ANYTHING</small></span><span className="gb-agent-spark">✦</span></>}</button>}
  </div>
 }
