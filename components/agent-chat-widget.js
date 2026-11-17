@@ -3,6 +3,15 @@ import {useEffect,useRef,useState} from 'react';
 import {usePathname} from 'next/navigation';
 
 const START={x:20,y:null};
+function AgentBrandMark({className=''}) {
+ return <svg className={className} viewBox="0 0 64 64" role="img" aria-label="G-BEST Agent">
+  <path d="M32 2.8C16 2.8 3.5 14.7 3.5 30c0 10.2 5.2 18.8 13.2 23.8l-1.3 7.1 10.1-3.4c2.1.5 4.3.8 6.5.8 16 0 28.5-11.9 28.5-27.2S48 2.8 32 2.8Z" fill="#0c2e20" stroke="#d8bd77" strokeWidth="1.7"/>
+  <circle cx="31.5" cy="29.5" r="21.5" fill="#e7cb83" stroke="#fff4d5" strokeWidth="1.1"/>
+  <circle cx="31.5" cy="29.5" r="18.8" fill="none" stroke="#b4934e" strokeWidth=".65" opacity=".8"/>
+  <text x="31.5" y="37.3" textAnchor="middle" fontFamily="Georgia,serif" fontSize="25" fontWeight="700" fill="#153d2b">G</text>
+  <path d="m49 8 1.6 4.1 4.1 1.6-4.1 1.6L49 19.4l-1.6-4.1-4.1-1.6 4.1-1.6L49 8Z" fill="#f1d98e"/>
+ </svg>
+}
 export default function AgentChatWidget(){
  const pathname=usePathname();
  const [open,setOpen]=useState(false),[minimized,setMinimized]=useState(false),[position,setPosition]=useState(START),[draft,setDraft]=useState(''),[messages,setMessages]=useState([{id:'welcome',from:'agent',text:'Hello, I’m Agent — your G-BEST property assistant. Ask me about finding a property, arranging an inspection or getting started.'}]),[busy,setBusy]=useState(false),[gate,setGate]=useState(false),[authenticated,setAuthenticated]=useState(false);
@@ -19,16 +28,16 @@ export default function AgentChatWidget(){
  return <div className="gb-agent-root" style={{right:position.x,bottom:position.y===null?20:undefined,top:position.y===null?undefined:position.y}}>
   {open&&!minimized&&<section className="gb-agent-panel" ref={panelRef} aria-label="Chat with Agent">
    <header className="gb-agent-head" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
-    <span className="gb-agent-avatar">G<span>✦</span></span><div><b>Agent</b><small>G-BEST PROPERTY ASSISTANT</small></div><button type="button" aria-label="Minimize Agent chat" onClick={()=>setMinimized(true)}>−</button><button type="button" aria-label="Close Agent chat" onClick={()=>setOpen(false)}>×</button>
+    <span className="gb-agent-avatar"><AgentBrandMark className="gb-agent-mark"/></span><div><b>Agent</b><small>G-BEST PROPERTY ASSISTANT</small></div><button type="button" aria-label="Minimize Agent chat" onClick={()=>setMinimized(true)}>−</button><button type="button" aria-label="Close Agent chat" onClick={()=>setOpen(false)}>×</button>
    </header>
-   <div className="gb-agent-messages" aria-live="polite">{messages.map(m=><div key={m.id} className={'gb-agent-message '+m.from}>{m.from==='agent'&&<span className="gb-agent-mini">G</span>}<p>{m.text}</p></div>)}
+   <div className="gb-agent-messages" aria-live="polite">{messages.map(m=><div key={m.id} className={'gb-agent-message '+m.from}>{m.from==='agent'&&<span className="gb-agent-mini"><AgentBrandMark className="gb-agent-mark"/></span>}<p>{m.text}</p></div>)}
     {gate&&<div className="gb-agent-gate"><b>One quick step before we continue</b><p>Create your free client profile, or sign in if you already have an approved account.</p><a href="/client-registration">REGISTER AS A CLIENT <span>↗</span></a><a className="gb-agent-login" href="/client-login">Already registered? Sign in</a></div>}
     {authenticated&&!gate&&<a className="gb-agent-inspect" href="/#inspection">REQUEST A PROPERTY INSPECTION ↗</a>}
    </div>
    <form className="gb-agent-compose" onSubmit={send}><input aria-label="Message Agent" value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Ask Agent anything…" maxLength={1200}/><button type="submit" disabled={!draft.trim()||busy} aria-label="Send message">➤</button></form>
    <footer className="gb-agent-foot">PRIVATE PROPERTY ENQUIRIES · G-BEST LUXURY REALTY</footer>
   </section>}
-  {minimized&&<button className="gb-agent-minimized" aria-label="Reopen Agent chat" title="Reopen Agent" onClick={()=>{setMinimized(false);setOpen(true)}}><span>G</span></button>}
-  {!minimized&&<button className={'gb-agent-launcher '+(open?'is-open':'')} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} aria-label={open?'Close Agent assistant':'Open Agent assistant'} onClick={()=>{setOpen(v=>!v);setMinimized(false)}}><span className="gb-agent-launch-icon">{open?'×':'G'}</span>{!open&&<><span className="gb-agent-launch-copy"><b>Agent</b><small>ASK US ANYTHING</small></span><span className="gb-agent-spark">✦</span></>}</button>}
+  {minimized&&<button className="gb-agent-minimized" aria-label="Reopen Agent chat" title="Reopen Agent" onClick={()=>{setMinimized(false);setOpen(true)}}><AgentBrandMark className="gb-agent-mark"/></button>}
+  {!minimized&&<button className={'gb-agent-launcher '+(open?'is-open':'')} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} aria-label={open?'Close Agent assistant':'Open Agent assistant'} onClick={()=>{setOpen(v=>!v);setMinimized(false)}}>{open?<span className="gb-agent-close-icon">×</span>:<AgentBrandMark className="gb-agent-mark gb-agent-launch-icon"/>}{!open&&<><span className="gb-agent-launch-copy"><b>Agent</b><small>ASK US ANYTHING</small></span><span className="gb-agent-spark">✦</span></>}</button>}
  </div>
 }
