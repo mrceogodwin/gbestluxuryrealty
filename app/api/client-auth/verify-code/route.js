@@ -11,7 +11,7 @@ function equal(a,b){const x=Buffer.from(String(a)),y=Buffer.from(String(b));retu
 export async function POST(req){
  try{
   if(!SECRET())return NextResponse.json({error:'Client sign-in is temporarily unavailable.'},{status:503});
-  if(req.headers.get('origin')&&req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
+  if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
   const body=await req.json().catch(()=>null),email=String(body?.email||'').trim().toLowerCase(),code=String(body?.code||'').trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^[0-9]{6}$/.test(code))return NextResponse.json({error:'Enter your email and six-digit code.'},{status:400});
   const pool=getDatabasePool();
