@@ -55,7 +55,7 @@ export async function PATCH(req){
     if(Number(before.rows[0].tenant_id)!==Number(staff?.tenant_id)){await dbClient.query('ROLLBACK');return NextResponse.json({error:'You cannot review another company’s registration.'},{status:403});}
    }
    if(before.rows[0].payment_status!=='pending'){await dbClient.query('ROLLBACK');return NextResponse.json({error:'This registration has already been reviewed. Refresh the record; payment decisions cannot be overwritten.'},{status:409});}
-   q=await dbClient.query(`UPDATE public.client_registrations SET payment_status=$2,client_status=CASE WHEN $2='approved' THEN 'active' ELSE 'pending' END,approved_at=CASE WHEN $2='approved' THEN now() ELSE NULL END,approved_by=CASE WHEN $2='approved' THEN 'master-admin' ELSE NULL END,admin_note=$3,updated_at=now() WHERE id=$1 RETURNING id,tenant_id,client_id,payment_status,client_status,admin_note,updated_at`,[d.id,d.payment_status,note]);
+   q=await dbClient.query(`UPDATE public.client_registrations SET payment_status=$2,client_status=CASE WHEN $2='approved' THEN 'active' ELSE 'pending' END,approved_at=CASE WHEN $2='approved' THEN now() ELSE NULL END,approved_by=CASE WHEN $2='approved' THEN $4 ELSE NULL END,admin_note=$3,updated_at=now() WHERE id=$1 RETURNING id,tenant_id,client_id,payment_status,client_status,admin_note,updated_at`,[d.id,d.payment_status,note,admin?'master-admin':(staff?.email||'staff')]);
    await dbClient.query('INSERT INTO public.client_registration_audit(registration_id,old_status,new_status,admin_note) VALUES($1,$2,$3,$4)',[d.id,before.rows[0].payment_status,d.payment_status,note]);
    await dbClient.query('COMMIT');
   }catch(txError){await dbClient.query('ROLLBACK').catch(()=>{});throw txError;}finally{dbClient.release();}
