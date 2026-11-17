@@ -29,7 +29,7 @@ export async function POST(req){
   if(session.rows[0].email.toLowerCase()!==email.toLowerCase())return NextResponse.json({error:'The booking email must match your approved client account.'},{status:403});
   const registration={rows:[{id:session.rows[0].id}]};
   let propertyLabel=pid;
-  const listing=await pool.query(`SELECT id,title FROM public.properties
+  const listing=await pool.query(`SELECT id,title,description FROM public.properties
     WHERE tenant_id=$2 AND status IN ('published','available')
       AND ('GB-' || CASE
         WHEN id::text ~ '^[0-9]+$' THEN lpad(id::text,8,'0')
@@ -37,6 +37,7 @@ export async function POST(req){
       END)=$1
     LIMIT 1`,[pid,tenant.id]);
   if(!listing.rowCount)return NextResponse.json({error:'That property is no longer available. Refresh the listings and try again.'},{status:400});
+  if(/sample showcase listing|illustrative|design preview/i.test(String(listing.rows[0].description||'')))return NextResponse.json({error:'This is a demonstration listing and cannot be booked. Please choose a verified G-BEST property.'},{status:400});
   propertyLabel=listing.rows[0].title;
   const client=await pool.connect();
   let q;
