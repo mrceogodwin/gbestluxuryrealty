@@ -5,10 +5,12 @@ on:
       - main
       - feature/client-registration-manual-payment
       - feat/gbest-marketing-content
+      - feat/gbest-client-auth
   pull_request:
     branches:
       - main
       - feat/gbest-marketing-content
+      - feat/gbest-client-auth
 jobs:
   build:
     runs-on: ubuntu-latest
