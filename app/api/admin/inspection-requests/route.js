@@ -6,6 +6,7 @@ import {isAdminRequest} from '../../../../lib/admin-auth';
 import {ensureSiteTenants} from '../../../../lib/site-tenants';
 import {getStaffSession} from '../../../../lib/staff-auth';
 import {getSchedule,validClock} from '../../../../lib/inspection-schedule';
+import {createInspectionCalendarEvent,deleteInspectionCalendarEvent} from '../../../../lib/google-calendar';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -66,24 +67,35 @@ export async function PATCH(req) {
       await client.query('COMMIT');
     } catch(transactionError){await client.query('ROLLBACK').catch(()=>{});throw transactionError;}
     finally{client.release();}
-    const calendar={created:false,reason:'Managed directly in the Super Admin dashboard.'};
+    let calendar={created:false,reason:'Google Calendar is not configured.'};
     if(!q.rowCount) {
       const existing=await getDatabasePool().query('SELECT id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1',[id]);
       if(!existing.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
       const prior=existing.rows[0];
       if(prior.status!==status) return NextResponse.json({error:'This status change is not allowed from '+prior.status+'. Refresh the request and choose a valid next action.',currentStatus:prior.status},{status:409});
-      const retryCalendar={created:false,reason:'Managed directly in the Super Admin dashboard.'};
+      let retryCalendar={created:false,reason:'Google Calendar is not configured.'};
+      if(status==='confirmed'&&!prior.calendar_event_id){
+        try{retryCalendar=await createInspectionCalendarEvent(prior);if(retryCalendar.eventId)await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1 AND calendar_event_id IS NULL',[id,retryCalendar.eventId]);}
+        catch(calendarError){retryCalendar={created:false,reason:calendarError.message};}
+      }
       const retried=await deliverInspectionEmails(id);
       const counts=await getDatabasePool().query(`SELECT count(*) FILTER (WHERE status='sent')::int AS emails_sent,count(*) FILTER (WHERE status='failed')::int AS emails_failed,count(*) FILTER (WHERE status='pending')::int AS emails_pending FROM public.inspection_email_outbox WHERE inspection_request_id=$1`,[id]);
       Object.assign(prior,counts.rows[0]||{});
       return NextResponse.json({ok:true,unchanged:true,request:prior,calendar:retryCalendar,email:{retried},warnings:[...(!retryCalendar.created&&status==='confirmed'&&!prior.calendar_event_id?[retryCalendar.reason]:[]),...(retried.failed?['Some emails remain queued for retry.']:[])]},{headers:{'Cache-Control':'no-store'}});
     }
     const row=q.rows[0];
+    const warnings=[];
+    if(status==='confirmed'&&!row.calendar_event_id){
+      try{calendar=await createInspectionCalendarEvent(row);if(calendar.eventId){await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1 AND calendar_event_id IS NULL',[row.id,calendar.eventId]);row.calendar_event_id=calendar.eventId;}}
+      catch(calendarError){calendar={created:false,reason:calendarError.message};warnings.push('Inspection confirmed, but the calendar event could not be created. Retry after checking Google Calendar settings.');}
+    }else if((status==='cancelled'||status==='contacted')&&currentRow.calendar_event_id){
+      try{calendar=await deleteInspectionCalendarEvent(currentRow.calendar_event_id);}
+      catch(calendarError){calendar={deleted:false,reason:calendarError.message};warnings.push('The inspection status changed, but its Google Calendar event could not be removed.');}
+    }
     const date=String(row.preferred_date).slice(0,10), time=String(row.preferred_time||'').slice(0,5);
     const subject=status==='confirmed'?'Your G-BEST inspection is confirmed':status==='declined'?'Update on your G-BEST inspection request':'Update to your G-BEST inspection request';
     const message=status==='confirmed'?'Your physical inspection has been approved for '+date+' at '+time+' WAT. The appointment is '+Number(row.duration_minutes||30)+' minutes.':status==='declined'?'We are sorry, but we cannot approve your requested inspection slot. Please contact our team to arrange another time.':'Your inspection request status has been updated to '+status+'.';
     let email={sent:0,failed:0,skipped:0};
-    const warnings=[];
     try {
       await queueInspectionEmails([
         {requestId:row.id,type:'client',to:row.client_email,subject,html:'<p>Hello '+safe(row.full_name)+',</p><p>'+safe(message)+'</p><p>G-BEST Luxury Realty</p>'},
