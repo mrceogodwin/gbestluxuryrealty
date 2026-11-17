@@ -311,3 +311,25 @@ test('client authentication endpoints never expose OTP hashes or session tokens'
   assert.doesNotMatch(session, /token_hash\s*:/i);
   assert.doesNotMatch(session, /code_hash\s*:/i);
 });
+
+test('inspection approvals create idempotent Google Calendar events and retain Neon as source of truth', async () => {
+  const calendar = await source('lib/google-calendar.js');
+  const admin = await source('app/api/admin/inspection-requests/route.js');
+  assert.match(calendar, /GOOGLE_CLIENT_ID/);
+  assert.match(calendar, /GOOGLE_CLIENT_SECRET/);
+  assert.match(calendar, /GOOGLE_REFRESH_TOKEN/);
+  assert.match(calendar, /GOOGLE_CALENDAR_ID/);
+  assert.match(calendar, /timeZone:zone/);
+  assert.match(calendar, /id,\s*summary:/);
+  assert.match(admin, /createInspectionCalendarEvent/);
+  assert.match(admin, /deleteInspectionCalendarEvent/);
+  assert.match(admin, /calendar_event_id/);
+  assert.match(admin, /Inspection confirmed, but the calendar event could not be created/);
+});
+
+test('Google Calendar integration never blocks a saved inspection status when the calendar is unavailable', async () => {
+  const admin = await source('app/api/admin/inspection-requests/route.js');
+  assert.match(admin, /catch\(calendarError\)/);
+  assert.match(admin, /Inspection status saved but email queueing failed/);
+  assert.match(admin, /status was saved, but notification emails could not be queued/);
+});
