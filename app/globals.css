@@ -3091,18 +3091,18 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 
 /* Refined G-BEST primary action palette: forest green, warm ivory and restrained sage.
    Intentionally scoped to site/header/content actions; platform footer is untouched. */
-.gbest-site-root .gbest-lockup-type{
+.gbest-site-root nav .gbest-lockup-type{
  display:flex!important;flex-direction:column!important;align-items:flex-start!important;
  gap:0!important;line-height:.94!important;min-width:0!important;
 }
-.gbest-site-root .gbest-lockup-type b{
+.gbest-site-root nav .gbest-lockup-type b{
  display:block!important;color:#f7f4e9!important;
  font:800 21px/.96 Inter,Arial,sans-serif!important;letter-spacing:-.045em!important;
 }
-.gbest-site-root .gbest-lockup-type b.gbest-lockup-line{
+.gbest-site-root nav .gbest-lockup-type b.gbest-lockup-line{
  font-size:19px!important;font-weight:750!important;
 }
-.gbest-site-root .gbest-lockup-type small{
+.gbest-site-root nav .gbest-lockup-type small{
  display:block!important;max-width:180px!important;margin-top:7px!important;
  color:#d5bd78!important;font:700 7px/1.25 'DM Mono',monospace!important;
  letter-spacing:.09em!important;white-space:normal!important;
@@ -3148,9 +3148,9 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .gbest-site-root nav .gbest-lockup-mark{
   flex-basis:31px!important;width:31px!important;height:39px!important;
  }
- .gbest-site-root .gbest-lockup-type b{font-size:17px!important}
- .gbest-site-root .gbest-lockup-type b.gbest-lockup-line{font-size:16px!important}
- .gbest-site-root .gbest-lockup-type small{font-size:5.5px!important;max-width:105px!important;letter-spacing:.04em!important;margin-top:5px!important}
+ .gbest-site-root nav .gbest-lockup-type b{font-size:17px!important}
+ .gbest-site-root nav .gbest-lockup-type b.gbest-lockup-line{font-size:16px!important}
+ .gbest-site-root nav .gbest-lockup-type small{font-size:5.5px!important;max-width:105px!important;letter-spacing:.04em!important;margin-top:5px!important}
  .gbest-site-root nav>div>a.navbtn{
   background:#174b35!important;color:#f7f4e9!important;
   border:1px solid #52765b!important;box-shadow:2px 2px 0 #0c3021!important;
@@ -3162,8 +3162,8 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 }
 @media(max-width:360px){
  .gbest-site-root nav .gbest-brand-lockup{flex-basis:33%!important;width:33%!important;max-width:33%!important}
- .gbest-site-root .gbest-lockup-type b{font-size:15px!important}
- .gbest-site-root .gbest-lockup-type b.gbest-lockup-line{font-size:14px!important}
+ .gbest-site-root nav .gbest-lockup-type b{font-size:15px!important}
+ .gbest-site-root nav .gbest-lockup-type b.gbest-lockup-line{font-size:14px!important}
 }
 
 
