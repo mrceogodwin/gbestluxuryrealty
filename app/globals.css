@@ -3165,3 +3165,49 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .gbest-site-root .gbest-lockup-type b{font-size:15px!important}
  .gbest-site-root .gbest-lockup-type b.gbest-lockup-line{font-size:14px!important}
 }
+
+
+/* Recovery: keep the revised stacked wordmark strictly inside the top navigation.
+   Do not style the platform footer through shared lockup selectors. */
+.gbest-site-root nav .gbest-lockup-type{
+ display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+ gap:0!important;line-height:.94!important;min-width:0!important;
+}
+.gbest-site-root nav .gbest-lockup-type b{
+ display:block!important;color:#f7f4e9!important;
+ font:800 21px/.96 Inter,Arial,sans-serif!important;letter-spacing:-.045em!important;
+}
+.gbest-site-root nav .gbest-lockup-type b.gbest-lockup-line{font-size:19px!important;font-weight:750!important}
+.gbest-site-root nav .gbest-lockup-type small{
+ display:block!important;max-width:180px!important;margin-top:7px!important;
+ color:#d5bd78!important;font:700 7px/1.25 'DM Mono',monospace!important;
+ letter-spacing:.09em!important;white-space:normal!important;
+}
+/* Restore the approved high-visibility lime CTA treatment; keep the register action outlined. */
+.gbest-site-root nav>div>a.navbtn,
+.gbest-site-root .hero .goldbtn,
+.gbest-site-root .booking .formbox .submit,
+.gbest-site-root .searchbutton,
+.gbest-site-root .marketing-intro-actions .goldbtn{
+ background:#d7ff32!important;color:#07140b!important;
+ border:1px solid #d7ff32!important;border-bottom:3px solid #9fbe23!important;
+ box-shadow:3px 3px 0 rgba(7,20,11,.3)!important;border-radius:0!important;
+}
+.gbest-site-root nav>div>a.nav-register{
+ background:transparent!important;color:#d7ff32!important;
+ border:1px solid #d7ff32!important;box-shadow:none!important;
+}
+.gbest-site-root nav>div>a.navbtn:hover,
+.gbest-site-root .hero .goldbtn:hover,
+.gbest-site-root .booking .formbox .submit:hover:not(:disabled),
+.gbest-site-root .searchbutton:hover,
+.gbest-site-root .marketing-intro-actions .goldbtn:hover{
+ background:#c5ef25!important;color:#07140b!important;
+}
+@media(max-width:680px){
+ .gbest-site-root nav .gbest-lockup-type b{font-size:17px!important}
+ .gbest-site-root nav .gbest-lockup-type b.gbest-lockup-line{font-size:16px!important}
+ .gbest-site-root nav .gbest-lockup-type small{font-size:5.5px!important;max-width:105px!important;letter-spacing:.04em!important;margin-top:5px!important}
+ .gbest-site-root nav>div>a.navbtn{background:#d7ff32!important;color:#07140b!important;border:1px solid #d7ff32!important;box-shadow:2px 2px 0 #fff!important}
+ .gbest-site-root .hero .goldbtn{background:#d7ff32!important;color:#07140b!important;border:2px solid #07140b!important;box-shadow:5px 5px 0 #d7ff32!important}
+}
