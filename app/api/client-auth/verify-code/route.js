@@ -8,24 +8,13 @@ const COOKIE='gbest_client_session';
 const SECRET=()=>process.env.CLIENT_AUTH_SECRET||'';
 const digest=value=>createHmac('sha256',SECRET()).update(value).digest('hex');
 function equal(a,b){const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&timingSafeEqual(x,y);}
-async function schema(pool){
- await ensureSiteTenants(pool);
- await pool.query(`CREATE TABLE IF NOT EXISTS public.client_auth_challenges(id bigserial PRIMARY KEY,registration_id text NOT NULL,tenant_id bigint NOT NULL REFERENCES public.site_tenants(id) ON DELETE CASCADE,email_normalized text NOT NULL,code_hash text NOT NULL,attempts integer NOT NULL DEFAULT 0,expires_at timestamptz NOT NULL,used_at timestamptz,created_at timestamptz NOT NULL DEFAULT now())`);
- await pool.query('ALTER TABLE public.client_auth_challenges ADD COLUMN IF NOT EXISTS client_ip text');
- await pool.query(`CREATE TABLE IF NOT EXISTS public.client_sessions(id bigserial PRIMARY KEY,registration_id text NOT NULL,token_hash text NOT NULL UNIQUE,expires_at timestamptz NOT NULL,revoked_at timestamptz,created_at timestamptz NOT NULL DEFAULT now())`);
- await pool.query('ALTER TABLE public.client_sessions ADD COLUMN IF NOT EXISTS registration_id text');
- await pool.query('ALTER TABLE public.client_sessions ADD COLUMN IF NOT EXISTS token_hash text');
- await pool.query('ALTER TABLE public.client_sessions ADD COLUMN IF NOT EXISTS expires_at timestamptz');
- await pool.query('ALTER TABLE public.client_sessions ADD COLUMN IF NOT EXISTS revoked_at timestamptz');
- await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS client_sessions_token_hash_uidx ON public.client_sessions(token_hash)');
-}
 export async function POST(req){
  try{
   if(!SECRET())return NextResponse.json({error:'Client sign-in is temporarily unavailable.'},{status:503});
   if(req.headers.get('origin')&&req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
   const body=await req.json().catch(()=>null),email=String(body?.email||'').trim().toLowerCase(),code=String(body?.code||'').trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^[0-9]{6}$/.test(code))return NextResponse.json({error:'Enter your email and six-digit code.'},{status:400});
-  const pool=getDatabasePool();await schema(pool);
+  const pool=getDatabasePool();
   const host=req.headers.get('x-forwarded-host')||req.headers.get('host')||'',tenant=await resolveSiteTenant(pool,host);
   if(!tenant)return NextResponse.json({error:'That code is invalid or expired. Request a new one.'},{status:400});
   const client=await pool.connect();let registrationId;
