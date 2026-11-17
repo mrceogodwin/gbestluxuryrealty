@@ -290,3 +290,24 @@ test('inspection approval revalidates schedule and slot conflicts inside the boo
   assert.match(inspections, /Another request is holding the time/);
   assert.match(inspections, /client\.query\('COMMIT'\)/);
 });
+
+test('client session endpoint verifies tenant ownership and approved active status', async () => {
+  const session = await source('app/api/client-auth/session/route.js');
+  assert.match(session, /gbest_client_session/);
+  assert.match(session, /token_hash=\$1/);
+  assert.match(session, /r\.tenant_id=\$2/);
+  assert.match(session, /payment_status='approved'/);
+  assert.match(session, /client_status='active'/);
+  assert.match(session, /Cache-Control/);
+  assert.doesNotMatch(session, /SELECT\s+\*/i);
+});
+
+test('client authentication endpoints never expose OTP hashes or session tokens', async () => {
+  const verify = await source('app/api/client-auth/verify-code/route.js');
+  const session = await source('app/api/client-auth/session/route.js');
+  assert.match(verify, /httpOnly:true/);
+  assert.match(verify, /token_hash/);
+  assert.match(session, /createHash\('sha256'\)/);
+  assert.doesNotMatch(session, /token_hash\s*:/i);
+  assert.doesNotMatch(session, /code_hash\s*:/i);
+});
