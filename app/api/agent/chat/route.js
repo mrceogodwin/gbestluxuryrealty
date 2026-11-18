@@ -35,6 +35,13 @@ export async function POST(req){
     const score=words.reduce((n,w)=>n+(tokens.has(w)?3:hay.includes(w)?1:0),0);
     return {...p,_score:score};
    }).filter(p=>p._score>0).sort((a,b)=>b._score-a._score).slice(0,5);
+   const knowledge=Array.isArray(tenant.brand_config?.agentKnowledge)?tenant.brand_config.agentKnowledge.filter(x=>x&&x.active!==false):[];
+   const knowledgeMatch=knowledge.map(x=>{
+    const hay=normalise([x.question,x.category,x.keywords].join(' '));
+    const tokens=new Set(hay.split(/\\s+/));
+    const score=words.reduce((n,w)=>n+(tokens.has(w)?3:hay.includes(w)?1:0),0);
+    return {...x,_score:score};
+   }).filter(x=>x._score>0).sort((a,b)=>b._score-a._score)[0];
    const n=normalise(message);
    const wantsRent=/\\b(rent|rental|lease|tenant)\\b/.test(n);
    const wantsBuy=/\\b(buy|purchase|sale|sell)\\b/.test(n);
@@ -44,7 +51,7 @@ export async function POST(req){
    const wantsPrice=/\\b(price|cost|how much|budget|₦|naira)\\b/.test(n);
    const relevant=properties.filter(p=>(!wantsLand||normalise(p.type+' '+p.name).includes('land'))&&(!wantsApartment||normalise(p.type+' '+p.name).match(/apartment|flat/))&&(!wantsRent||normalise(p.description+' '+p.name).includes('rent'))&&(!wantsBuy||normalise(p.description+' '+p.name).match(/sale|buy/)));
    let reply='';
-   if(wantsInspection)reply='I can help you arrange a physical inspection. Choose a property from our published listings, then use its inspection request option. The team confirms the appointment; please do not treat a request as confirmed until G-BEST approves it.';
+   if(knowledgeMatch&&knowledgeMatch._score>=3)reply=knowledgeMatch.answer;\n   else if(wantsInspection)reply='I can help you arrange a physical inspection. Choose a property from our published listings, then use its inspection request option. The team confirms the appointment; please do not treat a request as confirmed until G-BEST approves it.';
    else if(ranked.length){
     const found=ranked.map(p=>p.name+' — '+p.location+' — '+p.type+' — '+p.price+(p.beds?' — '+p.beds+' bedroom(s)':'')+(p.url?' — '+p.url:'')).join('\\n');
     reply='Here are the closest matches in G-BEST’s live published catalogue:\\n'+found+'\\n\\nWould you like details about one of these, or should I narrow the search by location, property type or budget? Listing details and prices should be reconfirmed with our team before payment.';
@@ -61,7 +68,7 @@ export async function POST(req){
    }else{
     reply='I can help with G-BEST property searches and inspections, but there are no published properties in the live catalogue at the moment. You can still ask about the inspection process or tell me what kind of property you’re looking for.';
    }
-   return NextResponse.json({reply,mode:'knowledge-engine',listingMatches:ranked.length},{headers:noStore});
+   return NextResponse.json({reply,mode:'knowledge-engine',listingMatches:ranked.length,knowledgeMatched:Boolean(knowledgeMatch&&knowledgeMatch._score>=3)},{headers:noStore});
   }
   return NextResponse.json({reply:'Agent knowledge service is ready.'},{headers:noStore});
  }catch(e){console.error('Public Agent chat failed',e.code||e.message);return NextResponse.json({error:'Agent could not respond right now. Please try again shortly.'},{status:503,headers:noStore});}
