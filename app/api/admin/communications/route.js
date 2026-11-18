@@ -55,7 +55,7 @@ export async function GET(req){
    if(isClient){
     if(!admin)return NextResponse.json({error:'Only Super Admin can open the full client conversation inbox.'},{status:403,headers:noStore});
     const exists=await pool.query('SELECT 1 FROM public.client_chat_conversations WHERE id=$1 AND tenant_id=$2',[conversationId,tenant.id]);
-    if(exists.rowCount){messages=(await pool.query("SELECT id,sender_type,sender_id,body,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at ASC LIMIT 250",[conversationId])).rows;await pool.query(\"UPDATE public.client_chat_messages SET read_at=now() WHERE conversation_id=$1 AND sender_type='client' AND read_at IS NULL\",[conversationId]);}
+    if(exists.rowCount){messages=(await pool.query("SELECT id,sender_type,sender_id,body,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at ASC LIMIT 250",[conversationId])).rows;await pool.query(`UPDATE public.client_chat_messages SET read_at=now() WHERE conversation_id=$1 AND sender_type='client' AND read_at IS NULL`,[conversationId]);}
    }else{
     const allowed=admin||(staff&&await isMember(pool,conversationId,tenant.id,staff.id));
     if(!allowed)return NextResponse.json({error:'This team conversation is not available to your account.'},{status:403,headers:noStore});
