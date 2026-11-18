@@ -132,12 +132,14 @@ export async function POST(req){
    if(!uuid(d.conversationId))return NextResponse.json({error:'Choose a conversation.'},{status:400});
    const body=clean(d.body,4000);if(!body)return NextResponse.json({error:'Write a message first.'},{status:400});
    if(staff&&!await isMember(pool,d.conversationId,tenant.id,staff.id))return NextResponse.json({error:'You are not a member of this team conversation.'},{status:403});
+   const conversation=await pool.query('SELECT 1 FROM public.staff_chat_conversations WHERE id=$1 AND tenant_id=$2',[d.conversationId,tenant.id]);
+   if(!conversation.rowCount)return NextResponse.json({error:'Team conversation not found.'},{status:404});
    const client=await pool.connect();
    try{await client.query('BEGIN');const ins=await client.query('INSERT INTO public.staff_chat_messages(tenant_id,conversation_id,sender_staff_id,sender_type,body) VALUES($1,$2,$3,$4,$5) RETURNING id,created_at',[tenant.id,d.conversationId,staff?.id||null,admin?'super_admin':'staff',body]);
     await client.query('UPDATE public.staff_chat_conversations SET last_message_at=now(),updated_at=now() WHERE id=$1 AND tenant_id=$2',[d.conversationId,tenant.id]);
     await client.query(`INSERT INTO public.staff_notifications(tenant_id,staff_id,notification_type,title,body,reference_type,reference_id)
       SELECT $1,m.staff_id,'team_message','New team message',$3,'team_conversation',$2
-      FROM public.staff_chat_members m WHERE m.conversation_id=$2 AND ($4::uuid IS NULL OR m.staff_id<>$4)`,[tenant.id,d.conversationId,body.slice(0,300),staff.id]);
+      FROM public.staff_chat_members m WHERE m.conversation_id=$2 AND ($4::uuid IS NULL OR m.staff_id<>$4)`,[tenant.id,d.conversationId,body.slice(0,300),staff?.id||null]);
     if(staff)await client.query('UPDATE public.staff_chat_members SET last_read_at=now() WHERE conversation_id=$1 AND staff_id=$2',[d.conversationId,staff.id]);
     await client.query('COMMIT');return NextResponse.json({ok:true,message:ins.rows[0]},{headers:noStore});
    }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e;}finally{client.release();}
