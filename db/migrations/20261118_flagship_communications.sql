@@ -9,14 +9,20 @@ ALTER TABLE public.client_chat_conversations
   ADD COLUMN IF NOT EXISTS last_client_message_at timestamptz,
   ADD COLUMN IF NOT EXISTS last_staff_message_at timestamptz;
 
-ALTER TABLE public.client_chat_conversations
-  ALTER COLUMN assigned_staff_id TYPE uuid
+DO $$
+DECLARE col_type text;
+BEGIN
+ SELECT data_type INTO col_type FROM information_schema.columns
+ WHERE table_schema='public' AND table_name='client_chat_conversations' AND column_name='assigned_staff_id';
+ IF col_type='text' THEN
+  ALTER TABLE public.client_chat_conversations ALTER COLUMN assigned_staff_id TYPE uuid
   USING CASE
-    WHEN assigned_staff_id IS NULL OR trim(assigned_staff_id) = '' THEN NULL
-    WHEN assigned_staff_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-      THEN assigned_staff_id::uuid
-    ELSE NULL
+   WHEN assigned_staff_id IS NULL OR trim(assigned_staff_id) = '' THEN NULL
+   WHEN assigned_staff_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN assigned_staff_id::uuid
+   ELSE NULL
   END;
+ END IF;
+END $$;
 
 DO $$
 BEGIN
