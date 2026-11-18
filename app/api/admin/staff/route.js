@@ -27,7 +27,7 @@ export async function GET(req){
  try{
   const p=getDatabasePool();await ensureSiteTenants(p);const url=new URL(req.url),tenant=await selectedTenant(p,url.searchParams.get('tenantId'),req,admin);
   const [staff,events,defaults,companies]=await Promise.all([
-   p.query("SELECT s.id,s.tenant_id,s.full_name,s.email,s.role,s.status,s.invited_by,s.created_at,s.updated_at,s.last_login_at,COALESCE((SELECT json_agg(json_build_object('permission_key',a.permission_key,'enabled',a.enabled) ORDER BY a.permission_key) FROM public.staff_account_permissions a WHERE a.staff_id=s.id),'[]'::json) permissions FROM public.staff_accounts s WHERE s.tenant_id=$1 AND s.role <> 'super_admin' ORDER BY s.created_at DESC",[tenant.id]),
+   p.query("SELECT s.id,s.tenant_id,s.full_name,s.email,s.avatar_url,s.role,s.status,s.invited_by,s.created_at,s.updated_at,s.last_login_at,COALESCE((SELECT json_agg(json_build_object('permission_key',a.permission_key,'enabled',a.enabled) ORDER BY a.permission_key) FROM public.staff_account_permissions a WHERE a.staff_id=s.id),'[]'::json) permissions FROM public.staff_accounts s WHERE s.tenant_id=$1 AND s.role <> 'super_admin' ORDER BY s.created_at DESC",[tenant.id]),
    p.query('SELECT id,tenant_id,actor_type,actor_email,action,target_type,target_id,details,created_at FROM public.staff_audit_events WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 100',[tenant.id]),
    p.query("SELECT role,permission_key,enabled FROM public.staff_role_permissions ORDER BY role,permission_key"),
    admin?p.query('SELECT id,tenant_key,display_name,status FROM public.site_tenants ORDER BY created_at ASC'):Promise.resolve({rows:[]})
@@ -73,8 +73,9 @@ export async function PATCH(req){
  if(!/^[0-9a-f-]{36}$/i.test(id))return NextResponse.json({error:'Invalid staff ID.'},{status:400});
  if(d.status!==undefined&&!['invited','active','suspended','revoked'].includes(d.status))return NextResponse.json({error:'Invalid staff status.'},{status:400});
  if(d.role!==undefined&&!ROLES.includes(d.role))return NextResponse.json({error:'Invalid role.'},{status:400});
+ if(d.avatar_url!==undefined){const value=String(d.avatar_url||'').trim();if(value.length>2048||(value&&!/^https:\/\//i.test(value)))return NextResponse.json({error:'Profile photo must be a secure HTTPS image URL.'},{status:400});}
  if(d.permissions!==undefined&&(!Array.isArray(d.permissions)||d.permissions.some(x=>!x||!PERMISSIONS.includes(x.key)||typeof x.enabled!=='boolean')||new Set(d.permissions.map(x=>x.key)).size!==d.permissions.length))return NextResponse.json({error:'Invalid permission settings.'},{status:400});
- if(d.status===undefined&&d.role===undefined&&d.permissions===undefined)return NextResponse.json({error:'No staff changes were supplied.'},{status:400});
+ if(d.status===undefined&&d.role===undefined&&d.permissions===undefined&&d.avatar_url===undefined)return NextResponse.json({error:'No staff changes were supplied.'},{status:400});
  const p=getDatabasePool(),client=await p.connect();
  try{
   await ensureSiteTenants(p);const tenant=await selectedTenant(p,d.tenant_id,req,admin);
@@ -90,11 +91,12 @@ export async function PATCH(req){
    await audit(client,tenant.id,'staff.status_changed','staff',id,{from:current.status,to:d.status,email:current.email});
   }
   if(d.role!==undefined&&d.role!==current.role){await client.query('UPDATE public.staff_accounts SET role=$2,updated_at=now() WHERE id=$1',[id,d.role]);await audit(client,tenant.id,'staff.role_changed','staff',id,{from:current.role,to:d.role,email:current.email});}
+  if(d.avatar_url!==undefined){const avatar=String(d.avatar_url||'').trim()||null;await client.query('UPDATE public.staff_accounts SET avatar_url=$2,updated_at=now() WHERE id=$1',[id,avatar]);await audit(client,tenant.id,'staff.avatar_changed','staff',id,{avatarSet:Boolean(avatar),email:current.email});}
   if(d.permissions!==undefined){
    for(const x of d.permissions)await client.query("INSERT INTO public.staff_account_permissions(staff_id,permission_key,enabled,granted_by,updated_at) VALUES($1,$2,$3,'master-admin',now()) ON CONFLICT(staff_id,permission_key) DO UPDATE SET enabled=EXCLUDED.enabled,granted_by=EXCLUDED.granted_by,updated_at=now()",[id,x.key,x.enabled]);
    await audit(client,tenant.id,'staff.permissions_changed','staff',id,{permissions:d.permissions});
   }
-  const out=await client.query("SELECT s.id,s.tenant_id,s.full_name,s.email,s.role,s.status,s.created_at,s.last_login_at,COALESCE((SELECT json_agg(json_build_object('permission_key',a.permission_key,'enabled',a.enabled) ORDER BY a.permission_key) FROM public.staff_account_permissions a WHERE a.staff_id=s.id),'[]'::json) permissions FROM public.staff_accounts s WHERE s.id=$1 AND s.tenant_id=$2",[id,tenant.id]);
+  const out=await client.query("SELECT s.id,s.tenant_id,s.full_name,s.email,s.avatar_url,s.role,s.status,s.created_at,s.last_login_at,COALESCE((SELECT json_agg(json_build_object('permission_key',a.permission_key,'enabled',a.enabled) ORDER BY a.permission_key) FROM public.staff_account_permissions a WHERE a.staff_id=s.id),'[]'::json) permissions FROM public.staff_accounts s WHERE s.id=$1 AND s.tenant_id=$2",[id,tenant.id]);
   await client.query('COMMIT');return NextResponse.json({staff:out.rows[0]},{headers:{'Cache-Control':'no-store'}});
  }catch(e){await client.query('ROLLBACK').catch(()=>{});console.error('Staff admin PATCH',e.code||e.message);return NextResponse.json({error:'Could not update staff account.'},{status:500});}
  finally{client.release();}
