@@ -56,13 +56,15 @@ export async function POST(req){
    const budgetLimit=budgetMatch?Number(budgetMatch[1].replace(/,/g,''))*(multiplier[String(budgetMatch[2]||'').toLowerCase()]||1):null;
    const priceNumber=value=>{const m=String(value||'').replace(/,/g,'').match(/(?:₦|NGN|N)?\s*([\d.]+)\s*(billion|bn|million|m|thousand|k)?/i);return m?Number(m[1])*(multiplier[String(m[2]||'').toLowerCase()]||1):null};
    const relevant=properties.filter(p=>(!wantsLand||normalise(p.type+' '+p.name).includes('land'))&&(!wantsApartment||normalise(p.type+' '+p.name).match(/apartment|flat/))&&(!wantsRent||normalise(p.description+' '+p.name).includes('rent'))&&(!wantsBuy||normalise(p.description+' '+p.name).match(/sale|buy/))&&(!budgetLimit||priceNumber(p.price)===null||priceNumber(p.price)<=budgetLimit));
-   const filteredRanked=budgetLimit?ranked.filter(p=>priceNumber(p.price)===null||priceNumber(p.price)<=budgetLimit):ranked;
+   const filteredRanked=ranked.filter(p=>relevant.some(r=>r.name===p.name)&&(!budgetLimit||(priceNumber(p.price)!==null&&priceNumber(p.price)<=budgetLimit)));
    let reply='';
    if(knowledgeMatch&&knowledgeMatch._score>=3)reply=knowledgeMatch.answer;
    else if(wantsInspection)reply='I can help you arrange a physical inspection. Choose a property from our published listings, then use its inspection request option. The team confirms the appointment; please do not treat a request as confirmed until G-BEST approves it.';
    else if(filteredRanked.length){
     const found=filteredRanked.map(p=>p.name+' — '+p.location+' — '+p.type+' — '+p.price+(p.beds?' — '+p.beds+' bedroom(s)':'')+(p.url?' — '+p.url:'')+(p.image?' — Photo: '+p.image:'')).join('\n');
     reply='Here are the closest matches in G-BEST’s live published catalogue:\n'+found+'\n\nWould you like details about one of these, or should I narrow the search by location, property type or budget? Listing details and prices should be reconfirmed with our team before payment.';
+   }else if(budgetLimit&&relevant.length&&filteredRanked.length===0){
+    reply='I found listings that may fit the property type, but their recorded prices are missing or above your stated budget. I won’t label them as budget matches without a verifiable price. Would you like to raise the budget or ask our team to confirm current prices?';
    }else if((wantsLand||wantsApartment||wantsRent||wantsBuy)&&relevant.length===0){
     reply='I couldn’t find a published listing matching those requirements in the live catalogue right now. Tell me your preferred city or area and budget, and I can help narrow down what to ask our team for.';
    }else if(/\b(hello|hi|hey|good morning|good afternoon|good evening)\b/.test(n)){
