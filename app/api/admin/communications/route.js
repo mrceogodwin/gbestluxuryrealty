@@ -135,6 +135,7 @@ export async function POST(req){
    }else{
     await pool.query(`INSERT INTO public.client_chat_participants(conversation_id,tenant_id,staff_id,added_by) VALUES($1,$2,$3,'super_admin') ON CONFLICT(conversation_id,staff_id) DO UPDATE SET removed_at=NULL,added_by='super_admin',added_at=now()`,[d.conversationId,tenant.id,d.staffId]);
     await pool.query("INSERT INTO public.staff_notifications(tenant_id,staff_id,notification_type,title,body,reference_type,reference_id) VALUES($1,$2,'chat_assigned','Added to a client conversation','You have been added as a collaborating staff member.','client_conversation',$3)",[tenant.id,d.staffId,d.conversationId]);
+    await pool.query("UPDATE public.client_chat_conversations SET assigned_staff_id=COALESCE(assigned_staff_id,$1),handoff_status='assigned',handoff_resolved_at=now(),updated_at=now() WHERE id=$2 AND tenant_id=$3",[d.staffId,d.conversationId,tenant.id]);
     await pool.query("INSERT INTO public.client_chat_handover_events(tenant_id,conversation_id,event_type,actor_type,actor_id,details) VALUES($1,$2,'staff_joined','super_admin','super-admin',$3::jsonb)",[tenant.id,d.conversationId,JSON.stringify({staffId:d.staffId})]);
    }
    await pool.query("INSERT INTO public.staff_communications_audit(tenant_id,actor_type,action,reference_type,reference_id,details) VALUES($1,'super_admin',$2,'client_conversation',$3,$4::jsonb)",[tenant.id,d.remove?'client_chat.staff_removed':'client_chat.staff_added',d.conversationId,JSON.stringify({staffId:d.staffId})]);
