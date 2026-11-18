@@ -52,6 +52,10 @@ export async function POST(req){
   const client=await clientContext(req);
   if(!client)return NextResponse.json({error:'Sign in with an approved G-BEST client account to send messages.'},{status:401,headers:noStore});
   const body=await req.json().catch(()=>null);
+  if(body?.action==='presence'){
+   await pool.query(`INSERT INTO public.client_presence(tenant_id,registration_id,presence,last_seen_at,updated_at) VALUES($1,$2,'online',now(),now()) ON CONFLICT(tenant_id,registration_id) DO UPDATE SET presence='online',last_seen_at=now(),updated_at=now()`,[client.tenant_id,client.id]);
+   return NextResponse.json({ok:true},{headers:noStore});
+  }
   if(body?.action==='request-human'){
    const db=await pool.connect();
    try{
