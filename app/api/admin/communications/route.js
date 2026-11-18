@@ -97,7 +97,7 @@ export async function POST(req){
    const members=Array.isArray(d.memberIds)?[...new Set(d.memberIds.filter(uuid))]:[];
    if(staff&&!members.includes(staff.id))members.push(staff.id);
    if(admin&&!members.length)return NextResponse.json({error:'Choose at least one staff member.'},{status:400});
-   if(type==='direct'&&members.length!==2)return NextResponse.json({error:'A direct chat needs exactly two staff members.'},{status:400});
+   if(type==='direct'&&((admin&&members.length!==1)||(!admin&&members.length!==2)))return NextResponse.json({error:admin?'A Super Admin direct chat needs one staff member.':'A direct chat needs exactly two staff members.'},{status:400});
    if(type==='group'&&members.length<2)return NextResponse.json({error:'A group needs at least two members.'},{status:400});
    const valid=await pool.query("SELECT id FROM public.staff_accounts WHERE tenant_id=$1 AND status='active' AND id=ANY($2::uuid[])",[tenant.id,members]);
    if(valid.rowCount!==members.length)return NextResponse.json({error:'One or more selected staff members are not active in this company.'},{status:400});
