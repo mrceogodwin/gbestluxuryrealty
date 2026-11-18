@@ -40,8 +40,9 @@ export async function GET(req){
    UNION SELECT a.id,a.full_name,a.avatar_url,CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END,p.last_seen_at
    FROM public.client_chat_conversations c JOIN public.staff_accounts a ON a.id=c.assigned_staff_id
    LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id WHERE c.id=$1`,[first.conversation_id]):{rows:[]};
+  const events=first?.conversation_id?await pool.query(`SELECT e.event_type,e.created_at,a.full_name,a.avatar_url FROM public.client_chat_handover_events e LEFT JOIN public.staff_accounts a ON a.id::text=e.details->>'staffId' WHERE e.conversation_id=$1 ORDER BY e.created_at DESC LIMIT 12`,[first.conversation_id]):{rows:[]};
   return NextResponse.json({conversation:first?{id:first.conversation_id,status:first.status,handoffStatus:first.handoff_status,handoffRequestedAt:first.handoff_requested_at,created_at:first.created_at,last_message_at:first.last_message_at}:null,
-   humanAvailable:staff.rows.some(s=>s.presence==='online'),staff:staff.rows,
+   humanAvailable:staff.rows.some(s=>s.presence==='online'),staff:staff.rows,events:events.rows,
    messages:q.rows.filter(x=>x.message_id).map(x=>({id:x.message_id,sender_type:x.sender_type,sender_id:x.sender_id,body:x.body,created_at:x.message_created_at,read_at:x.read_at}))},{headers:noStore});
  }catch(e){console.error('Client chat load failed',e.code||e.message);return NextResponse.json({error:'Could not load your messages right now.'},{status:503,headers:noStore});}
 }
