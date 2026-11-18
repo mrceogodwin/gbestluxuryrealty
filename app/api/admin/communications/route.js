@@ -31,7 +31,7 @@ export async function GET(req){
  try{
   const [staffRows,clientRows,teamRows,notifications]=await Promise.all([
    pool.query("SELECT a.id,a.full_name,a.email,a.role,a.status,a.avatar_url,a.last_login_at,COALESCE(p.presence,'offline') AS presence, p.last_seen_at FROM public.staff_accounts a LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id WHERE a.tenant_id=$1 AND a.status='active' AND a.role<>'super_admin' ORDER BY a.full_name",[tenant.id]),
-   pool.query(`SELECT c.id,c.status,c.priority,c.last_message_at,c.created_at,c.assigned_staff_id,c.assigned_at,
+   pool.query(`SELECT c.id,c.status,c.priority,c.handoff_status,c.last_message_at,c.created_at,c.assigned_staff_id,c.assigned_at,
     r.full_name AS client_name,r.email AS client_email,r.phone AS client_phone,
     s.full_name AS assigned_staff_name,s.avatar_url AS assigned_staff_avatar,COALESCE(sp.presence,'offline') AS assigned_staff_presence,
     (SELECT count(*)::int FROM public.client_chat_messages m WHERE m.conversation_id=c.id AND m.read_at IS NULL AND m.sender_type='client') AS unread_count
@@ -82,7 +82,8 @@ export async function POST(req){
     if(!c.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Client conversation not found.'},{status:404});}
     if(d.staffId){const target=await client.query("SELECT id,full_name FROM public.staff_accounts WHERE id=$1 AND tenant_id=$2 AND status='active' AND role<>'super_admin'",[d.staffId,tenant.id]);if(!target.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'That staff account is not active in this company.'},{status:400});}}
     const previous=c.rows[0].assigned_staff_id;
-    await client.query('UPDATE public.client_chat_conversations SET assigned_staff_id=$1,assigned_by=$2,assigned_at=now(),updated_at=now() WHERE id=$3',[d.staffId,actorId||'super-admin',d.conversationId]);
+    await client.query("UPDATE public.client_chat_conversations SET assigned_staff_id=$1,assigned_by=$2,assigned_at=now(),handoff_status=CASE WHEN $1::uuid IS NULL THEN 'requested' ELSE 'assigned' END,handoff_resolved_at=CASE WHEN $1::uuid IS NULL THEN NULL ELSE now() END,updated_at=now() WHERE id=$3",[d.staffId,actorId||'super-admin',d.conversationId]);
+    if(d.staffId){await client.query("INSERT INTO public.client_chat_participants(conversation_id,tenant_id,staff_id,added_by) VALUES($1,$2,$3,'super_admin') ON CONFLICT(conversation_id,staff_id) DO UPDATE SET removed_at=NULL,added_at=now()",[d.conversationId,tenant.id,d.staffId]);await client.query("INSERT INTO public.client_chat_handover_events(tenant_id,conversation_id,event_type,actor_type,actor_id,details) VALUES($1,$2,'staff_joined','super_admin',$3,$4::jsonb)",[tenant.id,d.conversationId,actorId||'super-admin',JSON.stringify({staffId:d.staffId})]);}
     await client.query("INSERT INTO public.client_chat_assignment_events(tenant_id,conversation_id,from_staff_id,to_staff_id,actor_type,actor_id,note) VALUES($1,$2,$3,$4,'super_admin',$5,$6)",[tenant.id,d.conversationId,previous,d.staffId,actorId||'super-admin',clean(d.note,300)||null]);
     if(d.staffId)await client.query("INSERT INTO public.staff_notifications(tenant_id,staff_id,notification_type,title,body,reference_type,reference_id) VALUES($1,$2,'chat_assigned','New client conversation assigned','A client conversation has been assigned to you.','client_conversation',$3)",[tenant.id,d.staffId,d.conversationId]);
     await client.query('COMMIT');
