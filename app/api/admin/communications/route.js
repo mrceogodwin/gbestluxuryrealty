@@ -137,7 +137,7 @@ export async function POST(req){
     await client.query('UPDATE public.staff_chat_conversations SET last_message_at=now(),updated_at=now() WHERE id=$1 AND tenant_id=$2',[d.conversationId,tenant.id]);
     await client.query(`INSERT INTO public.staff_notifications(tenant_id,staff_id,notification_type,title,body,reference_type,reference_id)
       SELECT $1,m.staff_id,'team_message','New team message',$3,'team_conversation',$2
-      FROM public.staff_chat_members m WHERE m.conversation_id=$2 AND m.staff_id<>$4`,[tenant.id,d.conversationId,body.slice(0,300),staff.id]);
+      FROM public.staff_chat_members m WHERE m.conversation_id=$2 AND ($4::uuid IS NULL OR m.staff_id<>$4)`,[tenant.id,d.conversationId,body.slice(0,300),staff.id]);
     if(staff)await client.query('UPDATE public.staff_chat_members SET last_read_at=now() WHERE conversation_id=$1 AND staff_id=$2',[d.conversationId,staff.id]);
     await client.query('COMMIT');return NextResponse.json({ok:true,message:ins.rows[0]},{headers:noStore});
    }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e;}finally{client.release();}
