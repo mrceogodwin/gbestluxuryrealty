@@ -76,17 +76,17 @@ export async function POST(req){
    const saved=await db.query(`INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body)
     VALUES($1,'client',$2,$3) RETURNING id,sender_type,body,created_at,read_at`,[conv.rows[0].id,String(client.id),message]);
    await db.query('UPDATE public.client_chat_conversations SET last_message_at=now(),last_client_message_at=now(),updated_at=now() WHERE id=$1',[conv.rows[0].id]);
+   await db.query('COMMIT');
    let agentMessage=null,suggestHuman=false;
    try{
     const agentResponse=await fetch(new URL('/api/agent/chat',req.nextUrl.origin),{method:'POST',headers:{'Content-Type':'application/json','Origin':req.nextUrl.origin},body:JSON.stringify({message}),signal:AbortSignal.timeout(9000)});
     const agentData=await agentResponse.json();
     if(agentResponse.ok&&agentData.reply){suggestHuman=Boolean(agentData.suggestHuman);
-     const stored=await db.query("INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body) VALUES($1,'agent','agent',$2) RETURNING id,sender_type,sender_id,body,created_at,read_at",[conv.rows[0].id,String(agentData.reply).slice(0,4000)]);
+     const stored=await pool.query("INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body) VALUES($1,'agent','agent',$2) RETURNING id,sender_type,sender_id,body,created_at,read_at",[conv.rows[0].id,String(agentData.reply).slice(0,4000)]);
      agentMessage=stored.rows[0];
-     await db.query('UPDATE public.client_chat_conversations SET last_message_at=now(),updated_at=now() WHERE id=$1',[conv.rows[0].id]);
+     await pool.query('UPDATE public.client_chat_conversations SET last_message_at=now(),updated_at=now() WHERE id=$1',[conv.rows[0].id]);
     }
    }catch(agentError){console.warn('Agent fallback unavailable',agentError?.name||'error')}
-   await db.query('COMMIT');
    return NextResponse.json({ok:true,conversationId:conv.rows[0].id,message:saved.rows[0],agentMessage,suggestHuman},{status:201,headers:noStore});
   }catch(e){await db.query('ROLLBACK').catch(()=>{});throw e;}finally{db.release();}
  }catch(e){console.error('Client chat send failed',e.code||e.message);return NextResponse.json({error:'Your message could not be sent. Please try again.'},{status:503,headers:noStore});}
