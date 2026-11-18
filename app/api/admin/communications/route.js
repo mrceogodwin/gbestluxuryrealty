@@ -12,8 +12,10 @@ async function actor(req,tenantRequested){
  if(!admin&&!staff)return null;
  const pool=getDatabasePool();await ensureSiteTenants(pool);
  let tenantId=admin?String(tenantRequested||''):String(staff.tenant_id);
+ let t;
+ if(admin&&!tenantId){t=await pool.query("SELECT id,display_name FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");tenantId=String(t.rows[0]?.id||'');}
  if(!/^\d+$/.test(tenantId)||Number(tenantId)<1)return null;
- const t=await pool.query('SELECT id,display_name FROM public.site_tenants WHERE id=$1',[tenantId]);
+ t=await pool.query('SELECT id,display_name FROM public.site_tenants WHERE id=$1',[tenantId]);
  if(!t.rowCount)return null;
  if(staff&&Number(staff.tenant_id)!==Number(t.rows[0].id))return null;
  return {pool,admin,staff,tenant:t.rows[0],actorId:staff?.id||null,actorType:admin?'super_admin':'staff'};
