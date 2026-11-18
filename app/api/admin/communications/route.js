@@ -30,15 +30,15 @@ export async function GET(req){
  const {pool,admin,staff,tenant}=ctx;
  try{
   const [staffRows,clientRows,teamRows,notifications]=await Promise.all([
-   pool.query("SELECT id,full_name,email,role,status,last_login_at FROM public.staff_accounts WHERE tenant_id=$1 AND status='active' AND role<>'super_admin' ORDER BY full_name",[tenant.id]),
+   pool.query("SELECT a.id,a.full_name,a.email,a.role,a.status,a.avatar_url,a.last_login_at,COALESCE(p.presence,'offline') AS presence, p.last_seen_at FROM public.staff_accounts a LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id WHERE a.tenant_id=$1 AND a.status='active' AND a.role<>'super_admin' ORDER BY a.full_name",[tenant.id]),
    pool.query(`SELECT c.id,c.status,c.priority,c.last_message_at,c.created_at,c.assigned_staff_id,c.assigned_at,
     r.full_name AS client_name,r.email AS client_email,r.phone AS client_phone,
-    s.full_name AS assigned_staff_name,
+    s.full_name AS assigned_staff_name,s.avatar_url AS assigned_staff_avatar,COALESCE(sp.presence,'offline') AS assigned_staff_presence,
     (SELECT count(*)::int FROM public.client_chat_messages m WHERE m.conversation_id=c.id AND m.read_at IS NULL AND m.sender_type='client') AS unread_count
     FROM public.client_chat_conversations c
     JOIN public.client_registrations r ON r.id=c.registration_id
-    LEFT JOIN public.staff_accounts s ON s.id=c.assigned_staff_id
-    WHERE c.tenant_id=$1 AND ($2::boolean OR c.assigned_staff_id=$3::uuid)
+    LEFT JOIN public.staff_accounts s ON s.id=c.assigned_staff_id LEFT JOIN public.staff_presence sp ON sp.staff_id=s.id AND sp.tenant_id=c.tenant_id
+    WHERE c.tenant_id=$1 AND ($2::boolean OR c.assigned_staff_id=$3::uuid OR EXISTS(SELECT 1 FROM public.client_chat_participants cp WHERE cp.conversation_id=c.id AND cp.staff_id=$3::uuid AND cp.removed_at IS NULL) OR EXISTS(SELECT 1 FROM public.client_chat_monitor_access ma WHERE ma.conversation_id=c.id AND ma.staff_id=$3::uuid AND ma.revoked_at IS NULL))
     ORDER BY c.last_message_at DESC NULLS LAST,c.created_at DESC LIMIT 150`,[tenant.id,admin,staff?.id||null]),
    pool.query(`SELECT c.id,c.conversation_type,c.title,c.last_message_at,c.created_at,
     (SELECT count(*)::int FROM public.staff_chat_members m WHERE m.conversation_id=c.id) AS member_count,
@@ -54,7 +54,7 @@ export async function GET(req){
    const isClient=String(url.searchParams.get('kind')||'')==='client';
    if(isClient){
     const exists=await pool.query('SELECT 1 FROM public.client_chat_conversations WHERE id=$1 AND tenant_id=$2 AND ($3::boolean OR assigned_staff_id=$4::uuid)',[conversationId,tenant.id,admin,staff?.id||null]);
-    if(exists.rowCount){messages=(await pool.query("SELECT id,sender_type,sender_id,body,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at ASC LIMIT 250",[conversationId])).rows;await pool.query(`UPDATE public.client_chat_messages SET read_at=now() WHERE conversation_id=$1 AND sender_type='client' AND read_at IS NULL`,[conversationId]);}
+    if(exists.rowCount){messages=(await pool.query("SELECT m.id,m.sender_type,m.sender_id,m.body,m.created_at,m.read_at,COALESCE(a.full_name,'G-BEST Agent') AS sender_name,a.avatar_url AS sender_avatar FROM public.client_chat_messages m LEFT JOIN public.staff_accounts a ON a.id::text=m.sender_id WHERE m.conversation_id=$1 ORDER BY m.created_at ASC LIMIT 250",[conversationId])).rows;await pool.query(`UPDATE public.client_chat_messages SET read_at=now() WHERE conversation_id=$1 AND sender_type='client' AND read_at IS NULL`,[conversationId]);}
    }else{
     const allowed=admin||(staff&&await isMember(pool,conversationId,tenant.id,staff.id));
     if(!allowed)return NextResponse.json({error:'This team conversation is not available to your account.'},{status:403,headers:noStore});
@@ -115,12 +115,43 @@ export async function POST(req){
    }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e;}finally{client.release();}
    return NextResponse.json({ok:true,conversationId:id,message:type==='group'?'Team group created.':'Direct chat created.'},{headers:noStore});
   }
+  if(d.action==='presence'){
+   if(!staff)return NextResponse.json({error:'Staff sign-in required.'},{status:403});
+   const presence=['online','away','offline'].includes(d.presence)?d.presence:'online';
+   await pool.query(`INSERT INTO public.staff_presence(tenant_id,staff_id,presence,last_seen_at,updated_at) VALUES($1,$2,$3,now(),now()) ON CONFLICT(tenant_id,staff_id) DO UPDATE SET presence=EXCLUDED.presence,last_seen_at=now(),updated_at=now()`,[tenant.id,staff.id,presence]);
+   return NextResponse.json({ok:true,presence},{headers:noStore});
+  }
+  if(d.action==='manage-client-staff'){
+   if(!admin)return NextResponse.json({error:'Only Super Admin can manage client chat participants.'},{status:403});
+   if(!uuid(d.conversationId)||!uuid(d.staffId))return NextResponse.json({error:'Choose a valid conversation and staff member.'},{status:400});
+   const target=await pool.query("SELECT id FROM public.staff_accounts WHERE id=$1 AND tenant_id=$2 AND status='active' AND role<>'super_admin'",[d.staffId,tenant.id]);
+   if(!target.rowCount)return NextResponse.json({error:'Staff account is not active in this company.'},{status:400});
+   const exists=await pool.query('SELECT 1 FROM public.client_chat_conversations WHERE id=$1 AND tenant_id=$2',[d.conversationId,tenant.id]);
+   if(!exists.rowCount)return NextResponse.json({error:'Client conversation not found.'},{status:404});
+   if(d.remove===true){
+    await pool.query('UPDATE public.client_chat_participants SET removed_at=now() WHERE conversation_id=$1 AND staff_id=$2',[d.conversationId,d.staffId]);
+   }else{
+    await pool.query(`INSERT INTO public.client_chat_participants(conversation_id,tenant_id,staff_id,added_by) VALUES($1,$2,$3,'super_admin') ON CONFLICT(conversation_id,staff_id) DO UPDATE SET removed_at=NULL,added_by='super_admin',added_at=now()`,[d.conversationId,tenant.id,d.staffId]);
+    await pool.query("INSERT INTO public.staff_notifications(tenant_id,staff_id,notification_type,title,body,reference_type,reference_id) VALUES($1,$2,'chat_assigned','Added to a client conversation','You have been added as a collaborating staff member.','client_conversation',$3)",[tenant.id,d.staffId,d.conversationId]);
+   }
+   await pool.query("INSERT INTO public.staff_communications_audit(tenant_id,actor_type,action,reference_type,reference_id,details) VALUES($1,'super_admin',$2,'client_conversation',$3,$4::jsonb)",[tenant.id,d.remove?'client_chat.staff_removed':'client_chat.staff_added',d.conversationId,JSON.stringify({staffId:d.staffId})]);
+   return NextResponse.json({ok:true,message:d.remove?'Staff member removed.':'Staff member added to the client conversation.'},{headers:noStore});
+  }
+  if(d.action==='monitor-client'){
+   if(!admin)return NextResponse.json({error:'Only Super Admin can control monitoring access.'},{status:403});
+   if(!uuid(d.conversationId)||!uuid(d.staffId))return NextResponse.json({error:'Choose a valid conversation and staff member.'},{status:400});
+   const target=await pool.query("SELECT id FROM public.staff_accounts WHERE id=$1 AND tenant_id=$2 AND status='active'",[d.staffId,tenant.id]);
+   if(!target.rowCount)return NextResponse.json({error:'Staff account not found.'},{status:404});
+   if(d.enabled===false)await pool.query('UPDATE public.client_chat_monitor_access SET revoked_at=now() WHERE conversation_id=$1 AND staff_id=$2 AND revoked_at IS NULL',[d.conversationId,d.staffId]);
+   else await pool.query(`INSERT INTO public.client_chat_monitor_access(conversation_id,tenant_id,staff_id,granted_by) VALUES($1,$2,$3,'super_admin') ON CONFLICT(conversation_id,staff_id) DO UPDATE SET revoked_at=NULL,granted_by='super_admin',granted_at=now()`,[d.conversationId,tenant.id,d.staffId]);
+   return NextResponse.json({ok:true,message:d.enabled===false?'Monitoring access revoked.':'Monitoring access granted.'},{headers:noStore});
+  }
   if(d.action==='reply-client'){
    if(!admin&&!staff)return NextResponse.json({error:'Staff sign-in required.'},{status:403});
    if(!uuid(d.conversationId))return NextResponse.json({error:'Choose a valid client conversation.'},{status:400});
    const body=clean(d.body,4000);if(!body)return NextResponse.json({error:'Write a reply first.'},{status:400});
    const client=await pool.connect();
-   try{await client.query('BEGIN');const c=await client.query('SELECT id FROM public.client_chat_conversations WHERE id=$1 AND tenant_id=$2 AND ($3::boolean OR assigned_staff_id=$4::uuid) FOR UPDATE',[d.conversationId,tenant.id,admin,staff?.id||null]);if(!c.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Client conversation not found.'},{status:404});}
+   try{await client.query('BEGIN');const c=await client.query(`SELECT id FROM public.client_chat_conversations x WHERE id=$1 AND tenant_id=$2 AND ($3::boolean OR assigned_staff_id=$4::uuid OR EXISTS(SELECT 1 FROM public.client_chat_participants p WHERE p.conversation_id=x.id AND p.staff_id=$4::uuid AND p.removed_at IS NULL) OR EXISTS(SELECT 1 FROM public.client_chat_monitor_access m WHERE m.conversation_id=x.id AND m.staff_id=$4::uuid AND m.revoked_at IS NULL)) FOR UPDATE`,[d.conversationId,tenant.id,admin,staff?.id||null]);if(!c.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Client conversation not found.'},{status:404});}
     const m=await client.query("INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body) VALUES($1,$2,$3,$4) RETURNING id,created_at",[d.conversationId,admin?'admin':'staff',admin?'super-admin':staff.id,body]);
     await client.query("UPDATE public.client_chat_conversations SET last_message_at=now(),last_staff_message_at=now(),updated_at=now() WHERE id=$1",[d.conversationId]);
     await client.query("INSERT INTO public.staff_communications_audit(tenant_id,actor_type,action,reference_type,reference_id,details) VALUES($1,$2,'client_chat.replied','client_conversation',$3,$4::jsonb)",[tenant.id,actorType,d.conversationId,JSON.stringify({messageId:m.rows[0].id})]);
