@@ -13,6 +13,8 @@ export async function POST(req){
   if(message.length>1200)return NextResponse.json({error:'Please keep your question under 1,200 characters.'},{status:400,headers:noStore});
   const pool=getDatabasePool(),host=req.headers.get('x-forwarded-host')||req.headers.get('host')||'',tenant=await resolveSiteTenant(pool,host);
   if(!tenant)return NextResponse.json({error:'G-BEST workspace is not available on this domain.'},{status:503,headers:noStore});
+  const brandResult=await pool.query('SELECT brand_config FROM public.site_tenants WHERE id=$1 LIMIT 1',[tenant.id]);
+  const agentKnowledge=Array.isArray(brandResult.rows[0]?.brand_config?.agentKnowledge)?brandResult.rows[0].brand_config.agentKnowledge.filter(x=>x&&x.active!==false):[];
   const q=await pool.query(`SELECT title,location,state,property_type,
     COALESCE(NULLIF(price,'Price on request'),price_label,'Price on request') AS price,
     COALESCE(NULLIF(beds,0),bedrooms,0) AS bedrooms,
@@ -35,7 +37,7 @@ export async function POST(req){
     const score=words.reduce((n,w)=>n+(tokens.has(w)?3:hay.includes(w)?1:0),0);
     return {...p,_score:score};
    }).filter(p=>p._score>0).sort((a,b)=>b._score-a._score).slice(0,5);
-   const knowledge=Array.isArray(tenant.brand_config?.agentKnowledge)?tenant.brand_config.agentKnowledge.filter(x=>x&&x.active!==false):[];
+   const knowledge=agentKnowledge;
    const knowledgeMatch=knowledge.map(x=>{
     const hay=normalise([x.question,x.category,x.keywords].join(' '));
     const tokens=new Set(hay.split(/\\s+/));
