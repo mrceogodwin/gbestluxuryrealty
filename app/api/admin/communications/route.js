@@ -53,7 +53,7 @@ export async function GET(req){
    if(isClient){
     if(!admin)return NextResponse.json({error:'Only Super Admin can open the full client conversation inbox.'},{status:403,headers:noStore});
     const exists=await pool.query('SELECT 1 FROM public.client_chat_conversations WHERE id=$1 AND tenant_id=$2',[conversationId,tenant.id]);
-    if(exists.rowCount)messages=(await pool.query("SELECT id,sender_type,sender_id,body,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at ASC LIMIT 250",[conversationId])).rows;
+    if(exists.rowCount){messages=(await pool.query("SELECT id,sender_type,sender_id,body,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at ASC LIMIT 250",[conversationId])).rows;await pool.query(\"UPDATE public.client_chat_messages SET read_at=now() WHERE conversation_id=$1 AND sender_type='client' AND read_at IS NULL\",[conversationId]);}
    }else{
     const allowed=admin||(staff&&await isMember(pool,conversationId,tenant.id,staff.id));
     if(!allowed)return NextResponse.json({error:'This team conversation is not available to your account.'},{status:403,headers:noStore});
@@ -113,6 +113,18 @@ export async function POST(req){
     await client.query('COMMIT');
    }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e;}finally{client.release();}
    return NextResponse.json({ok:true,conversationId:id,message:type==='group'?'Team group created.':'Direct chat created.'},{headers:noStore});
+  }
+  if(d.action==='reply-client'){
+   if(!admin)return NextResponse.json({error:'Only authorised Super Admins can reply to client conversations.'},{status:403});
+   if(!uuid(d.conversationId))return NextResponse.json({error:'Choose a valid client conversation.'},{status:400});
+   const body=clean(d.body,4000);if(!body)return NextResponse.json({error:'Write a reply first.'},{status:400});
+   const client=await pool.connect();
+   try{await client.query('BEGIN');const c=await client.query('SELECT id FROM public.client_chat_conversations WHERE id=$1 AND tenant_id=$2 FOR UPDATE',[d.conversationId,tenant.id]);if(!c.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Client conversation not found.'},{status:404});}
+    const m=await client.query("INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body) VALUES($1,'admin','super-admin',$2) RETURNING id,created_at",[d.conversationId,body]);
+    await client.query("UPDATE public.client_chat_conversations SET last_message_at=now(),last_staff_message_at=now(),updated_at=now() WHERE id=$1",[d.conversationId]);
+    await client.query("INSERT INTO public.staff_communications_audit(tenant_id,actor_type,action,reference_type,reference_id,details) VALUES($1,'super_admin','client_chat.replied','client_conversation',$2,$3::jsonb)",[tenant.id,d.conversationId,JSON.stringify({messageId:m.rows[0].id})]);
+    await client.query('COMMIT');return NextResponse.json({ok:true,message:m.rows[0]},{headers:noStore});
+   }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e;}finally{client.release();}
   }
   if(d.action==='send-team-message'){
    if(!staff&&!admin)return NextResponse.json({error:'Sign in required to send team messages.'},{status:403});
