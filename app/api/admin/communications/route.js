@@ -57,8 +57,8 @@ export async function GET(req){
    }else{
     const allowed=admin||(staff&&await isMember(pool,conversationId,tenant.id,staff.id));
     if(!allowed)return NextResponse.json({error:'This team conversation is not available to your account.'},{status:403,headers:noStore});
-    messages=(await pool.query(`SELECT m.id,m.sender_staff_id,m.body,m.message_type,m.created_at,m.edited_at,s.full_name AS sender_name
-      FROM public.staff_chat_messages m JOIN public.staff_accounts s ON s.id=m.sender_staff_id
+    messages=(await pool.query(`SELECT m.id,m.sender_staff_id,m.sender_type,m.body,m.message_type,m.created_at,m.edited_at,COALESCE(s.full_name,'G-BEST Super Admin') AS sender_name
+      FROM public.staff_chat_messages m LEFT JOIN public.staff_accounts s ON s.id=m.sender_staff_id
       WHERE m.conversation_id=$1 AND m.tenant_id=$2 AND m.deleted_at IS NULL ORDER BY m.created_at ASC LIMIT 250`,[conversationId,tenant.id])).rows;
     if(staff)await pool.query('UPDATE public.staff_chat_members SET last_read_at=now() WHERE conversation_id=$1 AND staff_id=$2',[conversationId,staff.id]);
    }
@@ -115,17 +115,17 @@ export async function POST(req){
    return NextResponse.json({ok:true,conversationId:id,message:type==='group'?'Team group created.':'Direct chat created.'},{headers:noStore});
   }
   if(d.action==='send-team-message'){
-   if(!staff)return NextResponse.json({error:'Staff sign-in required to send team messages.'},{status:403});
+   if(!staff&&!admin)return NextResponse.json({error:'Sign in required to send team messages.'},{status:403});
    if(!uuid(d.conversationId))return NextResponse.json({error:'Choose a conversation.'},{status:400});
    const body=clean(d.body,4000);if(!body)return NextResponse.json({error:'Write a message first.'},{status:400});
-   if(!await isMember(pool,d.conversationId,tenant.id,staff.id))return NextResponse.json({error:'You are not a member of this team conversation.'},{status:403});
+   if(staff&&!await isMember(pool,d.conversationId,tenant.id,staff.id))return NextResponse.json({error:'You are not a member of this team conversation.'},{status:403});
    const client=await pool.connect();
-   try{await client.query('BEGIN');const ins=await client.query('INSERT INTO public.staff_chat_messages(tenant_id,conversation_id,sender_staff_id,body) VALUES($1,$2,$3,$4) RETURNING id,created_at',[tenant.id,d.conversationId,staff.id,body]);
+   try{await client.query('BEGIN');const ins=await client.query('INSERT INTO public.staff_chat_messages(tenant_id,conversation_id,sender_staff_id,sender_type,body) VALUES($1,$2,$3,$4,$5) RETURNING id,created_at',[tenant.id,d.conversationId,staff?.id||null,admin?'super_admin':'staff',body]);
     await client.query('UPDATE public.staff_chat_conversations SET last_message_at=now(),updated_at=now() WHERE id=$1 AND tenant_id=$2',[d.conversationId,tenant.id]);
     await client.query(`INSERT INTO public.staff_notifications(tenant_id,staff_id,notification_type,title,body,reference_type,reference_id)
       SELECT $1,m.staff_id,'team_message','New team message',$3,'team_conversation',$2
       FROM public.staff_chat_members m WHERE m.conversation_id=$2 AND m.staff_id<>$4`,[tenant.id,d.conversationId,body.slice(0,300),staff.id]);
-    await client.query('UPDATE public.staff_chat_members SET last_read_at=now() WHERE conversation_id=$1 AND staff_id=$2',[d.conversationId,staff.id]);
+    if(staff)await client.query('UPDATE public.staff_chat_members SET last_read_at=now() WHERE conversation_id=$1 AND staff_id=$2',[d.conversationId,staff.id]);
     await client.query('COMMIT');return NextResponse.json({ok:true,message:ins.rows[0]},{headers:noStore});
    }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e;}finally{client.release();}
   }
