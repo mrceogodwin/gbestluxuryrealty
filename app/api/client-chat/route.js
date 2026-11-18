@@ -78,7 +78,7 @@ export async function POST(req){
    await db.query('UPDATE public.client_chat_conversations SET last_message_at=now(),last_client_message_at=now(),updated_at=now() WHERE id=$1',[conv.rows[0].id]);
    let agentMessage=null;
    try{
-    const agentResponse=await fetch(new URL('/api/agent/chat',req.nextUrl.origin),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message}),signal:AbortSignal.timeout(9000)});
+    const agentResponse=await fetch(new URL('/api/agent/chat',req.nextUrl.origin),{method:'POST',headers:{'Content-Type':'application/json','Origin':req.nextUrl.origin},body:JSON.stringify({message}),signal:AbortSignal.timeout(9000)});
     const agentData=await agentResponse.json();
     if(agentResponse.ok&&agentData.reply){
      const stored=await db.query("INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body) VALUES($1,'agent','agent',$2) RETURNING id,sender_type,sender_id,body,created_at,read_at",[conv.rows[0].id,String(agentData.reply).slice(0,4000)]);
