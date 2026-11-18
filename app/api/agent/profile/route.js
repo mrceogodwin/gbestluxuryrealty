@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
-import {getDatabasePool} from '../../../lib/db';
-import {resolveSiteTenant} from '../../../lib/site-tenants';
+import {getDatabasePool} from '../../../../lib/db';
+import {resolveSiteTenant} from '../../../../lib/site-tenants';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 export async function GET(req){
