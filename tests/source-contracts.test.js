@@ -294,15 +294,36 @@ test('inspection approval revalidates schedule and slot conflicts inside the boo
   assert.match(inspections, /client\.query\('COMMIT'\)/);
 });
 
-test('client session endpoint verifies tenant ownership and approved active status', async () => {
+test('client session endpoint verifies tenant ownership and eligible active status', async () => {
   const session = await source('app/api/client-auth/session/route.js');
   assert.match(session, /gbest_client_session/);
   assert.match(session, /token_hash=\$1/);
   assert.match(session, /r\.tenant_id=\$2/);
-  assert.match(session, /payment_status='approved'/);
+  assert.match(session, /payment_status IN \('approved','not_required','pending'\)/);
   assert.match(session, /client_status='active'/);
   assert.match(session, /Cache-Control/);
   assert.doesNotMatch(session, /SELECT\s+\*/i);
+});
+
+test('general client registration is free while inspection registration requires manual payment evidence', async () => {
+  const page = await source('app/client-registration/page.js');
+  const registration = await source('app/api/client-registrations/route.js');
+  const migration = await source('db/migrations/20261119_client_registration_intent.sql');
+  const inspection = await source('app/api/inspection-requests/route.js');
+  assert.match(page, /General enquiries \/ private client messaging — FREE/);
+  assert.match(page, /I want to arrange a physical property inspection — ₦15,000 manual verification/);
+  assert.match(registration, /intent==='inspection'/);
+  assert.match(registration, /'not_required':'pending'/);
+  assert.match(registration, /registration_intent/);
+  assert.match(migration, /payment_status IN \('pending','submitted','approved','rejected','not_required'\)/);
+  assert.match(inspection, /registration_intent='inspection' AND r\.payment_status='approved'/);
+});
+
+test('mobile Agent chat opens as a spacious near-full-screen conversation', async () => {
+  const styles = await source('app/globals.css');
+  assert.match(styles, /\.gb-agent-panel\{width:100%!important;height:calc\(100dvh - 16px\)!important/);
+  assert.match(styles, /\.gb-agent-messages\{min-height:0;flex:1 1 auto;overflow-y:auto/);
+  assert.match(styles, /env\(safe-area-inset-bottom\)/);
 });
 
 test('client authentication endpoints never expose OTP hashes or session tokens', async () => {
