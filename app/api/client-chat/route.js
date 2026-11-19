@@ -25,7 +25,7 @@ export async function GET(req){
   const pool=getDatabasePool();
   await pool.query("UPDATE public.client_chat_messages m SET read_at=COALESCE(m.read_at,now()) FROM public.client_chat_conversations c WHERE m.conversation_id=c.id AND c.tenant_id=$1 AND c.registration_id=$2 AND m.sender_type IN ('admin','staff') AND m.read_at IS NULL",[client.tenant_id,client.id]);
   const q=await pool.query(`SELECT c.id AS conversation_id,c.status,c.handoff_status,c.handoff_requested_at,c.assigned_staff_id,c.assigned_at,c.created_at,c.last_message_at,
-   m.id AS message_id,m.sender_type,m.sender_id,m.body,m.created_at AS message_created_at,m.read_at
+   m.id AS message_id,m.sender_type,m.sender_id,m.body,m.created_at AS message_created_at,m.read_at,ms.full_name AS sender_name,ms.avatar_url AS sender_avatar_url
    FROM public.client_chat_conversations c
    LEFT JOIN public.client_chat_messages m ON m.conversation_id=c.id
    WHERE c.tenant_id=$1 AND c.registration_id=$2
@@ -43,7 +43,7 @@ export async function GET(req){
   const events=first?.conversation_id?await pool.query(`SELECT e.event_type,e.created_at,a.full_name,a.avatar_url FROM public.client_chat_handover_events e LEFT JOIN public.staff_accounts a ON a.id::text=e.details->>'staffId' WHERE e.conversation_id=$1 ORDER BY e.created_at DESC LIMIT 12`,[first.conversation_id]):{rows:[]};
   return NextResponse.json({conversation:first?{id:first.conversation_id,status:first.status,handoffStatus:first.handoff_status,handoffRequestedAt:first.handoff_requested_at,assignedStaffId:first.assigned_staff_id,assignedAt:first.assigned_at,created_at:first.created_at,last_message_at:first.last_message_at}:null,
    humanAvailable:staff.rows.some(s=>s.presence==='online'),staff:staff.rows,events:events.rows,
-   messages:q.rows.filter(x=>x.message_id).map(x=>({id:x.message_id,sender_type:x.sender_type,sender_id:x.sender_id,body:x.body,created_at:x.message_created_at,read_at:x.read_at}))},{headers:noStore});
+   messages:q.rows.filter(x=>x.message_id).map(x=>({id:x.message_id,sender_type:x.sender_type,sender_id:x.sender_id,sender_name:x.sender_name,sender_avatar_url:x.sender_avatar_url,body:x.body,created_at:x.message_created_at,read_at:x.read_at}))},{headers:noStore});
  }catch(e){console.error('Client chat load failed',e.code||e.message);return NextResponse.json({error:'Could not load your messages right now.'},{status:503,headers:noStore});}
 }
 export async function POST(req){
