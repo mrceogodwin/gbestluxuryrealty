@@ -58,7 +58,7 @@ export async function POST(req){
    }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e;}finally{client.release();}
   }
   const full_name=clean(d.full_name,140),email=clean(d.email,254).toLowerCase(),phone_number=clean(d.phone_number,40),role=clean(d.role,30);
-  if(full_name.length<2||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||!ROLES.includes(role))return NextResponse.json({error:'Enter a valid name, email and staff role.'},{status:400});
+  if(full_name.length<2||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||(phone_number&&!/^[+0-9().\s-]{7,40}$/.test(phone_number))||!ROLES.includes(role))return NextResponse.json({error:'Enter a valid name, email, phone number and staff role.'},{status:400});
   const token=newOpaqueToken(),tokenHash=hashToken(token),base=process.env.NEXT_PUBLIC_SITE_URL||req.nextUrl.origin;
   const inviteUrl=new URL('/staff/accept',base);inviteUrl.searchParams.set('token',token);
   const r=await p.query("INSERT INTO public.staff_accounts(tenant_id,full_name,email,email_normalized,phone_number,role,status,invited_by,invitation_token_hash,invitation_expires_at) VALUES($1,$2,$3,$3,$4,$5,'invited','master-admin',$6,now()+interval '48 hours') RETURNING id,tenant_id,full_name,email,phone_number,role,status,created_at,invitation_expires_at",[tenant.id,full_name,email,phone_number||null,role,tokenHash]);
@@ -74,7 +74,7 @@ export async function PATCH(req){
  if(d.status!==undefined&&!['invited','active','suspended','revoked'].includes(d.status))return NextResponse.json({error:'Invalid staff status.'},{status:400});
  if(d.role!==undefined&&!ROLES.includes(d.role))return NextResponse.json({error:'Invalid role.'},{status:400});
  if(d.avatar_url!==undefined){const value=String(d.avatar_url||'').trim();if(value.length>2048||(value&&!/^https:\/\//i.test(value)))return NextResponse.json({error:'Profile photo must be a secure HTTPS image URL.'},{status:400});}
- if(d.phone_number!==undefined){const value=clean(d.phone_number,40);if(value&&(value.length<7||!/^[+0-9().\\s-]{7,40}$/.test(value)))return NextResponse.json({error:'Enter a valid staff phone number.'},{status:400});}
+ if(d.phone_number!==undefined){const value=clean(d.phone_number,40);if(value&&(value.length<7||!/^[+0-9().\s-]{7,40}$/.test(value)))return NextResponse.json({error:'Enter a valid staff phone number.'},{status:400});}
  if(d.permissions!==undefined&&(!Array.isArray(d.permissions)||d.permissions.some(x=>!x||!PERMISSIONS.includes(x.key)||typeof x.enabled!=='boolean')||new Set(d.permissions.map(x=>x.key)).size!==d.permissions.length))return NextResponse.json({error:'Invalid permission settings.'},{status:400});
  if(d.status===undefined&&d.role===undefined&&d.permissions===undefined&&d.avatar_url===undefined&&d.phone_number===undefined)return NextResponse.json({error:'No staff changes were supplied.'},{status:400});
  const p=getDatabasePool(),client=await p.connect();
