@@ -35,7 +35,7 @@ WHERE assigned_staff_id IS NOT NULL
   AND btrim(assigned_staff_id::text) !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
 ```
 
-This query must return no rows. The current Production snapshot returned zero conversations, so there were no legacy assignee values to convert at the time of the audit.
+This query must return no rows immediately before the migration. The latest read-only preflight returned no non-UUID assignments. Re-run it immediately before applying the migration; do not rely on an earlier result.
 
 ## Post-migration checks
 
