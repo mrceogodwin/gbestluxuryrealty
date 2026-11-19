@@ -65,6 +65,15 @@ export async function POST(req) {
             WHERE id=$1 AND tenant_id=$11
             RETURNING id,client_id,payment_status,registration_intent,client_status,created_at`,
             [prior.id,reference,file.name.slice(0,255),file.type,bytes,fullName,fields.phone,fields.preferred_location,fields.property_type,[fields.property_id?'Property ID: '+fields.property_id:'',fields.property_description].filter(Boolean).join('\\n').slice(0,1000),tenant.id]);
+        }else if(intent==='general'&&prior.registration_intent==='inspection'&&prior.payment_status==='rejected'){
+          q=await dbClient.query(`UPDATE public.client_registrations SET
+            registration_intent='general',registration_fee_kobo=0,payment_status='not_required',
+            client_status='active',fee_amount=NULL,payment_reference=NULL,receipt_name=NULL,receipt_type=NULL,
+            receipt_data=NULL,approved_at=NULL,approved_by=NULL,admin_note=NULL,
+            full_name=$2,phone=$3,preferred_location=$4,property_type=$5,property_description=$6,updated_at=now()
+            WHERE id=$1 AND tenant_id=$7
+            RETURNING id,client_id,payment_status,registration_intent,client_status,created_at`,
+            [prior.id,fullName,fields.phone,fields.preferred_location,fields.property_type,[fields.property_id?'Property ID: '+fields.property_id:'',fields.property_description].filter(Boolean).join('\\n').slice(0,1000),tenant.id]);
         }else{
           await dbClient.query('ROLLBACK');
           return NextResponse.json({error:'A client account already exists for this email. Please sign in instead of registering again.'},{status:409});
