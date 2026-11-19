@@ -299,7 +299,7 @@ test('client session endpoint verifies tenant ownership and eligible active stat
   assert.match(session, /gbest_client_session/);
   assert.match(session, /token_hash=\$1/);
   assert.match(session, /r\.tenant_id=\$2/);
-  assert.match(session, /payment_status IN \('approved','not_required','pending'\)/);
+  assert.match(session, /payment_status IN \('approved','not_required','pending','rejected'\)/);
   assert.match(session, /client_status='active'/);
   assert.match(session, /Cache-Control/);
   assert.doesNotMatch(session, /SELECT\s+\*/i);
