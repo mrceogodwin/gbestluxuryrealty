@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 import {createHmac,randomInt} from 'node:crypto';
+import {isIP} from 'node:net';
 import {getDatabasePool} from '../../../../lib/db';
 import {resolveSiteTenant} from '../../../../lib/site-tenants';
 import {sendClientRegistrationEmail,escapeHtml} from '../../../../lib/client-registration-email';
@@ -27,7 +28,10 @@ export async function POST(req){
   const pool=getDatabasePool();
   const host=req.headers.get('x-forwarded-host')||req.headers.get('host')||'',tenant=await resolveSiteTenant(pool,host);
   if(!tenant)return NextResponse.json({message:'If an eligible client account matches that email, a sign-in code will be sent.'},{headers:{'Cache-Control':'no-store'}});
-  const ip=(req.headers.get('x-forwarded-for')||'').split(',')[0].trim().slice(0,64);
+  const forwarded=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||'';
+  let ip=forwarded.split(',')[0]?.trim()||'';
+  if(ip.startsWith('[')&&ip.endsWith(']'))ip=ip.slice(1,-1);
+  if(!isIP(ip))ip='';
   const rate=await pool.query(`SELECT count(*) FILTER(WHERE email_normalized=$1 AND created_at>now()-interval '15 minutes')::int AS email_count,
     count(*) FILTER(WHERE created_at>now()-interval '15 minutes' AND $2<>'' AND client_ip=$2)::int AS ip_count,
     max(created_at) FILTER(WHERE email_normalized=$1) AS last_email_request
