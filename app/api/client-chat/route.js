@@ -31,7 +31,7 @@ export async function GET(req){
    WHERE c.tenant_id=$1 AND c.registration_id=$2
    ORDER BY m.created_at ASC NULLS FIRST LIMIT 500`,[client.tenant_id,client.id]);
   const first=q.rows[0];
-  const staff=first?.conversation_id?await pool.query(`SELECT a.id,a.full_name,a.avatar_url,a.phone_number,CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS presence,p.last_seen_at
+  const staff=first?.conversation_id?await pool.query(`SELECT a.id,a.full_name,a.avatar_url,a.phone_number,CASE WHEN p.last_seen_at>now()-interval '120 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS presence,p.last_seen_at
    FROM public.client_chat_conversations c
    JOIN public.client_chat_participants cp ON cp.conversation_id=c.id AND cp.removed_at IS NULL
    JOIN public.staff_accounts a ON a.id=cp.staff_id AND a.status='active'
@@ -50,7 +50,7 @@ export async function POST(req){
  if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
  try{
   const client=await clientContext(req);
-  if(!client)return NextResponse.json({error:'Sign in with an approved G-BEST client account to send messages.'},{status:401,headers:noStore});
+  if(!client)return NextResponse.json({error:'Sign in with an active G-BEST client account to send messages.'},{status:401,headers:noStore});
   const pool=getDatabasePool();
   const body=await req.json().catch(()=>null);
   if(body?.action==='presence'){
