@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feat/gbest-client-auth
+      - feat/gbest-marketing-content
   push:
     branches:
       - feat/gbest-prelaunch-registration-chat
