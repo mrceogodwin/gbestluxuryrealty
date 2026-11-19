@@ -56,7 +56,7 @@ export async function GET(req){
      (SELECT COUNT(*)::int FROM public.client_registrations WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1)) AS registered_total,
      (SELECT COUNT(*)::int FROM public.client_registrations WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1) AND created_at>=now()-interval '7 days') AS joined_7d,
      (SELECT COUNT(*)::int FROM public.client_presence WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1) AND last_seen_at>=now()-interval '30 days') AS interacted_30d,
-     (SELECT COUNT(*)::int FROM public.client_presence WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1) AND presence='online' AND last_seen_at>now()-interval '90 seconds') AS online_now,
+     (SELECT COUNT(*)::int FROM public.client_presence WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1) AND presence='online' AND last_seen_at>now()-interval '120 seconds') AS online_now,
      (SELECT COUNT(*)::int FROM public.inspection_requests WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1)) AS inspection_total,
      (SELECT COUNT(*)::int FROM public.inspection_requests WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1) AND status='pending') AS inspection_pending`,[],{registered_total:0,joined_7d:0,interacted_30d:0,online_now:0,inspection_total:0,inspection_pending:0},'client-activity'):null,
    admin?safeRows(`SELECT r.id,r.full_name,r.email,r.phone,p.presence,p.last_seen_at
