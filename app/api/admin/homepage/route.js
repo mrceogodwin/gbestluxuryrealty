@@ -3,7 +3,7 @@ import { ensureHomepageTables } from '../../../../lib/homepage-cms';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
-const allowed=new Set(['eyebrow','title','description','buttonText','buttonUrl','imageUrl','videoUrl','extraText','visible','imageAlt','mobileImageUrl','imagePosition','layout','alignment','fontFamily','backgroundColor','textColor','accentColor','overlayOpacity','padding','slides','autoplay','autoplayInterval','transition','showArrows','showDots','columns','itemsPerView']);
+const allowed=new Set(['eyebrow','title','description','buttonText','buttonUrl','imageUrl','videoUrl','extraText','visible','imageAlt','mobileImageUrl','imagePosition','layout','alignment','fontFamily','backgroundColor','textColor','accentColor','overlayOpacity','padding','slides','autoplay','autoplayInterval','transition','showArrows','showDots','columns','itemsPerView','socialLinks','headerLogoUrl','footerLogoUrl']);
 function cleanContent(value){
  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Section content must be an object.');
  const out={};
@@ -11,6 +11,13 @@ function cleanContent(value){
   if(!allowed.has(key))continue;
   if(['visible','autoplay','showArrows','showDots'].includes(key)){out[key]=Boolean(val);continue;}
   if(['overlayOpacity','autoplayInterval','columns','itemsPerView'].includes(key)){const n=Number(val);if(!Number.isFinite(n)||n<0||n>10000)throw new Error('Invalid numeric setting: '+key);out[key]=n;continue;}
+  if(key==='headerLogoUrl'||key==='footerLogoUrl'){const url=String(val||'').trim();if(url&&(!/^https:\/\//i.test(url)||url.length>2000))throw new Error('Brand logo must be a valid HTTPS media URL.');out[key]=url;continue;}
+  if(key==='socialLinks'){
+   if(!val||typeof val!=='object'||Array.isArray(val))throw new Error('Social links must be an object.');
+   const platforms=['instagram','facebook','x','linkedin','youtube','tiktok','whatsapp'];const links={};
+   for(const platform of platforms){const url=String(val[platform]||'').trim();if(!url)continue;if(url.length>1200||!/^https:\/\//i.test(url))throw new Error('Each social profile must be a valid HTTPS URL.');links[platform]=url;}
+   out.socialLinks=links;continue;
+  }
   if(key==='slides'){if(!Array.isArray(val)||val.length>30)throw new Error('Carousel slides must be a list of up to 30 items.');out.slides=val.slice(0,30).map((slide)=>{if(!slide||typeof slide!=='object'||Array.isArray(slide))throw new Error('Each slide must be an object.');const clean={};for(const k of ['eyebrow','title','description','imageUrl','imageAlt','buttonText','buttonUrl'])if(typeof slide[k]==='string')clean[k]=slide[k].trim().slice(0,1200);if(clean.imageUrl&&!/^https:\/\//i.test(clean.imageUrl))throw new Error('Slide images must use HTTPS URLs.');if(clean.buttonUrl&&!/^(https:\/\/|\/|#)/i.test(clean.buttonUrl))throw new Error('Slide buttons must use HTTPS URLs or local paths.');return clean;});continue;}
   if(typeof val!=='string')throw new Error('Content fields must be text.');
   const max=key==='description'||key==='extraText'?4000:['imageUrl','videoUrl','buttonUrl','mobileImageUrl'].includes(key)?1200:500;

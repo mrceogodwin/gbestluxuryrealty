@@ -6,7 +6,7 @@ import {hashToken,verifyPassword,newOpaqueToken,STAFF_COOKIE,STAFF_SESSION_SECON
 export const runtime='nodejs';export const dynamic='force-dynamic';
 const WINDOW_MINUTES=15, LOCK_MINUTES=15, EMAIL_MAX_FAILURES=5, IP_MAX_FAILURES=20;
 function loginAttemptKeys(req,email){
- const forwarded=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||req.headers.get('x-forwarded-for')||'';
+ const forwarded=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-real-ip')||'';
  let candidate=forwarded.split(',')[0]?.trim()||'';
  if(candidate.startsWith('[')&&candidate.endsWith(']'))candidate=candidate.slice(1,-1);
  // Vercel overwrites its forwarded-IP headers at the edge; validate before hashing.
@@ -18,7 +18,7 @@ function loginAttemptKeys(req,email){
 }
 export async function GET(req){try{const staff=await getStaffSession(req);if(!staff)return NextResponse.json({authenticated:false,staff:null},{headers:{'Cache-Control':'no-store'}});const q=await getDatabasePool().query(`SELECT rp.permission_key FROM public.staff_role_permissions rp WHERE rp.role=$1 AND rp.enabled=true AND NOT EXISTS(SELECT 1 FROM public.staff_account_permissions ap WHERE ap.staff_id=$2 AND ap.permission_key=rp.permission_key) UNION SELECT permission_key FROM public.staff_account_permissions WHERE staff_id=$2 AND enabled=true`,[staff.role,staff.id]);return NextResponse.json({authenticated:true,staff:{id:staff.id,full_name:staff.full_name,email:staff.email,role:staff.role,permissions:q.rows.map(x=>x.permission_key)}},{headers:{'Cache-Control':'no-store'}})}catch{return NextResponse.json({authenticated:false,staff:null},{headers:{'Cache-Control':'no-store'}})}}
 export async function POST(req){
- if(req.headers.get('origin')&&req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
+ if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
  let body;try{body=await req.json()}catch{return NextResponse.json({error:'Invalid login request.'},{status:400})}
  const email=String(body?.email||'').trim().toLowerCase(),password=String(body?.password||'');
  if(email.length>254||password.length>128||!email||!password)return NextResponse.json({error:'Enter your work email and password.'},{status:400});
@@ -50,6 +50,7 @@ export async function POST(req){
  }catch(e){console.error('Staff login',e.code||e.message);return NextResponse.json({error:'Staff sign-in is temporarily unavailable.'},{status:500});}
 }
 export async function DELETE(req){
+ if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
  const token=req.cookies.get(STAFF_COOKIE)?.value;
  if(token){try{await getDatabasePool().query('UPDATE public.staff_sessions SET revoked_at=now() WHERE token_hash=$1 AND revoked_at IS NULL',[hashToken(token)]);}catch(e){console.error('Staff logout',e.code||e.message)}}
  const response=NextResponse.json({ok:true});response.cookies.set(STAFF_COOKIE,'',{...staffCookieOptions,maxAge:0});return response;
