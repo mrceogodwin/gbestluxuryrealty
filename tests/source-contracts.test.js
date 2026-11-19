@@ -453,9 +453,9 @@ test('client OTP throttling does not trust client-supplied X-Forwarded-For', asy
 
 test('tenant bootstrap uses balanced PostgreSQL dollar-quoted DO blocks', async () => {
   const code = await source('lib/site-tenants.js');
-  const opens = (code.match(/DO \\$\\$/g) || []).length;
-  const closes = (code.match(/END \\$\\$/g) || []).length;
+  const opens = (code.match(/DO \$\$/g) || []).length;
+  const closes = (code.match(/END \$\$/g) || []).length;
   assert.ok(opens > 0, 'tenant bootstrap contains guarded DO blocks');
   assert.equal(opens, closes, 'every DO block has a matching dollar-quote terminator');
-  assert.doesNotMatch(code, /DO \\$(?!\\$)\\s+BEGIN/);
+  assert.doesNotMatch(code, /DO \$(?!\$)\s+BEGIN/);
 });
