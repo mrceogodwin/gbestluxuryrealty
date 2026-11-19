@@ -24,7 +24,7 @@ export async function POST(req){
   // A submitted email address alone must never authorize an inspection booking.
   const sessionToken=req.cookies.get('gbest_client_session')?.value;
   if(!sessionToken)return NextResponse.json({error:'Please sign in with your approved G-BEST client account before booking an inspection.'},{status:401});
-  const session=await pool.query("SELECT r.id,r.email,r.full_name,r.phone FROM public.client_sessions s JOIN public.client_registrations r ON r.id::text=s.registration_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND r.payment_status='approved' AND r.client_status='active' AND r.tenant_id=$2 LIMIT 1",[createHash('sha256').update(sessionToken).digest('hex'),tenant.id]);
+  const session=await pool.query("SELECT r.id,r.email,r.full_name,r.phone FROM public.client_sessions s JOIN public.client_registrations r ON r.id::text=s.registration_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND r.registration_intent='inspection' AND r.payment_status='approved' AND r.client_status='active' AND r.tenant_id=$2 LIMIT 1",[createHash('sha256').update(sessionToken).digest('hex'),tenant.id]);
   if(!session.rowCount)return NextResponse.json({error:'Your client session is expired or your registration/payment is not approved. Please sign in again after approval.'},{status:401});
   if(session.rows[0].email.toLowerCase()!==email.toLowerCase())return NextResponse.json({error:'The booking email must match your approved client account.'},{status:403});
   // Identity and contact details must come from the approved registration, never the browser payload.
