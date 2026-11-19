@@ -362,7 +362,7 @@ test('staff presence is authenticated and heartbeat-based', async () => {
   assert.match(api, /getStaffSession/);
   assert.match(api, /INSERT INTO public\.staff_presence/);
   assert.match(layout, /\/api\/staff\/presence/);
-  assert.match(layout, /45000/);
+  assert.match(layout, /60000/);
 });
 
 test('Super Admin chat assignment exposes staff presence and contact shortcuts', async () => {
@@ -384,10 +384,10 @@ test('Super Admin client intelligence reports registrations, engagement, online 
   assert.match(api, /interacted_30d/);
   assert.match(api, /online_now/);
   assert.match(api, /inspection_total/);
-  assert.match(api, /last_seen_at>now\(\)-interval '90 seconds'/);
+  assert.match(api, /last_seen_at>now\(\)-interval '120 seconds'/);
   assert.match(page, /Client intelligence/);
   assert.match(page, /sec ago/);
-  assert.match(home, /setInterval\(beat,60000\)/);
+  assert.match(home, /setInterval\(beat,90000\)/);
 });
 
 test('inspection approvals create idempotent Google Calendar events and retain Neon as source of truth', async () => {
