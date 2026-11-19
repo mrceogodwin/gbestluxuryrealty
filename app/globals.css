@@ -3308,3 +3308,18 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .gb-agent-minimized{align-self:flex-end}
 }
 @media(prefers-reduced-motion:reduce){.gb-agent-panel,.gb-agent-message{animation:none!important;transition:none!important}}
+
+/* G-BEST agent chat: roomy, contained panel rather than a narrow, full-height sheet. */
+.gb-agent-root{left:auto!important;right:16px!important;top:auto!important;bottom:16px!important;width:auto!important;max-width:calc(100vw - 32px)!important;align-items:flex-end!important;gap:10px!important}
+.gb-agent-panel{width:min(520px,calc(100vw - 32px))!important;height:min(720px,calc(100dvh - 72px))!important;max-height:calc(100dvh - 72px)!important;min-height:360px!important;border-radius:20px!important}
+.gb-agent-messages{min-height:0!important;flex:1 1 auto!important;overflow-y:auto!important}
+.gb-agent-compose{flex:0 0 auto!important}
+@media(max-width:600px){
+ .gb-agent-root{left:12px!important;right:12px!important;bottom:max(12px,env(safe-area-inset-bottom))!important;max-width:none!important}
+ .gb-agent-panel{width:100%!important;height:min(78dvh,720px)!important;max-height:calc(100dvh - 72px)!important;min-height:380px!important;border-radius:18px!important}
+ .gb-agent-head{min-height:60px!important;padding:11px 12px!important}
+ .gb-agent-messages{padding:14px 12px!important;gap:10px!important}
+ .gb-agent-gate{margin:2px 0 2px 30px!important;padding:12px!important}
+ .gb-agent-compose{padding:9px!important}
+ .gb-agent-foot{padding-bottom:max(9px,env(safe-area-inset-bottom))!important}
+}
