@@ -19,7 +19,7 @@ export default function SuperAdminLayout({children}){
   const ping=(presence='online')=>fetch('/api/staff/presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({presence}),keepalive:true}).catch(()=>{});
   const beat=()=>{if(document.visibilityState==='visible')ping('online');};
   beat();
-  const timer=setInterval(beat,45000);
+  const timer=setInterval(beat,60000);
   const visibility=()=>ping(document.visibilityState==='visible'?'online':'away');
   document.addEventListener('visibilitychange',visibility);
   return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',visibility);ping('offline');};
