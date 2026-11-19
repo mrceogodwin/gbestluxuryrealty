@@ -330,6 +330,14 @@ test('a rejected inspection upgrade does not lock an existing free client out of
   assert.match(session, /'pending','rejected'/);
 });
 
+test('homepage exposes the in-app CHAT US NOW entry point', async () => {
+  const home = await source('app/page.js');
+  const widget = await source('components/agent-chat-widget.js');
+  assert.match(home, /CHAT US NOW/);
+  assert.match(home, /href="\/\?chat=1"/);
+  assert.match(widget, /Talk to a human/);
+});
+
 test('mobile Agent chat opens as a spacious near-full-screen conversation', async () => {
   const styles = await source('app/globals.css');
   assert.match(styles, /\.gb-agent-panel\{width:100%!important;height:calc\(100dvh - 16px\)!important/);
