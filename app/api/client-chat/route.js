@@ -31,13 +31,13 @@ export async function GET(req){
    WHERE c.tenant_id=$1 AND c.registration_id=$2
    ORDER BY m.created_at ASC NULLS FIRST LIMIT 500`,[client.tenant_id,client.id]);
   const first=q.rows[0];
-  const staff=first?.conversation_id?await pool.query(`SELECT a.id,a.full_name,a.avatar_url,a.phone_number,CASE WHEN p.last_seen_at>now()-interval '120 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '120 seconds' THEN p.presence ELSE 'offline' END AS presence,p.last_seen_at
+  const staff=first?.conversation_id?await pool.query(`SELECT a.id,a.full_name,a.avatar_url,CASE WHEN p.last_seen_at>now()-interval '120 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '120 seconds' THEN p.presence ELSE 'offline' END AS presence,p.last_seen_at
    FROM public.client_chat_conversations c
    JOIN public.client_chat_participants cp ON cp.conversation_id=c.id AND cp.removed_at IS NULL
    JOIN public.staff_accounts a ON a.id=cp.staff_id AND a.status='active'
    LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id
    WHERE c.id=$1
-   UNION SELECT a.id,a.full_name,a.avatar_url,a.phone_number,CASE WHEN p.last_seen_at>now()-interval '120 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '120 seconds' THEN p.presence ELSE 'offline' END,p.last_seen_at
+   UNION SELECT a.id,a.full_name,a.avatar_url,CASE WHEN p.last_seen_at>now()-interval '120 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '120 seconds' THEN p.presence ELSE 'offline' END,p.last_seen_at
    FROM public.client_chat_conversations c JOIN public.staff_accounts a ON a.id=c.assigned_staff_id
    LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id WHERE c.id=$1`,[first.conversation_id]):{rows:[]};
   const events=first?.conversation_id?await pool.query(`SELECT e.event_type,e.created_at,a.full_name,a.avatar_url FROM public.client_chat_handover_events e LEFT JOIN public.staff_accounts a ON a.id::text=e.details->>'staffId' WHERE e.conversation_id=$1 ORDER BY e.created_at DESC LIMIT 12`,[first.conversation_id]):{rows:[]};
