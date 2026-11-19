@@ -16,14 +16,13 @@ export default function SuperAdminLayout({children}){
  useEffect(()=>{if(path==='/admin/login'||path==='/staff/login'||path==='/staff/accept'){setChecking(false);return;}let alive=true;(async()=>{try{const a=await fetch('/api/admin/session',{cache:'no-store'}).then(r=>r.json());if(a.authenticated){if(alive){setStaff(null);setSignedIn(true);setChecking(false)}return;}const s=await fetch('/api/staff/session',{cache:'no-store'}).then(r=>r.json());if(!s.authenticated){router.replace('/staff/login');return;}if(alive){setStaff(s.staff);setSignedIn(true);setChecking(false)}}catch{router.replace('/staff/login')}})();return()=>{alive=false}},[path,router]);
  useEffect(()=>{
   if(!staff||checking)return;
-  let active=true;
   const ping=(presence='online')=>fetch('/api/staff/presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({presence}),keepalive:true}).catch(()=>{});
   const beat=()=>{if(document.visibilityState==='visible')ping('online');};
   beat();
   const timer=setInterval(beat,45000);
   const visibility=()=>ping(document.visibilityState==='visible'?'online':'away');
   document.addEventListener('visibilitychange',visibility);
-  return()=>{active=false;clearInterval(timer);document.removeEventListener('visibilitychange',visibility);if(active)ping('offline');};
+  return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',visibility);ping('offline');};
  },[staff?.id,checking]);
  async function signOut(){if(staff)await fetch('/api/staff/session',{method:'DELETE'});else await fetch('/api/admin/session',{method:'DELETE'});router.replace(staff?'/staff/login':'/admin/login')}
  const access=new Set(staff?.permissions||[]);
