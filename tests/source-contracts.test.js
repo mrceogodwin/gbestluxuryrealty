@@ -310,6 +310,7 @@ test('general client registration is free while inspection registration requires
   const registration = await source('app/api/client-registrations/route.js');
   const migration = await source('db/migrations/20261119_client_registration_intent.sql');
   const inspection = await source('app/api/inspection-requests/route.js');
+  const home = await source('app/page.js');
   assert.match(page, /General enquiries \/ private client messaging — FREE/);
   assert.match(page, /I want to arrange a physical property inspection — ₦15,000 manual verification/);
   assert.match(registration, /intent==='inspection'/);
@@ -317,6 +318,7 @@ test('general client registration is free while inspection registration requires
   assert.match(registration, /registration_intent/);
   assert.match(migration, /payment_status IN \('pending','submitted','approved','rejected','not_required'\)/);
   assert.match(inspection, /registration_intent='inspection' AND r\.payment_status='approved'/);
+  assert.match(home, /clientSession\.registrationIntent!=='inspection'\|\|clientSession\.paymentStatus!=='approved'/);
 });
 
 test('a rejected inspection upgrade does not lock an existing free client out of messaging', async () => {
