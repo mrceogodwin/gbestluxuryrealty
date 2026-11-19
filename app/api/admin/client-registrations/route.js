@@ -5,14 +5,7 @@ export const runtime='nodejs'; export const dynamic='force-dynamic';
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
 import {isAdminRequest} from '../../../../lib/admin-auth';
 import {getStaffSession,hasStaffPermission} from '../../../../lib/staff-auth';
-async function ready(pool){await pool.query(`CREATE TABLE IF NOT EXISTS public.client_registrations (
- id uuid PRIMARY KEY DEFAULT gen_random_uuid(), surname varchar(100) NOT NULL, other_names varchar(160) NOT NULL,
- address text NOT NULL,email varchar(254) NOT NULL,phone varchar(40) NOT NULL,nationality varchar(80) NOT NULL,
- state_of_origin varchar(100) NOT NULL,lga varchar(100) NOT NULL,occupation varchar(120) NOT NULL,
- property_type varchar(100) NOT NULL,price_range varchar(160) NOT NULL,preferred_location varchar(180) NOT NULL,
- property_description text,terms_accepted boolean NOT NULL DEFAULT false,fee_amount numeric(12,2),payment_reference varchar(120),
- receipt_name varchar(255),receipt_type varchar(100),receipt_data bytea,payment_status varchar(24) NOT NULL DEFAULT 'pending',
- admin_note text,created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now())`);await pool.query(`ALTER TABLE public.client_registrations ADD COLUMN IF NOT EXISTS full_name varchar(260), ADD COLUMN IF NOT EXISTS client_id varchar(40), ADD COLUMN IF NOT EXISTS email_normalized varchar(254), ADD COLUMN IF NOT EXISTS registration_fee_kobo bigint, ADD COLUMN IF NOT EXISTS client_status varchar(24) NOT NULL DEFAULT 'pending', ADD COLUMN IF NOT EXISTS approved_at timestamptz, ADD COLUMN IF NOT EXISTS approved_by varchar(120), ADD COLUMN IF NOT EXISTS fee_amount numeric(12,2), ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now()`);await pool.query(`CREATE TABLE IF NOT EXISTS public.client_registration_audit (id bigserial PRIMARY KEY,registration_id uuid NOT NULL REFERENCES public.client_registrations(id) ON DELETE CASCADE,old_status varchar(24),new_status varchar(24) NOT NULL,admin_note text,actor_type varchar(24) NOT NULL DEFAULT 'legacy_unknown',actor_email varchar(254) NOT NULL DEFAULT 'unknown',actor_staff_id uuid,changed_at timestamptz NOT NULL DEFAULT now())`);await pool.query(`ALTER TABLE public.client_registration_audit ADD COLUMN IF NOT EXISTS actor_type varchar(24) NOT NULL DEFAULT 'legacy_unknown', ADD COLUMN IF NOT EXISTS actor_email varchar(254) NOT NULL DEFAULT 'unknown', ADD COLUMN IF NOT EXISTS actor_staff_id uuid`);await pool.query(`ALTER TABLE public.client_registrations ALTER COLUMN approved_by TYPE varchar(254)`);}
+async function registrationSchemaReady(pool){const q=await pool.query("SELECT to_regclass('public.client_registrations') AS registrations,to_regclass('public.client_registration_audit') AS audit");return Boolean(q.rows[0]?.registrations&&q.rows[0]?.audit);}
 export async function GET(req){
  let staff=null;
  const isSuperAdmin=await isAdminRequest(req);
@@ -24,7 +17,7 @@ export async function GET(req){
   const canReviewPayments=!isSuperAdmin&&await hasStaffPermission(staff,'payments.review');
   const canViewClientProfiles=isSuperAdmin||(await hasStaffPermission(staff,'clients.view'))||(await hasStaffPermission(staff,'clients.manage'));
   if(!isSuperAdmin&&!canReviewPayments&&!canViewClientProfiles)return NextResponse.json({error:'Unauthorized'},{status:401});
-  const pool=getDatabasePool();await ready(pool);
+  const pool=getDatabasePool();if(!await registrationSchemaReady(pool))return NextResponse.json({error:'Registration database migration is required before this workspace can be used.'},{status:503,headers:{'Cache-Control':'no-store'}});
   const auditSelect=`COALESCE((SELECT json_agg(json_build_object('old_status',a.old_status,'new_status',a.new_status,'admin_note',a.admin_note,'actor_type',a.actor_type,'actor_email',a.actor_email,'changed_at',a.changed_at) ORDER BY a.changed_at DESC) FROM public.client_registration_audit a WHERE a.registration_id=public.client_registrations.id),'[]'::json) AS audit_history`;
   const canViewPaymentDetails=isSuperAdmin||canReviewPayments;
   const fields=isSuperAdmin
