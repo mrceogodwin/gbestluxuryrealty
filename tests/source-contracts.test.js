@@ -569,3 +569,29 @@ test('Super Admin login uses scalar IP throttle parameters and identifies failin
   assert.ok(!route.includes('attempt_key=ANY($1::text[])'));
   assert.ok(route.includes("console.error('Admin login',phase,{code:e.code||null,message:e.message||'Unknown database error'"));
 });
+
+
+test('client registration APIs never create or alter Neon schema at request time', async () => {
+  const publicApi = await source('app/api/client-registrations/route.js');
+  const adminApi = await source('app/api/admin/client-registrations/route.js');
+  for (const code of [publicApi, adminApi]) {
+    assert.doesNotMatch(code, /\\b(?:CREATE|ALTER|DROP)\\s+(?:TABLE|INDEX|COLUMN)\\b/i);
+    assert.match(code, /to_regclass\\('public\\.client_registrations'\\)/);
+  }
+  assert.match(publicApi, /to_regclass\\('public\\.client_registration_rate_limits'\\)/);
+  assert.match(adminApi, /to_regclass\\('public\\.client_registration_audit'\\)/);
+  assert.match(publicApi, /status:503/);
+  assert.match(adminApi, /status:503/);
+});
+
+test('client registration migration provisions registration, rate-limit and audit tables explicitly', async () => {
+  const sql = await source('database/migrations/20261119_001_client_registrations.sql');
+  assert.ok(sql.startsWith('-- G-BEST client registration and payment review schema'));
+  assert.match(sql, /BEGIN;[\\s\\S]*COMMIT;/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\\.client_registrations/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\\.client_registration_rate_limits/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\\.client_registration_audit/);
+  assert.match(sql, /REFERENCES public\\.client_registrations\\(id\\) ON DELETE CASCADE/);
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS actor_staff_id uuid/);
+  assert.match(sql, /CREATE INDEX IF NOT EXISTS/);
+});
