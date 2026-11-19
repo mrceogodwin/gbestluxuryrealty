@@ -21,7 +21,7 @@ async function clientContext(req){
 export async function GET(req){
  try{
   const client=await clientContext(req);
-  if(!client)return NextResponse.json({error:'Sign in with an approved G-BEST client account to use Agent messaging.'},{status:401,headers:noStore});
+  if(!client)return NextResponse.json({error:'Sign in with an active G-BEST client account to use Agent messaging.'},{status:401,headers:noStore});
   const pool=getDatabasePool();
   await pool.query("UPDATE public.client_chat_messages m SET read_at=COALESCE(m.read_at,now()) FROM public.client_chat_conversations c WHERE m.conversation_id=c.id AND c.tenant_id=$1 AND c.registration_id=$2 AND m.sender_type IN ('admin','staff') AND m.read_at IS NULL",[client.tenant_id,client.id]);
   const q=await pool.query(`SELECT c.id AS conversation_id,c.status,c.handoff_status,c.handoff_requested_at,c.created_at,c.last_message_at,
