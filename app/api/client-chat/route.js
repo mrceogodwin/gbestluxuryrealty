@@ -83,6 +83,18 @@ export async function POST(req){
    const saved=await db.query(`INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body)
     VALUES($1,'client',$2,$3) RETURNING id,sender_type,body,created_at,read_at`,[conv.rows[0].id,String(client.id),message]);
    await db.query('UPDATE public.client_chat_conversations SET last_message_at=now(),last_client_message_at=now(),updated_at=now() WHERE id=$1',[conv.rows[0].id]);
+   await db.query(`INSERT INTO public.staff_notifications(tenant_id,staff_id,notification_type,title,body,reference_type,reference_id)
+    SELECT c.tenant_id,recipients.staff_id,'team_message',$3,left($4,420),'client_chat',c.id::text
+    FROM public.client_chat_conversations c
+    JOIN (
+      SELECT c2.assigned_staff_id AS staff_id FROM public.client_chat_conversations c2
+       WHERE c2.id=$2 AND c2.tenant_id=$1 AND c2.assigned_staff_id IS NOT NULL
+      UNION
+      SELECT cp.staff_id FROM public.client_chat_participants cp
+       WHERE cp.conversation_id=$2 AND cp.tenant_id=$1 AND cp.removed_at IS NULL
+    ) recipients ON true
+    JOIN public.staff_accounts a ON a.id=recipients.staff_id AND a.tenant_id=c.tenant_id AND a.status='active'
+    WHERE c.id=$2 AND c.tenant_id=$1`,[client.tenant_id,conv.rows[0].id,'New client message from '+client.full_name,message.slice(0,420)]);
    await db.query('COMMIT');
    let agentMessage=null,suggestHuman=false;
    try{
