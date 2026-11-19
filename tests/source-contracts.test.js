@@ -313,7 +313,7 @@ test('general client registration is free while inspection registration requires
   assert.match(page, /General enquiries \/ private client messaging — FREE/);
   assert.match(page, /I want to arrange a physical property inspection — ₦15,000 manual verification/);
   assert.match(registration, /intent==='inspection'/);
-  assert.match(registration, /'not_required':'pending'/);
+  assert.match(registration, /intent==='inspection'\?'pending':'not_required'/);
   assert.match(registration, /registration_intent/);
   assert.match(migration, /payment_status IN \('pending','submitted','approved','rejected','not_required'\)/);
   assert.match(inspection, /registration_intent='inspection' AND r\.payment_status='approved'/);
