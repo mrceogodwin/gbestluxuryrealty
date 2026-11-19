@@ -397,7 +397,7 @@ test('Super Admin client intelligence reports registrations, engagement, online 
   assert.match(api, /interacted_30d/);
   assert.match(api, /online_now/);
   assert.match(api, /inspection_total/);
-  assert.match(api, /last_seen_at>now\(\)-interval '120 seconds'/);
+  assert.match(api, /last_seen_at>now\(\)-interval '90 seconds'/);
   assert.match(page, /Client intelligence/);
   assert.match(page, /sec ago/);
   assert.match(home, /setInterval\(beat,90000\)/);
