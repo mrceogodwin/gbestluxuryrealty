@@ -319,6 +319,15 @@ test('general client registration is free while inspection registration requires
   assert.match(inspection, /registration_intent='inspection' AND r\.payment_status='approved'/);
 });
 
+test('a rejected inspection upgrade does not lock an existing free client out of messaging', async () => {
+  const registration = await source('app/api/client-registrations/route.js');
+  const decision = await source('app/api/admin/client-registrations/route.js');
+  const session = await source('app/api/client-auth/session/route.js');
+  assert.match(registration, /prior\.registration_intent==='inspection'&&prior\.payment_status==='rejected'/);
+  assert.match(decision, /\$2='approved' OR \$5='active'/);
+  assert.match(session, /'pending','rejected'/);
+});
+
 test('mobile Agent chat opens as a spacious near-full-screen conversation', async () => {
   const styles = await source('app/globals.css');
   assert.match(styles, /\.gb-agent-panel\{width:100%!important;height:calc\(100dvh - 16px\)!important/);
