@@ -34,7 +34,7 @@ export async function POST(req){
     await client.query('UPDATE public.client_auth_challenges SET attempts=$2,used_at=CASE WHEN $2>=5 THEN now() ELSE used_at END WHERE id=$1',[challenge.id,attempts]);
     await client.query('COMMIT');return NextResponse.json({error:'That code is invalid or expired. Request a new one.'},{status:400});
    }
-   const eligible=await client.query(`SELECT id FROM public.client_registrations WHERE id::text=$1 AND tenant_id=$2 AND lower(email)=$3 AND payment_status='approved' AND client_status='active' LIMIT 1`,[challenge.registration_id,tenant.id,email]);
+   const eligible=await client.query(`SELECT id FROM public.client_registrations WHERE id::text=$1 AND tenant_id=$2 AND lower(email)=$3 AND payment_status IN ('approved','not_required','pending') AND client_status='active' LIMIT 1`,[challenge.registration_id,tenant.id,email]);
    if(!eligible.rowCount){await client.query('UPDATE public.client_auth_challenges SET used_at=now() WHERE id=$1',[challenge.id]);await client.query('COMMIT');return NextResponse.json({error:'That code is invalid or expired. Request a new one.'},{status:400});}
    await client.query('UPDATE public.client_auth_challenges SET used_at=now() WHERE id=$1',[challenge.id]);
    registrationId=String(challenge.registration_id);
