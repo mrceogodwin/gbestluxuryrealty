@@ -53,12 +53,12 @@ export async function GET(req){
    can.media?safeQuery("SELECT COUNT(*)::int AS total FROM public.admin_media_assets WHERE ($1::bigint IS NULL OR tenant_id=$1)",[tenantId],{total:0},'media'):null,
    can.finance?safeQuery("SELECT COUNT(*) FILTER(WHERE payment_status='pending')::int AS pending_count,COUNT(*) FILTER(WHERE payment_status='approved')::int AS approved_count,COALESCE(SUM(fee_amount) FILTER(WHERE payment_status='approved'),0)::numeric(14,2)::text AS approved_amount,COALESCE(SUM(fee_amount) FILTER(WHERE payment_status='pending'),0)::numeric(14,2)::text AS pending_amount,COUNT(*) FILTER(WHERE payment_status='rejected')::int AS rejected_count FROM public.client_registrations",[],{pending_count:0,approved_count:0,approved_amount:'0.00',pending_amount:'0.00',rejected_count:0},'finance'):null,
    admin?safeQuery(`SELECT
-     (SELECT COUNT(*)::int FROM public.client_registrations WHERE tenant_id=$1) AS registered_total,
-     (SELECT COUNT(*)::int FROM public.client_registrations WHERE tenant_id=$1 AND created_at>=now()-interval '7 days') AS joined_7d,
-     (SELECT COUNT(*)::int FROM public.client_presence WHERE tenant_id=$1 AND last_seen_at>=now()-interval '30 days') AS interacted_30d,
-     (SELECT COUNT(*)::int FROM public.client_presence WHERE tenant_id=$1 AND presence='online' AND last_seen_at>now()-interval '90 seconds') AS online_now,
-     (SELECT COUNT(*)::int FROM public.inspection_requests WHERE tenant_id=$1) AS inspection_total,
-     (SELECT COUNT(*)::int FROM public.inspection_requests WHERE tenant_id=$1 AND status='pending') AS inspection_pending`,[null],{registered_total:0,joined_7d:0,interacted_30d:0,online_now:0,inspection_total:0,inspection_pending:0},'client-activity'):null,
+     (SELECT COUNT(*)::int FROM public.client_registrations WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1)) AS registered_total,
+     (SELECT COUNT(*)::int FROM public.client_registrations WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1) AND created_at>=now()-interval '7 days') AS joined_7d,
+     (SELECT COUNT(*)::int FROM public.client_presence WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1) AND last_seen_at>=now()-interval '30 days') AS interacted_30d,
+     (SELECT COUNT(*)::int FROM public.client_presence WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1) AND presence='online' AND last_seen_at>now()-interval '90 seconds') AS online_now,
+     (SELECT COUNT(*)::int FROM public.inspection_requests WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1)) AS inspection_total,
+     (SELECT COUNT(*)::int FROM public.inspection_requests WHERE tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1) AND status='pending') AS inspection_pending`,[],{registered_total:0,joined_7d:0,interacted_30d:0,online_now:0,inspection_total:0,inspection_pending:0},'client-activity'):null,
    admin?safeRows(`SELECT r.id,r.full_name,r.email,r.phone,p.presence,p.last_seen_at
      FROM public.client_presence p JOIN public.client_registrations r ON r.id=p.registration_id AND r.tenant_id=p.tenant_id
      WHERE p.tenant_id=(SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1)
