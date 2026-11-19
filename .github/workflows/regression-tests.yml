@@ -2,7 +2,7 @@ name: Regression Tests
 
 on:
   pull_request:
-    branches: [main, master, feat/homepage-client-registration-entry]
+    branches: [main, master, feat/homepage-client-registration-entry, integration/registration-security-review]
   push:
     branches: [fix/permissions-client-payment-audit]
 
