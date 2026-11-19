@@ -3272,3 +3272,39 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .gb-agent-foot{font-size:6px;padding-bottom:8px}
  .gb-agent-minimized{padding:5px 10px;font-size:11px}
 }
+
+
+/* G-BEST chat panel: spacious desktop panel and near-full-screen mobile conversation. */
+@media(min-width:641px){
+ .gb-agent-panel{width:min(440px,calc(100vw - 32px));height:min(680px,calc(100dvh - 64px));min-height:420px;border-radius:20px}
+ .gb-agent-head{padding:16px 16px;gap:12px}
+ .gb-agent-messages{padding:20px 17px;gap:14px}
+ .gb-agent-message{max-width:90%}
+ .gb-agent-message p{font-size:14px;line-height:1.6;padding:13px 15px}
+ .gb-agent-gate{padding:18px;margin-left:32px}
+ .gb-agent-compose{padding:13px;gap:10px}
+ .gb-agent-compose input{min-height:48px;font-size:14px}
+ .gb-agent-compose button{width:46px;height:46px;flex:0 0 46px}
+ .gb-agent-foot{padding:8px 10px 12px;font-size:7px}
+}
+@media(max-width:640px){
+ .gb-agent-root{left:8px!important;right:8px!important;top:auto!important;bottom:8px!important;width:auto!important;max-width:none!important;align-items:stretch!important;gap:0!important}
+ .gb-agent-panel{width:100%!important;height:calc(100dvh - 16px)!important;max-height:calc(100dvh - 16px)!important;min-height:0!important;border-radius:18px!important;box-shadow:0 18px 60px #061b12a8!important}
+ .gb-agent-head{min-height:68px;padding:13px 14px;gap:10px;flex:0 0 auto}
+ .gb-agent-avatar{width:42px;height:42px;flex-basis:42px}
+ .gb-agent-head b{font-size:15px}.gb-agent-head small{font-size:8px}
+ .gb-agent-head button{width:34px;height:34px;font-size:22px}
+ .gb-agent-messages{min-height:0;flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:20px 15px;gap:14px}
+ .gb-agent-message{max-width:92%;gap:8px}
+ .gb-agent-message p{font-size:14px;line-height:1.6;padding:13px 14px}
+ .gb-agent-mini{width:28px;height:28px;flex-basis:28px}
+ .gb-agent-gate{margin:2px 0 2px 30px;padding:16px;border-radius:14px}
+ .gb-agent-gate b{font-size:14px}.gb-agent-gate p{font-size:13px;line-height:1.6}
+ .gb-agent-gate>a{font-size:10px;padding:13px}
+ .gb-agent-compose{flex:0 0 auto;padding:11px 12px;gap:9px}
+ .gb-agent-compose input{min-height:50px;padding:12px 15px;font-size:16px!important}
+ .gb-agent-compose button{width:48px;height:48px;flex:0 0 48px;font-size:20px}
+ .gb-agent-foot{flex:0 0 auto;padding:9px 8px max(10px,env(safe-area-inset-bottom));font-size:7px}
+ .gb-agent-minimized{align-self:flex-end}
+}
+@media(prefers-reduced-motion:reduce){.gb-agent-panel,.gb-agent-message{animation:none!important;transition:none!important}}
