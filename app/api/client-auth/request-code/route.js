@@ -39,7 +39,7 @@ export async function POST(req){
   try{
    await client.query('BEGIN');
    const found=await client.query(`SELECT id,full_name,email FROM public.client_registrations
-    WHERE lower(email)= $1 AND tenant_id=$2 AND payment_status='approved' AND client_status='active'
+    WHERE lower(email)= $1 AND tenant_id=$2 AND payment_status IN ('approved','not_required','pending') AND client_status='active'
     ORDER BY updated_at DESC,created_at DESC LIMIT 1 FOR UPDATE`,[email,tenant.id]);
    if(found.rowCount){
     registration=found.rows[0];
