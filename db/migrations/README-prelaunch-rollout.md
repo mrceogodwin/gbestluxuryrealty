@@ -16,6 +16,10 @@ Run these migrations against the Production Neon main branch only after taking a
    - Adds staff phone numbers for Super Admin escalation.
 5. `20261119_client_chat_runtime_compat.sql`
    - Adds assignment metadata, safely converts the legacy assignee column to UUID, and creates staff assignment notifications.
+6. `20261118_flagship_communications.sql`
+   - Creates the staff-to-staff direct/group chat tables, assignment event history, communications audit and supporting indexes. It also ensures the staff notification table exists.
+
+The flagship communications migration must run after `20261119_client_chat_runtime_compat.sql` so the assignee conversion first performs the strict UUID preflight instead of the older compatibility block's legacy fallback. The existing Production schema already contains the foundational client chat, OTP, finance ledger, tenant schedule and inspection-slot tables; verify those objects before considering any older baseline migration.
 
 The migrations are designed to be repeatable where possible. Stop and review any migration error; do not force a partial schema change.
 
