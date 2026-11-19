@@ -30,7 +30,7 @@ export async function GET(req){
         AND s.revoked_at IS NULL
         AND s.expires_at>now()
         AND r.tenant_id=$2
-        AND r.payment_status IN ('approved','not_required','pending')
+        AND r.payment_status IN ('approved','not_required','pending','rejected')
         AND r.client_status='active'
       LIMIT 1`,[tokenHash,tenant.id]);
 
