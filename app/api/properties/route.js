@@ -33,10 +33,11 @@ export async function GET(req) {
         COALESCE(NULLIF(image_url, ''), images[1], '') AS image_url,
         COALESCE(images, ARRAY[]::text[]) AS images,
         description,
-        video_url
+        video_url,
+        status
       FROM public.properties
       WHERE tenant_id=$1
-        AND status IN ('published', 'available')
+        AND status IN ('published', 'available', 'sold')
         AND COALESCE(description,'') !~* '(sample showcase listing|illustrative|design preview|test listing)'
       ORDER BY updated_at DESC, id DESC
     `,[tenant.id]);
