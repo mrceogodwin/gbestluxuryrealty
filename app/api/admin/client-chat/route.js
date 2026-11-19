@@ -30,7 +30,11 @@ export async function GET(req){
     FROM public.client_chat_conversations c JOIN public.client_registrations r ON r.id=c.registration_id AND r.tenant_id=c.tenant_id
     LEFT JOIN public.staff_accounts a ON a.id=c.assigned_staff_id AND a.tenant_id=c.tenant_id
     LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id
-    WHERE c.id=$1 AND c.tenant_id=$2 LIMIT 1`,[id,ctx.tenantId,ctx.admin]);
+    WHERE c.id=$1 AND c.tenant_id=$2
+      AND ($3::boolean OR c.assigned_staff_id=$4
+        OR EXISTS(SELECT 1 FROM public.client_chat_participants cp WHERE cp.conversation_id=c.id AND cp.tenant_id=c.tenant_id AND cp.staff_id=$4 AND cp.removed_at IS NULL)
+        OR EXISTS(SELECT 1 FROM public.client_chat_monitor_access ma WHERE ma.conversation_id=c.id AND ma.tenant_id=c.tenant_id AND ma.staff_id=$4 AND ma.revoked_at IS NULL))
+    LIMIT 1`,[id,ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
    if(!c.rowCount)return NextResponse.json({error:'Conversation not found.'},{status:404});
    const messages=await pool.query(`SELECT id,sender_type,sender_id,body,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at ASC LIMIT 500`,[id]);
    return NextResponse.json({conversation:c.rows[0],messages:messages.rows},{headers:noStore});
@@ -43,7 +47,10 @@ export async function GET(req){
    FROM public.client_chat_conversations c JOIN public.client_registrations r ON r.id=c.registration_id AND r.tenant_id=c.tenant_id
    LEFT JOIN public.staff_accounts a ON a.id=c.assigned_staff_id AND a.tenant_id=c.tenant_id
    LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id
-   WHERE c.tenant_id=$1 ORDER BY c.last_message_at DESC NULLS LAST,c.created_at DESC LIMIT 200`,[ctx.tenantId,ctx.admin]);
+   WHERE c.tenant_id=$1 AND ($2::boolean OR c.assigned_staff_id=$3
+     OR EXISTS(SELECT 1 FROM public.client_chat_participants cp WHERE cp.conversation_id=c.id AND cp.tenant_id=c.tenant_id AND cp.staff_id=$3 AND cp.removed_at IS NULL)
+     OR EXISTS(SELECT 1 FROM public.client_chat_monitor_access ma WHERE ma.conversation_id=c.id AND ma.tenant_id=c.tenant_id AND ma.staff_id=$3 AND ma.revoked_at IS NULL))
+   ORDER BY c.last_message_at DESC NULLS LAST,c.created_at DESC LIMIT 200`,[ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
   const tenants=ctx.admin?(await pool.query('SELECT id,display_name,status FROM public.site_tenants ORDER BY created_at')).rows:[];
   const staff=ctx.admin?(await pool.query(`SELECT a.id,a.full_name,a.email,a.phone_number,a.avatar_url,a.role,
     CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS presence,
@@ -64,7 +71,10 @@ export async function POST(req){
   const db=await pool.connect();
   try{
    await db.query('BEGIN');
-   const c=await db.query('SELECT id,status,tenant_id FROM public.client_chat_conversations WHERE id=$1 AND tenant_id=$2 FOR UPDATE',[id,ctx.tenantId]);
+   const c=await db.query(`SELECT c.id,c.status,c.tenant_id FROM public.client_chat_conversations c
+    WHERE c.id=$1 AND c.tenant_id=$2 AND ($3::boolean OR c.assigned_staff_id=$4
+      OR EXISTS(SELECT 1 FROM public.client_chat_participants cp WHERE cp.conversation_id=c.id AND cp.tenant_id=c.tenant_id AND cp.staff_id=$4 AND cp.removed_at IS NULL))
+    FOR UPDATE`,[id,ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
    if(!c.rowCount){await db.query('ROLLBACK');return NextResponse.json({error:'Conversation not found.'},{status:404});}
    if(c.rows[0].status!=='open'){await db.query('ROLLBACK');return NextResponse.json({error:'This conversation is closed.'},{status:409});}
    const sender=ctx.admin?'admin':'staff',senderId=ctx.admin?'master-admin':ctx.staff.email;
@@ -84,7 +94,10 @@ export async function PATCH(req){
   if(!/^[0-9a-f-]{36}$/i.test(id)||!['close','reopen','assign','read'].includes(action))return NextResponse.json({error:'Invalid conversation action.'},{status:400});
   const pool=getDatabasePool(),ctx=await context(req,pool,d?.tenantId);
   if(action==='assign'&&!ctx.admin)return NextResponse.json({error:'Only an administrator can assign conversations.'},{status:403});
-  const c=await pool.query('SELECT id FROM public.client_chat_conversations WHERE id=$1 AND tenant_id=$2',[id,ctx.tenantId]);
+  const c=await pool.query(`SELECT c.id FROM public.client_chat_conversations c
+   WHERE c.id=$1 AND c.tenant_id=$2 AND ($3::boolean OR c.assigned_staff_id=$4
+     OR EXISTS(SELECT 1 FROM public.client_chat_participants cp WHERE cp.conversation_id=c.id AND cp.tenant_id=c.tenant_id AND cp.staff_id=$4 AND cp.removed_at IS NULL))
+   `,[id,ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
   if(!c.rowCount)return NextResponse.json({error:'Conversation not found.'},{status:404});
   if(action==='close'||action==='reopen')await pool.query('UPDATE public.client_chat_conversations SET status=$3,updated_at=now() WHERE id=$1 AND tenant_id=$2',[id,ctx.tenantId,action==='close'?'closed':'open']);
   if(action==='assign'){
