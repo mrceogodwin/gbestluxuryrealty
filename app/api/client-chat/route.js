@@ -54,8 +54,9 @@ export async function POST(req){
   const pool=getDatabasePool();
   const body=await req.json().catch(()=>null);
   if(body?.action==='presence'){
-   await pool.query(`INSERT INTO public.client_presence(tenant_id,registration_id,presence,last_seen_at,updated_at) VALUES($1,$2,'online',now(),now()) ON CONFLICT(tenant_id,registration_id) DO UPDATE SET presence='online',last_seen_at=now(),updated_at=now()`,[client.tenant_id,client.id]);
-   return NextResponse.json({ok:true},{headers:noStore});
+   const presence=['online','away','offline'].includes(body?.presence)?body.presence:'online';
+   await pool.query(`INSERT INTO public.client_presence(tenant_id,registration_id,presence,last_seen_at,updated_at) VALUES($1,$2,$3,now(),now()) ON CONFLICT(tenant_id,registration_id) DO UPDATE SET presence=EXCLUDED.presence,last_seen_at=now(),updated_at=now()`,[client.tenant_id,client.id,presence]);
+   return NextResponse.json({ok:true,presence},{headers:noStore});
   }
   if(body?.action==='request-human'){
    const db=await pool.connect();
