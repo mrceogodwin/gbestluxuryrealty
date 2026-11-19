@@ -336,6 +336,51 @@ test('client authentication endpoints never expose OTP hashes or session tokens'
   assert.doesNotMatch(session, /code_hash\s*:/i);
 });
 
+test('Super Admin staff directory stores phone numbers and provides WhatsApp contact', async () => {
+  const api = await source('app/api/admin/staff/route.js');
+  const page = await source('app/admin/super/staff/page.js');
+  const migration = await source('db/migrations/20261119_staff_contact_details.sql');
+  assert.match(api, /phone_number/);
+  assert.match(api, /staff\.phone_changed/);
+  assert.match(page, /PHONE \/ WHATSAPP NUMBER/);
+  assert.match(page, /https:\/\/wa\.me/);
+  assert.match(migration, /ADD COLUMN IF NOT EXISTS phone_number text/);
+});
+
+test('staff presence is authenticated and heartbeat-based', async () => {
+  const api = await source('app/api/staff/presence/route.js');
+  const layout = await source('app/admin/layout.js');
+  assert.match(api, /getStaffSession/);
+  assert.match(api, /INSERT INTO public\.staff_presence/);
+  assert.match(layout, /\/api\/staff\/presence/);
+  assert.match(layout, /45000/);
+});
+
+test('Super Admin chat assignment exposes staff presence and contact shortcuts', async () => {
+  const api = await source('app/api/admin/client-chat/route.js');
+  const page = await source('app/admin/client-chat/page.js');
+  assert.match(api, /assigned_staff_phone_number/);
+  assert.match(api, /client_chat_participants/);
+  assert.match(api, /client_chat_handover_events/);
+  assert.match(page, /HUMAN ASSIGNMENT/);
+  assert.match(page, /WHATSAPP/);
+  assert.match(page, /ASSIGN/);
+});
+
+test('Super Admin client intelligence reports registrations, engagement, online presence and inspections', async () => {
+  const api = await source('app/api/admin/overview/route.js');
+  const page = await source('app/admin/super/overview/page.js');
+  const home = await source('app/page.js');
+  assert.match(api, /registered_total/);
+  assert.match(api, /interacted_30d/);
+  assert.match(api, /online_now/);
+  assert.match(api, /inspection_total/);
+  assert.match(api, /last_seen_at>now\(\)-interval '90 seconds'/);
+  assert.match(page, /Client intelligence/);
+  assert.match(page, /sec ago/);
+  assert.match(home, /setInterval\(beat,60000\)/);
+});
+
 test('inspection approvals create idempotent Google Calendar events and retain Neon as source of truth', async () => {
   const calendar = await source('lib/google-calendar.js');
   const admin = await source('app/api/admin/inspection-requests/route.js');
@@ -358,7 +403,7 @@ test('Google Calendar integration never blocks a saved inspection status when th
   assert.match(admin, /status was saved, but notification emails could not be queued/);
 });
 
-test('client login returns approved clients directly to inspection booking', async () => {
+test('client login returns clients to the intended next page', async () => {
   const login = await source('app/client-login/page.js');
   assert.ok(login.includes("next&&next.startsWith"));
   assert.match(login, /api\/client-auth\/verify-code/);
