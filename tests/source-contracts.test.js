@@ -376,6 +376,19 @@ test('Super Admin chat assignment exposes staff presence and contact shortcuts',
   assert.match(page, /ASSIGN/);
 });
 
+test('staff can only access client conversations assigned to or shared with them', async () => {
+  const api = await source('app/api/admin/client-chat/route.js');
+  const page = await source('app/admin/client-chat/page.js');
+  const migration = await source('db/migrations/20261119_client_chat_runtime_compat.sql');
+  assert.match(api, /c\.assigned_staff_id=\$4/);
+  assert.match(api, /client_chat_participants/);
+  assert.match(api, /client_chat_monitor_access/);
+  assert.match(api, /staff_notifications/);
+  assert.match(page, /setInterval\(\(\)=>load\(\),30000\)/);
+  assert.match(migration, /ALTER COLUMN assigned_staff_id TYPE uuid/);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.staff_notifications/);
+});
+
 test('Super Admin client intelligence reports registrations, engagement, online presence and inspections', async () => {
   const api = await source('app/api/admin/overview/route.js');
   const page = await source('app/admin/super/overview/page.js');
