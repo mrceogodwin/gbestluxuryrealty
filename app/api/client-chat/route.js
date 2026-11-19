@@ -31,13 +31,13 @@ export async function GET(req){
    WHERE c.tenant_id=$1 AND c.registration_id=$2
    ORDER BY m.created_at ASC NULLS FIRST LIMIT 500`,[client.tenant_id,client.id]);
   const first=q.rows[0];
-  const staff=first?.conversation_id?await pool.query(`SELECT a.id,a.full_name,a.avatar_url,CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS presence,p.last_seen_at
+  const staff=first?.conversation_id?await pool.query(`SELECT a.id,a.full_name,a.avatar_url,a.phone_number,CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS presence,p.last_seen_at
    FROM public.client_chat_conversations c
    JOIN public.client_chat_participants cp ON cp.conversation_id=c.id AND cp.removed_at IS NULL
    JOIN public.staff_accounts a ON a.id=cp.staff_id AND a.status='active'
    LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id
    WHERE c.id=$1
-   UNION SELECT a.id,a.full_name,a.avatar_url,CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END,p.last_seen_at
+   UNION SELECT a.id,a.full_name,a.avatar_url,a.phone_number,CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END,p.last_seen_at
    FROM public.client_chat_conversations c JOIN public.staff_accounts a ON a.id=c.assigned_staff_id
    LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id WHERE c.id=$1`,[first.conversation_id]):{rows:[]};
   const events=first?.conversation_id?await pool.query(`SELECT e.event_type,e.created_at,a.full_name,a.avatar_url FROM public.client_chat_handover_events e LEFT JOIN public.staff_accounts a ON a.id::text=e.details->>'staffId' WHERE e.conversation_id=$1 ORDER BY e.created_at DESC LIMIT 12`,[first.conversation_id]):{rows:[]};
@@ -51,6 +51,7 @@ export async function POST(req){
  try{
   const client=await clientContext(req);
   if(!client)return NextResponse.json({error:'Sign in with an approved G-BEST client account to send messages.'},{status:401,headers:noStore});
+  const pool=getDatabasePool();
   const body=await req.json().catch(()=>null);
   if(body?.action==='presence'){
    await pool.query(`INSERT INTO public.client_presence(tenant_id,registration_id,presence,last_seen_at,updated_at) VALUES($1,$2,'online',now(),now()) ON CONFLICT(tenant_id,registration_id) DO UPDATE SET presence='online',last_seen_at=now(),updated_at=now()`,[client.tenant_id,client.id]);
@@ -71,7 +72,7 @@ export async function POST(req){
   }
   const message=String(body?.message||'').trim();
   if(!message||message.length>4000)return NextResponse.json({error:'Enter a message of 1–4,000 characters.'},{status:400});
-  const pool=getDatabasePool(),db=await pool.connect();
+  const db=await pool.connect();
   try{
    await db.query('BEGIN');
    const conv=await db.query(`INSERT INTO public.client_chat_conversations(tenant_id,registration_id,last_message_at)
