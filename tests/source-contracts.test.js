@@ -440,3 +440,12 @@ test('client login returns clients to the intended next page', async () => {
   assert.ok(login.includes("next&&next.startsWith"));
   assert.match(login, /api\/client-auth\/verify-code/);
 });
+
+
+test('client OTP throttling does not trust client-supplied X-Forwarded-For', async () => {
+  const code = await source('app/api/client-auth/request-code/route.js');
+  assert.match(code, /x-vercel-forwarded-for/);
+  assert.match(code, /x-real-ip/);
+  assert.match(code, /isIP\(ip\)/);
+  assert.doesNotMatch(code, /get\('x-forwarded-for'\)/i);
+});
