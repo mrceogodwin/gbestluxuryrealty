@@ -15,7 +15,7 @@ async function clientContext(req){
  const q=await pool.query(`SELECT r.id,r.tenant_id,r.full_name,r.email,r.client_id
   FROM public.client_sessions s JOIN public.client_registrations r ON r.id::text=s.registration_id
   WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now()
-   AND r.tenant_id=$2 AND r.payment_status IN ('approved','not_required','pending') AND r.client_status='active' LIMIT 1`,[hash,tenant.id]);
+   AND r.tenant_id=$2 AND r.payment_status IN ('approved','not_required','pending','rejected') AND r.client_status='active' LIMIT 1`,[hash,tenant.id]);
  return q.rows[0]||null;
 }
 export async function GET(req){
