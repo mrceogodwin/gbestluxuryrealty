@@ -25,25 +25,25 @@ export async function GET(req){
   if(id){
    if(!/^[0-9a-f-]{36}$/i.test(id))return NextResponse.json({error:'Invalid conversation ID.'},{status:400});
    const c=await pool.query(`SELECT c.id,c.status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.id AS registration_id,r.client_id,r.full_name,r.email,r.phone,
-    a.full_name AS assigned_staff_name,a.avatar_url AS assigned_staff_avatar_url,a.phone_number AS assigned_staff_phone_number,a.email AS assigned_staff_email,
+    a.full_name AS assigned_staff_name,a.avatar_url AS assigned_staff_avatar_url,CASE WHEN $3::boolean THEN a.phone_number END AS assigned_staff_phone_number,CASE WHEN $3::boolean THEN a.email END AS assigned_staff_email,
     CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS assigned_staff_presence,p.last_seen_at AS assigned_staff_last_seen_at
     FROM public.client_chat_conversations c JOIN public.client_registrations r ON r.id=c.registration_id AND r.tenant_id=c.tenant_id
     LEFT JOIN public.staff_accounts a ON a.id=c.assigned_staff_id AND a.tenant_id=c.tenant_id
     LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id
-    WHERE c.id=$1 AND c.tenant_id=$2 LIMIT 1`,[id,ctx.tenantId]);
+    WHERE c.id=$1 AND c.tenant_id=$2 LIMIT 1`,[id,ctx.tenantId,ctx.admin]);
    if(!c.rowCount)return NextResponse.json({error:'Conversation not found.'},{status:404});
    const messages=await pool.query(`SELECT id,sender_type,sender_id,body,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at ASC LIMIT 500`,[id]);
    return NextResponse.json({conversation:c.rows[0],messages:messages.rows},{headers:noStore});
   }
   const q=await pool.query(`SELECT c.id,c.status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.client_id,r.full_name,r.email,r.phone,
-   a.full_name AS assigned_staff_name,a.avatar_url AS assigned_staff_avatar_url,a.phone_number AS assigned_staff_phone_number,
+   a.full_name AS assigned_staff_name,a.avatar_url AS assigned_staff_avatar_url,CASE WHEN $2::boolean THEN a.phone_number END AS assigned_staff_phone_number,
    CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS assigned_staff_presence,
    (SELECT count(*)::int FROM public.client_chat_messages m WHERE m.conversation_id=c.id AND m.sender_type='client' AND m.read_at IS NULL) AS unread_count,
    (SELECT body FROM public.client_chat_messages m WHERE m.conversation_id=c.id ORDER BY m.created_at DESC LIMIT 1) AS last_message
    FROM public.client_chat_conversations c JOIN public.client_registrations r ON r.id=c.registration_id AND r.tenant_id=c.tenant_id
    LEFT JOIN public.staff_accounts a ON a.id=c.assigned_staff_id AND a.tenant_id=c.tenant_id
    LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id
-   WHERE c.tenant_id=$1 ORDER BY c.last_message_at DESC NULLS LAST,c.created_at DESC LIMIT 200`,[ctx.tenantId]);
+   WHERE c.tenant_id=$1 ORDER BY c.last_message_at DESC NULLS LAST,c.created_at DESC LIMIT 200`,[ctx.tenantId,ctx.admin]);
   const tenants=ctx.admin?(await pool.query('SELECT id,display_name,status FROM public.site_tenants ORDER BY created_at')).rows:[];
   const staff=ctx.admin?(await pool.query(`SELECT a.id,a.full_name,a.email,a.phone_number,a.avatar_url,a.role,
     CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS presence,
