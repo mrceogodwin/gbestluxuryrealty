@@ -78,7 +78,7 @@ export async function POST(req){
    }else{
     reply='I can help with G-BEST property searches and inspections, but there are no published properties in the live catalogue at the moment. You can still ask about the inspection process or tell me what kind of property you’re looking for.';
    }
-   const suggestHuman=/\\b(human|real person|speak to (someone|staff)|talk to (someone|staff)|sales representative|customer service|speak with (an agent|staff))\\b/i.test(message)||/\\bcomplaint|specific booking issue|payment dispute\\b/i.test(message);
+   const suggestHuman=/\b(human|real person|speak to (someone|staff)|talk to (someone|staff)|sales representative|customer service|speak with (an agent|staff))\b/i.test(message)||/\bcomplaint|specific booking issue|payment dispute\b/i.test(message);
    return NextResponse.json({reply,mode:'knowledge-engine',listingMatches:filteredRanked.length,knowledgeMatched:Boolean(knowledgeMatch&&knowledgeMatch._score>=3),suggestHuman},{headers:noStore});
   }
   return NextResponse.json({reply:'Agent knowledge service is ready.'},{headers:noStore});
