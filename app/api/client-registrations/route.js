@@ -1,56 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getDatabasePool } from '../../../lib/db';
 import { sendClientRegistrationEmail, escapeHtml } from '../../../lib/client-registration-email';
-import {resolveSiteTenant,ensureSiteTenants} from '../../../lib/site-tenants';
+import {resolveSiteTenant} from '../../../lib/site-tenants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-async function ensureTable(pool) {
-  await pool.query(`CREATE TABLE IF NOT EXISTS public.client_registrations (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    surname varchar(100) NOT NULL,
-    other_names varchar(160) NOT NULL,
-    address text NOT NULL,
-    email varchar(254) NOT NULL,
-    phone varchar(40) NOT NULL,
-    nationality varchar(80) NOT NULL,
-    state_of_origin varchar(100) NOT NULL,
-    lga varchar(100) NOT NULL,
-    occupation varchar(120) NOT NULL,
-    property_type varchar(100) NOT NULL,
-    price_range varchar(160) NOT NULL,
-    preferred_location varchar(180) NOT NULL,
-    property_description text,
-    terms_accepted boolean NOT NULL DEFAULT false,
-    fee_amount numeric(12,2),
-    payment_reference varchar(120),
-    receipt_name varchar(255),
-    receipt_type varchar(100),
-    receipt_data bytea,
-    payment_status varchar(24) NOT NULL DEFAULT 'pending',
-    admin_note text,
-    created_at timestamptz NOT NULL DEFAULT now(),
-    updated_at timestamptz NOT NULL DEFAULT now()
-  )`);
-  // Keep both the current registration fields and the legacy columns used by the
-  // existing admin review screens available on fresh and upgraded Neon databases.
-  await pool.query(`ALTER TABLE public.client_registrations
-    ADD COLUMN IF NOT EXISTS full_name varchar(260),
-    ADD COLUMN IF NOT EXISTS client_id varchar(40),
-    ADD COLUMN IF NOT EXISTS email_normalized varchar(254),
-    ADD COLUMN IF NOT EXISTS registration_fee_kobo bigint,
-    ADD COLUMN IF NOT EXISTS client_status varchar(24) NOT NULL DEFAULT 'pending',
-    ADD COLUMN IF NOT EXISTS approved_at timestamptz,
-    ADD COLUMN IF NOT EXISTS approved_by varchar(120),
-    ADD COLUMN IF NOT EXISTS fee_amount numeric(12,2),
-    ADD COLUMN IF NOT EXISTS payment_reference varchar(120),
-    ADD COLUMN IF NOT EXISTS receipt_name varchar(255),
-    ADD COLUMN IF NOT EXISTS receipt_type varchar(100),
-    ADD COLUMN IF NOT EXISTS receipt_data bytea,
-    ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now()`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS client_registrations_status_created_idx ON public.client_registrations(payment_status, created_at DESC)`);
-}
 
 const clean=(v,n=500)=>String(v??'').trim().slice(0,n);
 export async function POST(req) {
@@ -61,73 +15,114 @@ export async function POST(req) {
   try {
     const form=await req.formData();
     const fields={
-      surname:clean(form.get('surname'),100), other_names:clean(form.get('other_names'),160),
-      address:clean(form.get('address'),1000), email:clean(form.get('email'),254),
-      phone:clean(form.get('phone'),40), nationality:clean(form.get('nationality'),80),
-      state_of_origin:clean(form.get('state_of_origin'),100), lga:clean(form.get('lga'),100),
-      occupation:clean(form.get('occupation'),120), property_type:clean(form.get('property_type'),100),
-      price_range:clean(form.get('price_range'),160), preferred_location:clean(form.get('preferred_location'),180),
-      property_description:clean(form.get('property_description'),2000)
+      full_name:clean(form.get('full_name'),180), email:clean(form.get('email'),254), phone:clean(form.get('phone'),40), current_location:clean(form.get('current_location'),180), preferred_location:clean(form.get('preferred_location'),180), property_type:clean(form.get('property_type'),80), property_id:clean(form.get('property_id'),80), property_description:clean(form.get('property_description'),1000)
     };
-    if(Object.values(fields).some(v=>!v) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email) || form.get('terms_accepted')!=='true')
+    if(!fields.full_name||!fields.email||!fields.phone || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email) || form.get('terms_accepted')!=='true')
       return NextResponse.json({error:'Complete all required fields and accept the terms.'},{status:400});
+    const intent=clean(form.get('registration_intent')||'general',20);
+    if(!['general','inspection'].includes(intent))return NextResponse.json({error:'Choose a valid registration purpose.'},{status:400});
     const file=form.get('receipt');
-    if(!(file instanceof File) || !file.size) return NextResponse.json({error:'Upload your bank transfer receipt.'},{status:400});
-    if(file.size>5*1024*1024) return NextResponse.json({error:'Receipt must be 5 MB or smaller.'},{status:400});
-    const allowed=['image/jpeg','image/png','image/webp','application/pdf'];
-    if(!allowed.includes(file.type)) return NextResponse.json({error:'Receipt must be JPG, PNG, WEBP or PDF.'},{status:400});
     const reference=clean(form.get('payment_reference'),120);
-    if(!reference) return NextResponse.json({error:'Enter your transfer reference.'},{status:400});
-    const pool=getDatabasePool();const host=req.headers.get('x-forwarded-host')||req.headers.get('host')||'';const tenant=await resolveSiteTenant(pool,host);if(!tenant)return NextResponse.json({error:'This domain is not connected to an active company workspace.'},{status:404});await ensureTable(pool);await ensureSiteTenants(pool);
-    const bytes=Buffer.from(await file.arrayBuffer());
-    const signatures={
-      'image/jpeg':bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff,
-      'image/png':bytes.length>=8&&bytes.subarray(0,8).equals(Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a])),
-      'image/webp':bytes.length>=12&&bytes.toString('ascii',0,4)==='RIFF'&&bytes.toString('ascii',8,12)==='WEBP',
-      'application/pdf':bytes.length>=5&&bytes.toString('ascii',0,5)==='%PDF-'
-    };
-    if(!signatures[file.type])return NextResponse.json({error:'The uploaded receipt content does not match its file type.'},{status:400});
+    let bytes=null;
+    if(intent==='inspection'){
+      if(!(file instanceof File) || !file.size) return NextResponse.json({error:'Upload your bank transfer receipt for inspection registration.'},{status:400});
+      if(file.size>5*1024*1024) return NextResponse.json({error:'Receipt must be 5 MB or smaller.'},{status:400});
+      const allowed=['image/jpeg','image/png','image/webp','application/pdf'];
+      if(!allowed.includes(file.type)) return NextResponse.json({error:'Receipt must be JPG, PNG, WEBP or PDF.'},{status:400});
+      if(!reference) return NextResponse.json({error:'Enter your transfer reference.'},{status:400});
+      bytes=Buffer.from(await file.arrayBuffer());
+      const signatures={
+        'image/jpeg':bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff,
+        'image/png':bytes.length>=8&&bytes.subarray(0,8).equals(Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a])),
+        'image/webp':bytes.length>=12&&bytes.toString('ascii',0,4)==='RIFF'&&bytes.toString('ascii',8,12)==='WEBP',
+        'application/pdf':bytes.length>=5&&bytes.toString('ascii',0,5)==='%PDF-'
+      };
+      if(!signatures[file.type])return NextResponse.json({error:'The uploaded receipt content does not match its file type.'},{status:400});
+    }
+    const pool=getDatabasePool();const host=req.headers.get('x-forwarded-host')||req.headers.get('host')||'';const tenant=await resolveSiteTenant(pool,host);if(!tenant)return NextResponse.json({error:'This domain is not connected to an active company workspace.'},{status:404});
+    if(String(form.get('has_seen_property')||'no')==='yes'&&!fields.property_id)return NextResponse.json({error:'Enter the Property ID you have seen, or choose “Not yet / still exploring”.'},{status:400});
+
     const dbClient=await pool.connect();
     let q;
     try {
       await dbClient.query('BEGIN');
       await dbClient.query("SELECT pg_advisory_xact_lock(hashtext(lower($1)),hashtext('client-registration'))",[fields.email]);
-      const duplicate=await dbClient.query("SELECT id FROM public.client_registrations WHERE tenant_id=$2 AND lower(email)=lower($1) AND payment_status='pending' ORDER BY created_at DESC LIMIT 1",[fields.email,tenant.id]);
-      if(duplicate.rowCount) {
-        await dbClient.query('ROLLBACK');
-        return NextResponse.json({error:'A registration for this email is already awaiting payment verification. Contact G-BEST if you need to update the submitted details.'},{status:409});
+      const existing=await dbClient.query("SELECT id,tenant_id,registration_intent,payment_status,client_status FROM public.client_registrations WHERE lower(email_normalized)=lower($1) FOR UPDATE",[fields.email]);
+      const fullName=fields.full_name;
+      const fee=intent==='inspection'?15000:null;
+      if(existing.rowCount){
+        const prior=existing.rows[0];
+        if(Number(prior.tenant_id)!==Number(tenant.id)){
+          await dbClient.query('ROLLBACK');
+          return NextResponse.json({error:'This email is already registered with another G-BEST workspace.'},{status:409});
+        }
+        if(intent==='inspection'&&prior.registration_intent==='general'&&prior.payment_status==='not_required'){
+          q=await dbClient.query(`UPDATE public.client_registrations SET
+            registration_intent='inspection',registration_fee_kobo=1500000,payment_status='pending',
+            client_status='active',fee_amount=15000,payment_reference=$2,receipt_name=$3,receipt_type=$4,
+            receipt_data=$5,full_name=$6,phone=$7,preferred_location=$8,property_type=$9,
+            property_description=$10,updated_at=now()
+            WHERE id=$1 AND tenant_id=$11
+            RETURNING id,client_id,payment_status,registration_intent,client_status,created_at`,
+            [prior.id,reference,file.name.slice(0,255),file.type,bytes,fullName,fields.phone,fields.preferred_location,fields.property_type,[fields.property_id?'Property ID: '+fields.property_id:'',fields.property_description].filter(Boolean).join('\\n').slice(0,1000),tenant.id]);
+        }else if(intent==='general'&&prior.registration_intent==='inspection'&&prior.payment_status==='rejected'){
+          q=await dbClient.query(`UPDATE public.client_registrations SET
+            registration_intent='general',registration_fee_kobo=0,payment_status='not_required',
+            client_status='active',fee_amount=NULL,payment_reference=NULL,receipt_name=NULL,receipt_type=NULL,
+            receipt_data=NULL,approved_at=NULL,approved_by=NULL,admin_note=NULL,
+            full_name=$2,phone=$3,preferred_location=$4,property_type=$5,property_description=$6,updated_at=now()
+            WHERE id=$1 AND tenant_id=$7
+            RETURNING id,client_id,payment_status,registration_intent,client_status,created_at`,
+            [prior.id,fullName,fields.phone,fields.preferred_location,fields.property_type,[fields.property_id?'Property ID: '+fields.property_id:'',fields.property_description].filter(Boolean).join('\\n').slice(0,1000),tenant.id]);
+        }else{
+          await dbClient.query('ROLLBACK');
+          return NextResponse.json({error:'A client account already exists for this email. Please sign in instead of registering again.'},{status:409});
+        }
+      }else{
+        q=await dbClient.query(`INSERT INTO public.client_registrations
+          (full_name,email,email_normalized,phone,registration_intent,registration_fee_kobo,payment_status,client_status,
+           surname,other_names,address,nationality,state_of_origin,lga,occupation,property_type,price_range,
+           preferred_location,property_description,terms_accepted,fee_amount,payment_reference,receipt_name,receipt_type,receipt_data,tenant_id)
+          VALUES ($1,$2,lower($2),$3,$4,$5,$6,$7,
+           $8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,true,$19,$20,$21,$22,$23,$24)
+          RETURNING id,client_id,payment_status,registration_intent,client_status,created_at`,
+          [fullName,fields.email,fields.phone,intent,intent==='inspection'?1500000:0,
+           intent==='inspection'?'pending':'not_required',intent==='inspection'?'pending':'active',
+           fullName,'',fields.current_location,'','','','',fields.property_type,'',fields.preferred_location,
+           [fields.property_id?'Property ID: '+fields.property_id:'',fields.property_description].filter(Boolean).join('\\n').slice(0,1000),
+           fee, intent==='inspection'?reference:null,intent==='inspection'?file.name.slice(0,255):null,
+           intent==='inspection'?file.type:null,bytes,tenant.id]);
       }
-      const fullName = fields.surname + ' ' + fields.other_names;
-      q=await dbClient.query(`INSERT INTO public.client_registrations
-        (full_name,email,email_normalized,phone,registration_fee_kobo,payment_status,client_status,
-         surname,other_names,address,nationality,state_of_origin,lga,occupation,property_type,price_range,
-         preferred_location,property_description,terms_accepted,fee_amount,payment_reference,receipt_name,receipt_type,receipt_data,tenant_id)
-        VALUES ($1,$2,lower($2),$3,1500000,'pending','pending',
-         $4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,true,15000,$15,$16,$17,$18,$19)
-        RETURNING id,client_id,payment_status,created_at`,
-        [fullName,fields.email,fields.phone,fields.surname,fields.other_names,fields.address,fields.nationality,
-         fields.state_of_origin,fields.lga,fields.occupation,fields.property_type,fields.price_range,
-         fields.preferred_location,fields.property_description,reference,file.name.slice(0,255),file.type,bytes,tenant.id]);
       await dbClient.query('COMMIT');
     } catch(registrationError) {
       await dbClient.query('ROLLBACK').catch(()=>{});
       throw registrationError;
     } finally { dbClient.release(); }
-    const fullName = fields.surname + ' ' + fields.other_names;
-    const adminEmail = await sendClientRegistrationEmail({
-      to: process.env.ADMIN_EMAIL || 'gbestinnovations@gmail.com',
-      subject: 'New client registration awaiting payment verification',
-      html: '<p>A new client registration has been submitted.</p><p><strong>Client:</strong> ' + escapeHtml(fullName) + '<br/><strong>Email:</strong> ' + escapeHtml(fields.email) + '<br/><strong>Phone:</strong> ' + escapeHtml(fields.phone) + '<br/><strong>Property:</strong> ' + escapeHtml(fields.property_type) + ' — ' + escapeHtml(fields.price_range) + '<br/><strong>Transfer reference:</strong> ' + escapeHtml(reference) + '</p><p>Sign in to the G-BEST admin area to inspect the receipt and verify the bank transaction manually.</p>'
-    });
-    const clientEmail = await sendClientRegistrationEmail({
-      to: fields.email,
-      subject: 'G-BEST received your client registration',
-      html: '<p>Hello ' + escapeHtml(fullName) + ',</p><p>We have received your client registration and transfer receipt. Your payment is <strong>pending manual verification</strong>. Uploading a receipt does not confirm payment.</p><p>Our team will review the transfer against the bank account and update you. You may request an inspection only after your registration is approved. Please use this same email address when booking.</p><p>G-BEST Luxury Realty</p>'
-    });
-    const warnings = [];
-    if (!adminEmail.sent) warnings.push('The admin notification email could not be sent. The registration was still saved.');
-    if (!clientEmail.sent) warnings.push('The confirmation email could not be sent. Keep your registration reference.');
-    return NextResponse.json({ok:true,registration:q.rows[0],message:'Registration received. Your payment is awaiting manual verification.',email:{admin:adminEmail.sent,client:clientEmail.sent},warnings},{status:201,headers:{'Cache-Control':'no-store'}});
+    const fullName=fields.full_name;
+    let adminEmail={sent:true},clientEmail={sent:false};
+    if(intent==='inspection'){
+      adminEmail=await sendClientRegistrationEmail({
+        to:process.env.ADMIN_EMAIL||'gbestinnovations@gmail.com',
+        subject:'New inspection client registration awaiting payment verification',
+        html:'<p>A client has selected physical inspection and submitted a registration payment receipt.</p><p><strong>Client:</strong> '+escapeHtml(fullName)+'<br/><strong>Email:</strong> '+escapeHtml(fields.email)+'<br/><strong>Phone:</strong> '+escapeHtml(fields.phone)+'<br/><strong>Transfer reference:</strong> '+escapeHtml(reference)+'</p><p>Review the receipt and verify the bank transaction manually before allowing inspection booking.</p>'
+      });
+      clientEmail=await sendClientRegistrationEmail({
+        to:fields.email,
+        subject:'G-BEST received your inspection registration',
+        html:'<p>Hello '+escapeHtml(fullName)+',</p><p>We received your inspection registration and transfer receipt. Payment is <strong>pending manual verification</strong>. Uploading a receipt does not confirm payment. Your free client profile, general enquiries and private messaging remain available while we review your payment. Physical inspection booking becomes available only after payment is approved and an appointment is confirmed.</p><p>G-BEST Luxury Realty</p>'
+      });
+    }else{
+      clientEmail=await sendClientRegistrationEmail({
+        to:fields.email,
+        subject:'Your free G-BEST client profile is ready',
+        html:'<p>Hello '+escapeHtml(fullName)+',</p><p>Your free G-BEST client profile has been created. No registration payment is required for browsing, enquiries or private messaging. You can sign in using the one-time code sent to this email address. If you later request a physical inspection, the inspection registration fee and manual verification will apply before booking.</p><p>G-BEST Luxury Realty</p>'
+      });
+    }
+    const warnings=[];
+    if(!adminEmail.sent)warnings.push('The admin notification email could not be sent. The registration was still saved.');
+    if(!clientEmail.sent)warnings.push('The confirmation email could not be sent. Keep your registration reference.');
+    const message=intent==='inspection'?'Inspection registration received. Payment is awaiting manual verification.':'Your free client profile has been created. No payment is required for general enquiries or private messaging.';
+    return NextResponse.json({ok:true,registration:q.rows[0],message,email:{admin:adminEmail.sent,client:clientEmail.sent},warnings},{status:201,headers:{'Cache-Control':'no-store'}});
   } catch(e) {
     console.error('Client registration failed',e.code||e.message);
     return NextResponse.json({error:'Could not submit registration. Please try again.'},{status:500});

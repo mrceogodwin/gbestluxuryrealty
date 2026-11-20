@@ -2951,3 +2951,387 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   border-radius:0!important;
  }
 }
+
+
+/* Featured property carousel: clean light backdrop and readable card labels */
+.property-orbit-placement{
+  background:#f3f1e7!important;
+  background-image:none!important;
+  color:#173b2b!important;
+}
+.property-orbit-placement .footer-property-orbit-heading .eyebrow{color:#789b32!important}
+.property-orbit-placement .footer-property-orbit-heading>div:first-child>span{color:#66745f!important}
+.property-orbit-placement .footer-property-orbit-item{color:#173b2b!important}
+.property-orbit-placement .footer-property-orbit-item>b{
+  color:#173b2b!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  line-height:1.3!important;
+  text-shadow:none!important;
+}
+.property-orbit-placement .footer-property-orbit-item>small{
+  color:#657260!important;
+  font-size:8px!important;
+  font-weight:700!important;
+  text-shadow:none!important;
+}
+.property-orbit-placement .footer-property-orbit-item>strong{
+  color:#719b22!important;
+  font-size:9px!important;
+  font-weight:900!important;
+  text-shadow:none!important;
+}
+.property-orbit-placement .footer-property-orbit-image{
+  box-shadow:0 5px 14px rgba(23,59,43,.12)!important;
+}
+
+
+/* Nigerian market cards: compact horizontal swipe rail instead of tall stacked panels */
+.gbest-market-grid{
+  display:grid!important;
+  grid-auto-flow:column!important;
+  grid-auto-columns:minmax(220px, min(28vw, 310px))!important;
+  grid-template-columns:none!important;
+  grid-template-rows:1fr!important;
+  gap:14px!important;
+  max-width:none!important;
+  width:100%!important;
+  margin:0!important;
+  padding:4px 2px 16px!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scroll-snap-type:x mandatory;
+  scroll-padding-inline:2px;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+  scrollbar-color:#9aac83 transparent;
+  overscroll-behavior-x:contain;
+}
+.gbest-market-tile{
+  min-width:0!important;
+  width:auto!important;
+  min-height:166px!important;
+  height:166px!important;
+  padding:17px 18px!important;
+  gap:9px!important;
+  scroll-snap-align:start;
+  scroll-snap-stop:always;
+}
+.gbest-market-tile b{font-size:clamp(19px,2.4vw,25px)!important}
+.gbest-market-tile span{font-size:12px!important;line-height:1.4!important}
+.gbest-market-tile small,.gbest-market-tile i{font-size:9px!important}
+@media(max-width:700px){
+  .gbest-market-discovery{padding:34px 0 40px 5vw!important;overflow:hidden!important}
+  .gbest-market-heading{padding-right:5vw!important;margin-bottom:18px!important}
+  .gbest-market-heading h2{font-size:clamp(29px,8vw,38px)!important}
+  .gbest-market-heading>span{font-size:15px!important;line-height:1.55!important}
+  .gbest-market-grid{
+    grid-auto-columns: min(72vw, 270px)!important;
+    gap:12px!important;
+    padding-right:5vw!important;
+    padding-bottom:14px!important;
+  }
+  .gbest-market-tile{
+    min-height:154px!important;
+    height:154px!important;
+    padding:15px 16px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .gbest-market-grid{scroll-behavior:auto}
+}
+
+
+/* Property collection carousel controls: clear, balanced touch targets */
+.property-orbit-placement .footer-property-orbit-controls{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:10px!important;
+  flex-shrink:0!important;
+}
+.property-orbit-placement .footer-property-orbit-controls button{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  display:grid!important;
+  place-items:center!important;
+  width:46px!important;
+  height:46px!important;
+  min-width:46px!important;
+  min-height:46px!important;
+  padding:0!important;
+  border:1.5px solid #647b50!important;
+  border-radius:50%!important;
+  background:#10251a!important;
+  color:#d8f36b!important;
+  box-shadow:0 3px 0 rgba(16,37,26,.16)!important;
+  font-family:Arial,sans-serif!important;
+  font-size:27px!important;
+  font-weight:500!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  transition:background .18s ease,transform .18s ease,border-color .18s ease!important;
+}
+.property-orbit-placement .footer-property-orbit-controls button:active{
+  transform:scale(.94)!important;
+  background:#244a31!important;
+}
+.property-orbit-placement .footer-property-orbit-controls button:focus-visible{
+  outline:3px solid #a7ca59!important;
+  outline-offset:3px!important;
+}
+@media(max-width:700px){
+  .property-orbit-placement .footer-property-orbit-controls{gap:9px!important}
+  .property-orbit-placement .footer-property-orbit-controls button{
+    width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;
+    font-size:26px!important;
+  }
+}
+
+
+/* Refined G-BEST primary action palette: forest green, warm ivory and restrained sage.
+   Intentionally scoped to site/header/content actions; platform footer is untouched. */
+.gbest-site-root nav .gbest-lockup-type{
+ display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+ gap:0!important;line-height:.94!important;min-width:0!important;
+}
+.gbest-site-root nav .gbest-lockup-type b{
+ display:block!important;color:#f7f4e9!important;
+ font:800 21px/.96 Inter,Arial,sans-serif!important;letter-spacing:-.045em!important;
+}
+.gbest-site-root nav .gbest-lockup-type b.gbest-lockup-line{
+ font-size:19px!important;font-weight:750!important;
+}
+.gbest-site-root nav .gbest-lockup-type small{
+ display:block!important;max-width:180px!important;margin-top:7px!important;
+ color:#d5bd78!important;font:700 7px/1.25 'DM Mono',monospace!important;
+ letter-spacing:.09em!important;white-space:normal!important;
+}
+.gbest-site-root nav .gbest-brand-lockup{
+ align-items:center!important;gap:10px!important;
+}
+.gbest-site-root nav .gbest-lockup-mark{
+ flex:0 0 46px!important;width:46px!important;height:48px!important;
+ color:#d8e89a!important;
+}
+.gbest-site-root .navbtn,
+.gbest-site-root .hero .goldbtn,
+.gbest-site-root .booking .formbox .submit,
+.gbest-site-root .searchbutton,
+.gbest-site-root .marketing-intro-actions .goldbtn{
+ background:#174b35!important;
+ color:#f7f4e9!important;
+ border:1px solid #52765b!important;
+ border-bottom:3px solid #0c3021!important;
+ box-shadow:3px 3px 0 rgba(12,48,33,.28)!important;
+ border-radius:2px!important;
+}
+.gbest-site-root .navbtn:hover,
+.gbest-site-root .hero .goldbtn:hover,
+.gbest-site-root .booking .formbox .submit:hover:not(:disabled),
+.gbest-site-root .searchbutton:hover,
+.gbest-site-root .marketing-intro-actions .goldbtn:hover{
+ background:#226344!important;color:#fffdf5!important;
+}
+.gbest-site-root nav>div>a.nav-register{
+ background:transparent!important;color:#dce9bd!important;
+ border:1px solid #829b70!important;box-shadow:none!important;
+}
+.gbest-site-root nav>div>a.nav-register:hover{
+ background:#173d2b!important;color:#fff!important;
+}
+@media(max-width:680px){
+ .gbest-site-root nav .gbest-brand-lockup{
+  flex:0 1 34%!important;width:34%!important;max-width:34%!important;
+  min-width:0!important;gap:7px!important;
+ }
+ .gbest-site-root nav .gbest-lockup-mark{
+  flex-basis:31px!important;width:31px!important;height:39px!important;
+ }
+ .gbest-site-root nav .gbest-lockup-type b{font-size:17px!important}
+ .gbest-site-root nav .gbest-lockup-type b.gbest-lockup-line{font-size:16px!important}
+ .gbest-site-root nav .gbest-lockup-type small{font-size:5.5px!important;max-width:105px!important;letter-spacing:.04em!important;margin-top:5px!important}
+ .gbest-site-root nav>div>a.navbtn{
+  background:#174b35!important;color:#f7f4e9!important;
+  border:1px solid #52765b!important;box-shadow:2px 2px 0 #0c3021!important;
+ }
+ .gbest-site-root .hero .goldbtn{
+  background:#174b35!important;color:#f7f4e9!important;
+  border:1px solid #829b70!important;box-shadow:3px 3px 0 #0c3021!important;
+ }
+}
+@media(max-width:360px){
+ .gbest-site-root nav .gbest-brand-lockup{flex-basis:33%!important;width:33%!important;max-width:33%!important}
+ .gbest-site-root nav .gbest-lockup-type b{font-size:15px!important}
+ .gbest-site-root nav .gbest-lockup-type b.gbest-lockup-line{font-size:14px!important}
+}
+
+
+/* Recovery: keep the revised stacked wordmark strictly inside the top navigation.
+   Do not style the platform footer through shared lockup selectors. */
+.gbest-site-root nav .gbest-lockup-type{
+ display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+ gap:0!important;line-height:.94!important;min-width:0!important;
+}
+.gbest-site-root nav .gbest-lockup-type b{
+ display:block!important;color:#f7f4e9!important;
+ font:800 21px/.96 Inter,Arial,sans-serif!important;letter-spacing:-.045em!important;
+}
+.gbest-site-root nav .gbest-lockup-type b.gbest-lockup-line{font-size:19px!important;font-weight:750!important}
+.gbest-site-root nav .gbest-lockup-type small{
+ display:block!important;max-width:180px!important;margin-top:7px!important;
+ color:#d5bd78!important;font:700 7px/1.25 'DM Mono',monospace!important;
+ letter-spacing:.09em!important;white-space:normal!important;
+}
+/* Restore the approved high-visibility lime CTA treatment; keep the register action outlined. */
+.gbest-site-root nav>div>a.navbtn,
+.gbest-site-root .hero .goldbtn,
+.gbest-site-root .booking .formbox .submit,
+.gbest-site-root .searchbutton,
+.gbest-site-root .marketing-intro-actions .goldbtn{
+ background:#d7ff32!important;color:#07140b!important;
+ border:1px solid #d7ff32!important;border-bottom:3px solid #9fbe23!important;
+ box-shadow:3px 3px 0 rgba(7,20,11,.3)!important;border-radius:0!important;
+}
+.gbest-site-root nav>div>a.nav-register{
+ background:transparent!important;color:#d7ff32!important;
+ border:1px solid #d7ff32!important;box-shadow:none!important;
+}
+.gbest-site-root nav>div>a.navbtn:hover,
+.gbest-site-root .hero .goldbtn:hover,
+.gbest-site-root .booking .formbox .submit:hover:not(:disabled),
+.gbest-site-root .searchbutton:hover,
+.gbest-site-root .marketing-intro-actions .goldbtn:hover{
+ background:#c5ef25!important;color:#07140b!important;
+}
+@media(max-width:680px){
+ .gbest-site-root nav .gbest-lockup-type b{font-size:17px!important}
+ .gbest-site-root nav .gbest-lockup-type b.gbest-lockup-line{font-size:16px!important}
+ .gbest-site-root nav .gbest-lockup-type small{font-size:5.5px!important;max-width:105px!important;letter-spacing:.04em!important;margin-top:5px!important}
+ .gbest-site-root nav>div>a.navbtn{background:#d7ff32!important;color:#07140b!important;border:1px solid #d7ff32!important;box-shadow:2px 2px 0 #fff!important}
+ .gbest-site-root .hero .goldbtn{background:#d7ff32!important;color:#07140b!important;border:2px solid #07140b!important;box-shadow:5px 5px 0 #d7ff32!important}
+}
+
+
+/* Property collection arrows: match the warm cream rail, not the neon CTA palette.
+   Scoped only to the two carousel navigation controls. */
+.property-orbit-placement .footer-property-orbit-controls button{
+  background:#e8ecdf!important;
+  color:#174b35!important;
+  border:1.5px solid #9aaa86!important;
+  box-shadow:0 2px 0 rgba(23,75,53,.14)!important;
+  text-shadow:none!important;
+}
+.property-orbit-placement .footer-property-orbit-controls button:hover{
+  background:#dce6d2!important;
+  color:#0c3925!important;
+  border-color:#66835e!important;
+}
+.property-orbit-placement .footer-property-orbit-controls button:active{
+  background:#d1dfc8!important;
+  transform:scale(.96)!important;
+}
+
+
+/* Floating Agent assistant */
+.gb-agent-root{position:fixed;z-index:9998;display:flex;flex-direction:column;align-items:flex-end;gap:12px;max-width:calc(100vw - 16px);touch-action:pan-y}
+.gb-agent-launcher{display:flex;align-items:center;gap:11px;min-height:62px;padding:8px 17px 8px 9px;border:1px solid rgba(220,237,218,.28);border-radius:999px;background:linear-gradient(135deg,#173f2b,#0d2b1c);color:#fff;box-shadow:0 12px 38px #102f2360;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.gb-agent-launcher:hover{transform:translateY(-2px);box-shadow:0 16px 42px #102f2370}
+.gb-agent-launch-icon{width:48px;height:48px;display:grid;place-items:center;flex:0 0 48px;border-radius:50%;overflow:hidden;background:#e7c978;border:2px solid #f5e5b3;color:#123b29;font:700 30px Georgia,serif;box-shadow:0 2px 5px #061d1440}.gb-agent-mark{width:100%;height:100%;display:block;overflow:hidden;object-fit:cover;border-radius:50%}
+.gb-agent-launch-copy{display:grid;text-align:left;gap:3px}.gb-agent-launch-copy b{font:700 14px Inter,Arial,sans-serif;letter-spacing:.01em}.gb-agent-launch-copy small{font:700 8px Inter,Arial,sans-serif;letter-spacing:.14em;color:#c9d8cb}
+.gb-agent-spark{font-size:15px;color:#e6c77b;margin-left:5px}
+.gb-agent-launcher.is-open{min-height:44px;width:44px;padding:0;justify-content:center;border-radius:50%}.gb-agent-close-icon{color:#fff;font:300 27px Arial}
+.gb-agent-panel{width:min(360px,calc(100vw - 24px));height:min(520px,calc(100dvh - 110px));min-height:360px;display:flex;flex-direction:column;overflow:hidden;border:1px solid #dce5da;border-radius:18px;background:#fbfcf9;box-shadow:0 22px 70px #102f2340;color:#193b2a}
+.gb-agent-head{display:flex;align-items:center;gap:10px;padding:15px 14px;background:linear-gradient(120deg,#173f2b,#0e2d1e);color:#fff;cursor:grab;touch-action:none}
+.gb-agent-head:active{cursor:grabbing}.gb-agent-avatar{width:43px;height:43px;display:block;flex:0 0 43px;overflow:hidden;border-radius:50%;object-fit:cover}.gb-agent-avatar .gb-agent-mark{filter:drop-shadow(0 2px 3px #061d1430)}
+.gb-agent-head>div{display:grid;gap:4px;flex:1}.gb-agent-head b{font:700 15px Inter,Arial,sans-serif}.gb-agent-head small{font:700 8px Inter,Arial,sans-serif;letter-spacing:.12em;color:#c7d7ca}
+.gb-agent-head button{width:28px;height:28px;border:1px solid #ffffff35;border-radius:50%;background:#ffffff12;color:#fff;font:20px Arial;cursor:pointer}
+.gb-agent-messages{flex:1;overflow:auto;padding:17px 13px;display:flex;flex-direction:column;gap:12px;background:radial-gradient(ellipse at 100% 0%,#eaf0e5 0,transparent 42%),#f8faf6}
+.gb-agent-message{display:flex;align-items:flex-end;gap:7px;max-width:92%}.gb-agent-message p{margin:0;padding:11px 12px;border-radius:13px 13px 13px 4px;background:#fff;border:1px solid #e5ebe2;color:#33483a;font:13px/1.55 Inter,Arial,sans-serif;box-shadow:0 2px 8px #183b2908}.gb-agent-message.visitor{align-self:flex-end}.gb-agent-message.visitor p{background:#1d5036;color:white;border-color:#1d5036;border-radius:13px 13px 4px 13px}.gb-agent-mini{flex:0 0 25px;width:25px;height:25px;display:block;overflow:hidden;border-radius:50%}.gb-agent-mini .gb-agent-mark{filter:drop-shadow(0 1px 2px #102f2330)}
+.gb-agent-gate{margin:0 2px 2px 30px;padding:14px;border:1px solid #e1d7b9;border-radius:12px;background:#fffdf7;color:#25432e}.gb-agent-gate b{font:700 13px Inter,Arial,sans-serif}.gb-agent-gate p{font:12px/1.55 Inter,Arial,sans-serif;color:#69766a;margin:7px 0 12px}.gb-agent-gate>a{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;border-radius:7px;background:#174b32;color:#fff;text-decoration:none;font:800 9px Inter,Arial,sans-serif;letter-spacing:.07em}.gb-agent-gate>a.gb-agent-login{justify-content:center;background:transparent;color:#24553a;text-decoration:underline;margin-top:5px;font-size:10px;letter-spacing:0}
+.gb-agent-inspect{align-self:flex-start;margin-left:30px;padding:10px 12px;border-radius:7px;background:#174b32;color:white;text-decoration:none;font:800 9px Inter,Arial,sans-serif;letter-spacing:.06em}
+.gb-agent-compose{display:flex;gap:8px;padding:11px;border-top:1px solid #e4eae1;background:#fff}.gb-agent-compose input{flex:1;min-width:0;border:1px solid #dfe6dd;border-radius:999px;padding:12px 14px;outline:none;color:#183b2b;font:13px Inter,Arial,sans-serif}.gb-agent-compose input:focus{border-color:#7c9a80}.gb-agent-compose button{width:42px;height:42px;border:0;border-radius:50%;background:#174b32;color:white;font-size:18px;cursor:pointer}.gb-agent-compose button:disabled{opacity:.4;cursor:not-allowed}
+.gb-agent-foot{text-align:center;padding:0 8px 11px;background:#fff;color:#849184;font:700 7px Inter,Arial,sans-serif;letter-spacing:.12em}
+.gb-agent-minimized{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border:1px solid #d8bd77;border-radius:999px;background:#103b29;color:#fff;box-shadow:0 8px 22px #102f2340;cursor:pointer;font:700 12px Inter,Arial,sans-serif}.gb-agent-minimized span{color:#e7c978;font-size:14px}
+@media(max-width:520px){
+ .gb-agent-root{gap:7px;max-width:calc(100vw - 16px)}
+ .gb-agent-launcher{width:auto;min-width:154px;height:44px;min-height:44px;padding:4px 10px 4px 5px;justify-content:flex-start;gap:8px;border-radius:999px;box-shadow:0 5px 14px #102f2350}
+ .gb-agent-launch-icon{width:34px;height:34px;flex-basis:34px;font-size:21px}
+ .gb-agent-launch-copy{display:grid;gap:2px}.gb-agent-launch-copy b{font-size:12px}.gb-agent-launch-copy small{font-size:7px;letter-spacing:.1em}.gb-agent-spark{display:block;font-size:12px;margin-left:auto}
+ .gb-agent-launcher.is-open{width:36px;height:36px;min-height:36px}
+ .gb-agent-panel{width:min(300px,calc(100vw - 24px));height:min(360px,55dvh);min-height:250px;border-radius:14px}
+ .gb-agent-head{padding:10px 11px;gap:8px}
+ .gb-agent-avatar{width:36px;height:36px;flex-basis:36px}
+ .gb-agent-head b{font-size:13px}.gb-agent-head small{font-size:7px}
+ .gb-agent-head button{width:26px;height:26px}
+ .gb-agent-messages{padding:10px;gap:8px}
+ .gb-agent-message p{font-size:12px;padding:9px 10px}
+ .gb-agent-compose{padding:8px;gap:6px}
+ .gb-agent-compose input{font-size:16px!important;min-height:42px;padding:9px 12px;touch-action:manipulation}
+ .gb-agent-compose button{width:38px;height:38px;flex:0 0 38px}
+ .gb-agent-foot{font-size:6px;padding-bottom:8px}
+ .gb-agent-minimized{padding:5px 10px;font-size:11px}
+}
+
+
+/* G-BEST chat panel: spacious desktop panel and near-full-screen mobile conversation. */
+@media(min-width:641px){
+ .gb-agent-panel{width:min(440px,calc(100vw - 32px));height:min(680px,calc(100dvh - 64px));min-height:420px;border-radius:20px}
+ .gb-agent-head{padding:16px 16px;gap:12px}
+ .gb-agent-messages{padding:20px 17px;gap:14px}
+ .gb-agent-message{max-width:90%}
+ .gb-agent-message p{font-size:14px;line-height:1.6;padding:13px 15px}
+ .gb-agent-gate{padding:18px;margin-left:32px}
+ .gb-agent-compose{padding:13px;gap:10px}
+ .gb-agent-compose input{min-height:48px;font-size:14px}
+ .gb-agent-compose button{width:46px;height:46px;flex:0 0 46px}
+ .gb-agent-foot{padding:8px 10px 12px;font-size:7px}
+}
+@media(max-width:640px){
+ .gb-agent-root{left:8px!important;right:8px!important;top:auto!important;bottom:8px!important;width:auto!important;max-width:none!important;align-items:stretch!important;gap:0!important}
+ .gb-agent-panel{width:100%!important;height:calc(100dvh - 16px)!important;max-height:calc(100dvh - 16px)!important;min-height:0!important;border-radius:18px!important;box-shadow:0 18px 60px #061b12a8!important}
+ .gb-agent-head{min-height:68px;padding:13px 14px;gap:10px;flex:0 0 auto}
+ .gb-agent-avatar{width:42px;height:42px;flex-basis:42px}
+ .gb-agent-head b{font-size:15px}.gb-agent-head small{font-size:8px}
+ .gb-agent-head button{width:34px;height:34px;font-size:22px}
+ .gb-agent-messages{min-height:0;flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:20px 15px;gap:14px}
+ .gb-agent-message{max-width:92%;gap:8px}
+ .gb-agent-message p{font-size:14px;line-height:1.6;padding:13px 14px}
+ .gb-agent-mini{width:28px;height:28px;flex-basis:28px}
+ .gb-agent-gate{margin:2px 0 2px 30px;padding:16px;border-radius:14px}
+ .gb-agent-gate b{font-size:14px}.gb-agent-gate p{font-size:13px;line-height:1.6}
+ .gb-agent-gate>a{font-size:10px;padding:13px}
+ .gb-agent-compose{flex:0 0 auto;padding:11px 12px;gap:9px}
+ .gb-agent-compose input{min-height:50px;padding:12px 15px;font-size:16px!important}
+ .gb-agent-compose button{width:48px;height:48px;flex:0 0 48px;font-size:20px}
+ .gb-agent-foot{flex:0 0 auto;padding:9px 8px max(10px,env(safe-area-inset-bottom));font-size:7px}
+ .gb-agent-minimized{align-self:flex-end}
+}
+@media(prefers-reduced-motion:reduce){.gb-agent-panel,.gb-agent-message{animation:none!important;transition:none!important}}
+
+/* G-BEST agent chat: roomy, contained panel rather than a narrow, full-height sheet. */
+.gb-agent-root{left:auto!important;right:16px!important;top:auto!important;bottom:16px!important;width:auto!important;max-width:calc(100vw - 32px)!important;align-items:flex-end!important;gap:10px!important}
+.gb-agent-panel{width:min(520px,calc(100vw - 32px))!important;height:min(720px,calc(100dvh - 72px))!important;max-height:calc(100dvh - 72px)!important;min-height:360px!important;border-radius:20px!important}
+.gb-agent-messages{min-height:0!important;flex:1 1 auto!important;overflow-y:auto!important}
+.gb-agent-compose{flex:0 0 auto!important}
+@media(max-width:600px){
+ .gb-agent-root{left:12px!important;right:12px!important;bottom:max(12px,env(safe-area-inset-bottom))!important;max-width:none!important}
+ .gb-agent-panel{width:100%!important;height:min(78dvh,720px)!important;max-height:calc(100dvh - 72px)!important;min-height:380px!important;border-radius:18px!important}
+ .gb-agent-head{min-height:60px!important;padding:11px 12px!important}
+ .gb-agent-messages{padding:14px 12px!important;gap:10px!important}
+ .gb-agent-gate{margin:2px 0 2px 30px!important;padding:12px!important}
+ .gb-agent-compose{padding:9px!important}
+ .gb-agent-foot{padding-bottom:max(9px,env(safe-area-inset-bottom))!important}
+}
+
+
+
+/* G-BEST availability: compact, consistent public labels and staff controls. */
+.property-availability{display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:5px 9px;border-radius:3px;font:800 9px/1 ui-monospace,monospace;letter-spacing:.09em;white-space:nowrap}
+.property-availability.is-available{background:#e4f4d9;color:#185b2c;border:1px solid #9bc98b}
+.property-availability.is-sold{background:#fbe5e2;color:#9e2828;border:1px solid #e7a29b}
+.photo-wrap>.property-availability{position:absolute;top:12px;right:12px;z-index:3}
+.collection-property-image>span.property-availability{left:auto;right:9px;top:9px}
+.gb-console .availability-control{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:8px 0 6px;font:800 8px ui-monospace,monospace;letter-spacing:.08em;color:#718175}
+.gb-console .availability-control select{border:1px solid #dce5d9;border-radius:5px;background:#f7faf5;color:#23452d;padding:7px 9px;font:800 9px ui-monospace,monospace;letter-spacing:.04em;cursor:pointer}
+.gb-console .availability-control select:focus{outline:2px solid #9bc98b;outline-offset:2px}

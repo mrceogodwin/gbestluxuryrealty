@@ -1,0 +1,18 @@
+ALTER TABLE public.staff_accounts ADD COLUMN IF NOT EXISTS avatar_url text;
+ALTER TABLE public.client_chat_conversations ADD COLUMN IF NOT EXISTS handoff_status text NOT NULL DEFAULT 'agent_only', ADD COLUMN IF NOT EXISTS handoff_requested_at timestamptz, ADD COLUMN IF NOT EXISTS handoff_resolved_at timestamptz;
+CREATE TABLE IF NOT EXISTS public.client_chat_participants (conversation_id uuid NOT NULL REFERENCES public.client_chat_conversations(id) ON DELETE CASCADE, tenant_id bigint NOT NULL REFERENCES public.site_tenants(id) ON DELETE CASCADE, staff_id uuid NOT NULL REFERENCES public.staff_accounts(id) ON DELETE CASCADE, added_by text, added_at timestamptz NOT NULL DEFAULT now(), removed_at timestamptz, PRIMARY KEY(conversation_id,staff_id));
+CREATE INDEX IF NOT EXISTS client_chat_participants_staff_idx ON public.client_chat_participants(tenant_id,staff_id,conversation_id) WHERE removed_at IS NULL;
+CREATE TABLE IF NOT EXISTS public.client_chat_monitor_access (conversation_id uuid NOT NULL REFERENCES public.client_chat_conversations(id) ON DELETE CASCADE, tenant_id bigint NOT NULL REFERENCES public.site_tenants(id) ON DELETE CASCADE, staff_id uuid NOT NULL REFERENCES public.staff_accounts(id) ON DELETE CASCADE, granted_by text NOT NULL, granted_at timestamptz NOT NULL DEFAULT now(), revoked_at timestamptz, PRIMARY KEY(conversation_id,staff_id));
+CREATE INDEX IF NOT EXISTS client_chat_monitor_staff_idx ON public.client_chat_monitor_access(tenant_id,staff_id,conversation_id) WHERE revoked_at IS NULL;
+CREATE TABLE IF NOT EXISTS public.staff_presence (tenant_id bigint NOT NULL REFERENCES public.site_tenants(id) ON DELETE CASCADE, staff_id uuid NOT NULL REFERENCES public.staff_accounts(id) ON DELETE CASCADE, presence text NOT NULL DEFAULT 'online' CHECK(presence IN ('online','away','offline')), last_seen_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(tenant_id,staff_id));
+CREATE INDEX IF NOT EXISTS staff_presence_tenant_idx ON public.staff_presence(tenant_id,presence,last_seen_at DESC);
+CREATE TABLE IF NOT EXISTS public.client_chat_handover_events (id bigserial PRIMARY KEY, tenant_id bigint NOT NULL REFERENCES public.site_tenants(id) ON DELETE CASCADE, conversation_id uuid NOT NULL REFERENCES public.client_chat_conversations(id) ON DELETE CASCADE, event_type text NOT NULL CHECK(event_type IN ('client_requested','agent_suggested','staff_joined','staff_left','resolved','agent_resumed')), actor_type text NOT NULL CHECK(actor_type IN ('client','agent','staff','super_admin','system')), actor_id text, details jsonb NOT NULL DEFAULT '{}'::jsonb, created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS client_chat_handover_events_idx ON public.client_chat_handover_events(tenant_id,conversation_id,created_at DESC);
+CREATE TABLE IF NOT EXISTS public.client_presence (
+ tenant_id bigint NOT NULL REFERENCES public.site_tenants(id) ON DELETE CASCADE,
+ registration_id uuid NOT NULL REFERENCES public.client_registrations(id) ON DELETE CASCADE,
+ presence text NOT NULL DEFAULT 'online' CHECK(presence IN ('online','away','offline')),
+ last_seen_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(),
+ PRIMARY KEY(tenant_id,registration_id)
+);
+CREATE INDEX IF NOT EXISTS client_presence_tenant_idx ON public.client_presence(tenant_id,presence,last_seen_at DESC);

@@ -1,4 +1,5 @@
 import './globals.css';
+import AgentChatWidget from '../components/agent-chat-widget';
 export const metadata={
  metadataBase:new URL(process.env.SITE_URL||'https://gbestluxuryrealty.vercel.app'),
  title:{default:'G-BEST Luxury Realty | Nigerian Property, Made Clear',template:'%s | G-BEST Luxury Realty'},
@@ -9,4 +10,5 @@ export const metadata={
  twitter:{card:'summary_large_image',title:'G-BEST Luxury Realty | Nigerian Property, Made Clear',description:'Explore Nigerian homes and property opportunities with G-BEST Luxury Realty.'},
  robots:{index:true,follow:true}
 };
-export default function RootLayout({children}){return <html lang="en-NG"><body>{children}</body></html>}
+export const viewport={width:'device-width',initialScale:1};
+export default function RootLayout({children}){return <html lang="en-NG"><body>{children}<AgentChatWidget/></body></html>}

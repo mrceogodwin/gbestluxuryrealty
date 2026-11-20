@@ -6,18 +6,28 @@ import {useRouter} from 'next/navigation';
 const groups=[
  {label:'OVERVIEW',items:[['/admin/super/overview','Executive overview','▦']]},
  {label:'PROPERTY OPERATIONS',items:[['/admin/super','Property portfolio','⌂'],['/admin/super/media','Media library','▧']]},
- {label:'CLIENT OPERATIONS',items:[['/admin/clients','Clients & payments','♙'],['/admin/super/contacts','Business contacts','✉'],['/admin','Inspection bookings','◷']]},
+ {label:'CLIENT OPERATIONS',items:[['/admin/clients','Clients & payments','♙'],['/admin/client-chat','Client messages','✉'],['/admin/super/contacts','Business contacts','✉'],['/admin','Inspection bookings','◷']]},
  {label:'FINANCE',items:[['/admin/super/finance','Company finance centre','₦']]},
  {label:'PEOPLE & GOVERNANCE',items:[['/admin/super/staff','Staff & permissions','♧'],['/admin/super/activity','Activity & audit trail','≋']]},
- {label:'WEBSITE MANAGEMENT',items:[['/admin/super/homepage','Website studio','◫'],['/admin/super/modification-engine','Modification Engine','⚙'],['/admin/super/companies','Company workspaces','▣']] }
+ {label:'WEBSITE MANAGEMENT',items:[['/admin/super/homepage','Website studio','◫'],['/admin/super/agent','Agent knowledge','✦'],['/admin/super/modification-engine','Modification Engine','⚙'],['/admin/super/companies','Company workspaces','▣']] }
 ];
 export default function SuperAdminLayout({children}){
  const path=usePathname(),router=useRouter(),[open,setOpen]=useState(false),[checking,setChecking]=useState(true),[signedIn,setSignedIn]=useState(false),[staff,setStaff]=useState(null);
  useEffect(()=>{if(path==='/admin/login'||path==='/staff/login'||path==='/staff/accept'){setChecking(false);return;}let alive=true;(async()=>{try{const a=await fetch('/api/admin/session',{cache:'no-store'}).then(r=>r.json());if(a.authenticated){if(alive){setStaff(null);setSignedIn(true);setChecking(false)}return;}const s=await fetch('/api/staff/session',{cache:'no-store'}).then(r=>r.json());if(!s.authenticated){router.replace('/staff/login');return;}if(alive){setStaff(s.staff);setSignedIn(true);setChecking(false)}}catch{router.replace('/staff/login')}})();return()=>{alive=false}},[path,router]);
+ useEffect(()=>{
+  if(!staff||checking)return;
+  const ping=(presence='online')=>fetch('/api/staff/presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({presence}),keepalive:true}).catch(()=>{});
+  const beat=()=>{if(document.visibilityState==='visible')ping('online');};
+  beat();
+  const timer=setInterval(beat,60000);
+  const visibility=()=>ping(document.visibilityState==='visible'?'online':'away');
+  document.addEventListener('visibilitychange',visibility);
+  return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',visibility);ping('offline');};
+ },[staff?.id,checking]);
  async function signOut(){if(staff)await fetch('/api/staff/session',{method:'DELETE'});else await fetch('/api/admin/session',{method:'DELETE'});router.replace(staff?'/staff/login':'/admin/login')}
  const access=new Set(staff?.permissions||[]);
- useEffect(()=>{if(!staff||checking)return;if(path==='/admin/super/activity'){const fallback=[['dashboard.view','/admin/super/overview'],['properties.manage','/admin/super'],['inspections.view','/admin'],['clients.view','/admin/clients'],['payments.review','/admin/clients']].find(([k])=>access.has(k));router.replace(fallback?fallback[1]:'/staff/login');return;}let required=null;if(path==='/admin/super/overview')required='dashboard.view';else if(path==='/admin/super')required='properties.manage';else if(path.startsWith('/admin/super/media'))required='media.manage';else if(path.startsWith('/admin/super/homepage'))required='homepage.manage';else if(path==='/admin'||path.startsWith('/admin/inspections'))required=['inspections.view','inspections.manage'];else if(path==='/admin/clients')required=['clients.view','clients.manage','payments.review'];else if(path.startsWith('/admin/super/contacts'))required=['contacts.view','contacts.manage'];else if(path.startsWith('/admin/super/modification-engine')||path.startsWith('/admin/super/companies'))required='__super_admin_only__';else if(path.startsWith('/admin/super/finance'))required='__super_admin_only__';else if(path==='/admin/super/activity')required='audit.view';else if(path.startsWith('/admin/super/staff'))required='staff.manage';if(required){const keys=Array.isArray(required)?required:[required];if(!keys.some(k=>access.has(k))){const fallback=[['dashboard.view','/admin/super/overview'],['properties.manage','/admin/super'],['inspections.view','/admin'],['inspections.manage','/admin'],['clients.view','/admin/clients'],['clients.manage','/admin/clients'],['payments.review','/admin/clients'],['contacts.view','/admin/super/contacts'],['contacts.manage','/admin/super/contacts'],['media.manage','/admin/super/media'],['homepage.manage','/admin/super/homepage'],['audit.view','/admin/super/activity'],['staff.manage','/admin/super/staff']].find(([k])=>access.has(k));if(fallback)router.replace(fallback[1]);else router.replace('/staff/login');}}},[staff,checking,path,router]);
- const visibleGroups=staff?groups.map(g=>({...g,items:g.items.filter(([href])=>{if(href==='/admin/super/staff')return access.has('staff.manage');if(href==='/admin/super/overview')return access.has('dashboard.view');if(href==='/admin/super')return access.has('properties.manage');if(href==='/admin/super/media')return access.has('media.manage');if(href==='/admin/super/homepage')return access.has('homepage.manage');if(href==='/admin/super/modification-engine'||href==='/admin/super/companies')return false;if(href==='/admin')return access.has('inspections.view')||access.has('inspections.manage');if(href==='/admin/clients')return access.has('clients.view')||access.has('clients.manage')||access.has('payments.review');if(href==='/admin/super/contacts')return access.has('contacts.view')||access.has('contacts.manage');if(href==='/admin/super/finance')return false;if(href==='/admin/super/activity')return false;return false})})).filter(g=>g.items.length):groups;
+ useEffect(()=>{if(!staff||checking)return;if(path==='/admin/super/activity'){const fallback=[['dashboard.view','/admin/super/overview'],['properties.manage','/admin/super'],['inspections.view','/admin'],['clients.view','/admin/clients'],['payments.review','/admin/clients']].find(([k])=>access.has(k));router.replace(fallback?fallback[1]:'/staff/login');return;}let required=null;if(path==='/admin/super/overview')required='dashboard.view';else if(path==='/admin/super')required='properties.manage';else if(path.startsWith('/admin/super/media'))required='media.manage';else if(path.startsWith('/admin/super/agent'))required='__super_admin_only__';else if(path.startsWith('/admin/super/homepage'))required='homepage.manage';else if(path==='/admin'||path.startsWith('/admin/inspections'))required=['inspections.view','inspections.manage'];else if(path==='/admin/clients'||path.startsWith('/admin/client-chat'))required=['clients.view','clients.manage','payments.review'];else if(path.startsWith('/admin/super/contacts'))required=['contacts.view','contacts.manage'];else if(path.startsWith('/admin/super/modification-engine')||path.startsWith('/admin/super/companies'))required='__super_admin_only__';else if(path.startsWith('/admin/super/finance'))required='__super_admin_only__';else if(path==='/admin/super/activity')required='audit.view';else if(path.startsWith('/admin/super/staff'))required='staff.manage';if(required){const keys=Array.isArray(required)?required:[required];if(!keys.some(k=>access.has(k))){const fallback=[['dashboard.view','/admin/super/overview'],['properties.manage','/admin/super'],['inspections.view','/admin'],['inspections.manage','/admin'],['clients.view','/admin/clients'],['clients.manage','/admin/clients'],['payments.review','/admin/clients'],['contacts.view','/admin/super/contacts'],['contacts.manage','/admin/super/contacts'],['media.manage','/admin/super/media'],['homepage.manage','/admin/super/homepage'],['audit.view','/admin/super/activity'],['staff.manage','/admin/super/staff']].find(([k])=>access.has(k));if(fallback)router.replace(fallback[1]);else router.replace('/staff/login');}}},[staff,checking,path,router]);
+ const visibleGroups=staff?groups.map(g=>({...g,items:g.items.filter(([href])=>{if(href==='/admin/super/staff')return access.has('staff.manage');if(href==='/admin/super/overview')return access.has('dashboard.view');if(href==='/admin/super')return access.has('properties.manage');if(href==='/admin/super/media')return access.has('media.manage');if(href==='/admin/super/homepage')return access.has('homepage.manage');if(href==='/admin/super/agent')return false;if(href==='/admin/super/modification-engine'||href==='/admin/super/companies')return false;if(href==='/admin')return access.has('inspections.view')||access.has('inspections.manage');if(href==='/admin/clients'||href==='/admin/client-chat')return access.has('clients.view')||access.has('clients.manage')||access.has('payments.review');if(href==='/admin/super/contacts')return access.has('contacts.view')||access.has('contacts.manage');if(href==='/admin/super/finance')return false;if(href==='/admin/super/activity')return false;return false})})).filter(g=>g.items.length):groups;
  if(path==='/admin/login'||path==='/staff/login'||path==='/staff/accept')return <>{children}</>;
  if(checking||!signedIn)return <div style={{minHeight:'100vh',display:'grid',placeItems:'center',background:'#edf2eb',color:'#194a32',fontFamily:'system-ui',fontWeight:700}}>SECURING ADMIN WORKSPACE…</div>;
  return <div className="gb-console">
@@ -60,6 +70,27 @@ export default function SuperAdminLayout({children}){
  .gb-navicon{width:22px;flex:0 0 22px;text-align:center;font-size:16px;color:#d1f27a}
  .gb-navlink.active .gb-navicon{color:#1a270e}
  .gb-sidefoot{border-top:1px solid #ffffff18;color:#87928a}
+
+ /* Mobile control-room drawer polish: prevent browser/global link styles leaking into navigation. */
+ .gb-console .gb-sidebar{box-sizing:border-box!important;width:300px!important;max-width:84vw!important;overflow-x:hidden!important}
+ .gb-console .gb-sidebar nav .gb-navlink,
+ .gb-console .gb-sidebar nav .gb-navlink:visited,
+ .gb-console .gb-sidebar nav .gb-navlink:hover,
+ .gb-console .gb-sidebar nav .gb-navlink:focus{
+  display:flex!important;align-items:center!important;width:100%!important;box-sizing:border-box!important;
+  color:#c5cec8!important;text-decoration:none!important;border-bottom:1px solid transparent!important;
+  line-height:1.3!important;white-space:normal!important;overflow-wrap:anywhere!important;
+ }
+ .gb-console .gb-sidebar nav .gb-navlink.active{color:#18200e!important;text-decoration:none!important}
+ .gb-console .gb-sidebar nav .gb-navgroup{min-width:0!important}
+ .gb-console .gb-sidebar .gb-navlabel{display:block!important;line-height:1.4!important}
+ .gb-console .gb-sidefoot{position:static!important;flex:0 0 auto!important;margin-top:24px!important;padding:16px 9px calc(18px + env(safe-area-inset-bottom))!important;background:#0d120f!important;border-radius:10px 10px 0 0!important}
+ @media(max-width:850px){
+  .gb-console .gb-sidebar{width:min(300px,84vw)!important;max-width:84vw!important;height:100dvh!important;padding:16px 13px calc(18px + env(safe-area-inset-bottom))!important}
+  .gb-console .gb-sidebar nav .gb-navlink{min-height:44px!important;margin:3px 0!important;padding:10px 11px!important;font-size:12px!important}
+  .gb-console .gb-sidefoot{margin-top:20px!important}
+ }
+
  .gb-main{background:#111312}
  .gb-topbar{background:linear-gradient(180deg,#252a27,#1a1e1b)!important;border-bottom:1px solid #ffffff18!important;box-shadow:0 8px 24px #0005!important;color:#f2f4f0}
  .gb-crumb{color:#aab4ad}.gb-crumb b{color:#f2f4ed}.gb-topright{color:#aab4ad}
@@ -98,6 +129,74 @@ export default function SuperAdminLayout({children}){
  .gb-content .ops .sectionline,.gb-content .ops .panel{border-color:#ffffff1b!important}
  .gb-content .ops button,.gb-content .staff button,.gb-content .audit button,.gb-content .finance button,.gb-content .super-shell button{background:linear-gradient(145deg,#d9ff70,#a9d82a)!important;color:#17210f!important;border:1px solid #edffb8!important;border-radius:9px!important;font-weight:850!important;box-shadow:0 8px 18px #0008,inset 0 2px 2px #fff9,inset 0 -3px 6px #668c1c66!important}
  .gb-content .ops a,.gb-content .staff a,.gb-content .audit a,.gb-content .finance a,.gb-content .super-shell a{color:#d9f79b}
+
+
+ /* Consistent mobile department surfaces and contrast. */
+ .gb-console .gb-content{min-width:0!important;max-width:100%!important;overflow-x:clip!important}
+ .gb-console .gb-content>main{min-width:0!important;max-width:100%!important;overflow-x:clip!important}
+ .gb-console .gb-content .audit,
+ .gb-console .gb-content .finance,
+ .gb-console .gb-content .staff,
+ .gb-console .gb-content .media-room{box-sizing:border-box!important;width:100%!important;max-width:100%!important}
+ .gb-console .gb-content .audit{background:radial-gradient(ellipse at 90% 0%,#252f28,transparent 36%),#111512!important;color:#edf3ec!important;padding:clamp(14px,3vw,30px)!important}
+ .gb-console .gb-content .audit .hero,
+ .gb-console .gb-content .audit .panel{background:linear-gradient(145deg,#242d27,#191f1b)!important;border:1px solid #ffffff1b!important;color:#edf3ec!important;box-shadow:0 14px 28px #0006!important}
+ .gb-console .gb-content .audit .hero{padding:clamp(16px,3vw,26px)!important}
+ .gb-console .gb-content .audit .hero h1,
+ .gb-console .gb-content .audit .panel b{color:#f2f5ef!important}
+ .gb-console .gb-content .audit .hero p,
+ .gb-console .gb-content .audit .muted,
+ .gb-console .gb-content .audit .empty{color:#aab5ad!important}
+ .gb-console .gb-content .audit .event{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important;min-width:0!important;color:#edf3ec!important;border-color:#ffffff1b!important;overflow-wrap:anywhere!important}
+ .gb-console .gb-content .audit .event>*{min-width:0!important;overflow-wrap:anywhere!important}
+ .gb-console .gb-content .audit .tag{background:#263b29!important;color:#c9edb1!important}
+ .gb-console .gb-content .audit .tools input,
+ .gb-console .gb-content .audit .tools select{min-width:0!important;max-width:100%!important;background:#111713!important;border:1px solid #465248!important;color:#f1f4ef!important}
+ .gb-console .gb-content .media-room{background:radial-gradient(ellipse at 90% 0%,#252f28,transparent 36%),#111512!important;color:#edf3ec!important;padding:clamp(14px,3vw,30px)!important;font-family:inherit!important}
+ .gb-console .gb-content .media-room .media-title{color:#f2f5ef!important}
+ .gb-console .gb-content .media-room .media-sub,
+ .gb-console .gb-content .media-room .media-note,
+ .gb-console .gb-content .media-room .media-count,
+ .gb-console .gb-content .media-room .media-meta small{color:#aab5ad!important}
+ .gb-console .gb-content .media-room .media-panel,
+ .gb-console .gb-content .media-room .media-card{background:linear-gradient(145deg,#242d27,#191f1b)!important;border:1px solid #ffffff1b!important;color:#edf3ec!important;box-shadow:0 14px 28px #0006!important;transform:none!important}
+ .gb-console .gb-content .media-room .media-meta b{color:#f2f5ef!important}
+ .gb-console .gb-content .media-room .media-drop{background:#171e19!important;border:2px dashed #758c6c!important;color:#edf3ec!important;box-shadow:none!important}
+ .gb-console .gb-content .media-room .media-drop p{color:#aab5ad!important}
+ .gb-console .gb-content .media-room input{background:#111713!important;border:1px solid #465248!important;color:#f1f4ef!important;max-width:100%!important;box-sizing:border-box!important}
+ .gb-console .gb-content .media-room button{background:#c9ed70!important;color:#17210f!important;border:1px solid #e4ffad!important}
+ .gb-console .gb-content .media-room .media-alert{background:#402722!important;color:#ffd0c5!important}
+ .gb-console .gb-content .homepage-cms,
+ .gb-console .gb-content .homepage-cms section,
+ .gb-console .gb-content .homepage-cms article,
+ .gb-console .gb-content .homepage-cms .homepage-cms-preview,
+ .gb-console .gb-content .homepage-cms .homepage-cms-history{max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+ .gb-console .gb-content .homepage-cms input:not([type=checkbox]):not([type=color]),
+ .gb-console .gb-content .homepage-cms select,
+ .gb-console .gb-content .homepage-cms textarea{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;background:#111713!important;color:#f1f4ef!important;border:1px solid #59665b!important;border-radius:9px!important;padding:11px!important}
+ .gb-console .gb-content .homepage-cms label{min-width:0!important;color:#dce6dc!important}
+ .gb-console .gb-content .homepage-cms p,
+ .gb-console .gb-content .homepage-cms small{color:#b7c2b9!important}
+ .gb-console .gb-content .homepage-cms .wide{min-width:0!important;max-width:100%!important}
+ .gb-console .gb-content .homepage-cms .homepage-cms-actions{display:flex!important;gap:8px!important;flex-wrap:wrap!important;max-width:100%!important}
+ .gb-console .gb-content .homepage-cms .homepage-cms-actions>*{min-width:0!important;max-width:100%!important}
+ .gb-console .gb-content .homepage-cms button{max-width:100%!important;overflow-wrap:anywhere!important}
+ @media(max-width:700px){
+  .gb-console .gb-content .audit .event{grid-template-columns:1fr 1fr!important;gap:8px!important;padding:12px 0!important}
+  .gb-console .gb-content .audit .event .details{grid-column:1/-1!important}
+  .gb-console .gb-content .audit .tools{display:grid!important;grid-template-columns:minmax(0,1fr)!important}
+  .gb-console .gb-content .audit .tools>*{width:100%!important;min-width:0!important;box-sizing:border-box!important}
+  .gb-console .gb-content .media-room .media-top{align-items:flex-start!important;flex-wrap:wrap!important}
+  .gb-console .gb-content .media-room .media-login{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:stretch!important}
+  .gb-console .gb-content .media-room .media-login label{min-width:0!important;width:100%!important}
+  .gb-console .gb-content .media-room .media-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+  .gb-console .gb-content .media-room .media-card{min-width:0!important}
+  .gb-console .gb-content .media-room .media-card img{height:112px!important}
+  .gb-console .gb-content .homepage-cms{padding:12px!important}
+  .gb-console .gb-content .homepage-cms .homepage-cms-actions{display:grid!important;grid-template-columns:1fr!important}
+  .gb-console .gb-content .homepage-cms .homepage-cms-actions>*{width:100%!important;text-align:center!important}
+  .gb-console .gb-content .homepage-cms article{grid-template-columns:minmax(0,1fr)!important}
+ }
 
  `}</style>
  <div className="gb-shell">
