@@ -473,6 +473,7 @@ test('staff can see and atomically claim only unassigned requested human handoff
   assert.match(page, /action:'claim'/);
 });
 
+
 test('available and sold property status is permission-controlled, tenant-scoped and reflected publicly', async () => {
   const adminApi = await source('app/api/admin/properties/route.js');
   const adminPage = await source('app/admin/super/page.js');
@@ -482,17 +483,17 @@ test('available and sold property status is permission-controlled, tenant-scoped
   const styles = await source('app/globals.css');
 
   for (const method of ['GET','POST','PATCH']) {
-    assert.match(adminApi, new RegExp('export async function ' + method + '\\(req\\)'));
+    assert.ok(adminApi.includes('export async function ' + method + '(req)'));
   }
-  assert.match(adminApi, /authorizeAdminRequest\(req, 'properties\\.manage'\)/);
-  assert.match(adminApi, /staff\\?\\.tenant_id/);
-  assert.match(adminApi, /WHERE p\\.tenant_id=\\$1/);
-  assert.match(layout, /href==='\\/admin\\/super'\\)return access\\.has\\('properties\\.manage'\\)/);
-  assert.match(adminPage, /value="available">🟢 AVAILABLE/);
-  assert.match(adminPage, /value="sold">🔴 SOLD/);
-  assert.match(adminPage, /saveListingStatus\(x\\.id,e\\.target\\.value\)/);
-  assert.match(publicApi, /status IN \\('published', 'available', 'sold'\\)/);
-  assert.match(home, /x\\.status==='sold'\\?'SOLD':'AVAILABLE'/);
-  assert.match(styles, /property-availability\\.is-available\\{background:#e4f4d9/);
-  assert.match(styles, /property-availability\\.is-sold\\{background:#fbe5e2/);
+  assert.ok(adminApi.includes("authorizeAdminRequest(req, 'properties.manage')"));
+  assert.ok(adminApi.includes('staff?.tenant_id'));
+  assert.ok(adminApi.includes('WHERE p.tenant_id=$1'));
+  assert.ok(layout.includes("href==='/admin/super')return access.has('properties.manage')"));
+  assert.ok(adminPage.includes('value="available">🟢 AVAILABLE'));
+  assert.ok(adminPage.includes('value="sold">🔴 SOLD'));
+  assert.ok(adminPage.includes('saveListingStatus(x.id,e.target.value)'));
+  assert.ok(publicApi.includes("status IN ('published', 'available', 'sold')"));
+  assert.ok(home.includes("x.status==='sold'?'SOLD':'AVAILABLE'"));
+  assert.ok(styles.includes('.property-availability.is-available{background:#e4f4d9'));
+  assert.ok(styles.includes('.property-availability.is-sold{background:#fbe5e2'));
 });
