@@ -52,7 +52,7 @@ export async function POST(req){
    await client.query("SELECT pg_advisory_xact_lock(hashtext($1),hashtext('inspection-booking'))",[date]);
    const duration=Number(schedule.slotMinutes);
    const overlap=await client.query(`SELECT 1 FROM public.inspection_requests
-     WHERE tenant_id=$4 AND preferred_date=$1::date AND status IN ('pending','confirmed')
+     WHERE tenant_id=$4 AND preferred_date=$1::date AND status IN ('pending','contacted','confirmed')
        AND preferred_time < ($2::time + ($3 * interval '1 minute'))
        AND (preferred_time + (COALESCE(duration_minutes,30) * interval '1 minute')) > $2::time
      LIMIT 1`,[date,time,duration,tenant.id]);
