@@ -477,7 +477,9 @@ test('staff can see and atomically claim only unassigned requested human handoff
 
 test('client chat staff identity and handover events remain tenant-scoped', async () => {
   const api = await source('app/api/client-chat/route.js');
+  assert.match(api, /cp\.tenant_id=c\.tenant_id AND cp\.removed_at IS NULL/);
   assert.match(api, /a\.tenant_id=c\.tenant_id AND a\.status='active'/);
+  assert.match(api, /a\.tenant_id=e\.tenant_id AND a\.status='active'/);
   assert.match(api, /e\.conversation_id=\$1 AND e\.tenant_id=\$2/);
 });
 
