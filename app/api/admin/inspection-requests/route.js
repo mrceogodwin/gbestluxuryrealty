@@ -73,7 +73,7 @@ export async function PATCH(req) {
         const overlap=await client.query("SELECT 1 FROM public.inspection_requests WHERE tenant_id=$4 AND preferred_date=$1::date AND id<>$5 AND status IN ('pending','confirmed') AND preferred_time < ($2::time + ($3 * interval '1 minute')) AND (preferred_time + (COALESCE(duration_minutes,30) * interval '1 minute')) > $2::time LIMIT 1",[date,time,duration,currentRow.tenant_id,id]);
         if(overlap.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'This inspection slot is no longer available. Another request is holding the time. Contact the client to choose another slot.'},{status:409});}
       }
-      q=await client.query('UPDATE public.inspection_requests SET status=$2,calendar_event_id=CASE WHEN $5::boolean THEN NULL ELSE COALESCE($4,calendar_event_id) END,updated_at=now() WHERE id=$1 AND status=$3 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id',[id,status,currentRow.status,currentRow.calendar_event_id||null,status==='cancelled'&&currentRow.status==='confirmed']);
+      q=await client.query('UPDATE public.inspection_requests SET status=$2,calendar_event_id=COALESCE($4,calendar_event_id),updated_at=now() WHERE id=$1 AND status=$3 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id',[id,status,currentRow.status,currentRow.calendar_event_id||null,status==='cancelled'&&currentRow.status==='confirmed']);
       await client.query('COMMIT');
     } catch(transactionError){await client.query('ROLLBACK').catch(()=>{});throw transactionError;}
     finally{client.release();}
@@ -84,6 +84,10 @@ export async function PATCH(req) {
       const prior=existing.rows[0];
       if(prior.status!==status) return NextResponse.json({error:'This status change is not allowed from '+prior.status+'. Refresh the request and choose a valid next action.',currentStatus:prior.status},{status:409});
       let retryCalendar={created:false,reason:'Google Calendar is not configured.'};
+      if(status==='cancelled'&&prior.calendar_event_id){
+        try{retryCalendar=await deleteInspectionCalendarEvent(prior.calendar_event_id);if(retryCalendar.deleted)await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=NULL,updated_at=now() WHERE id=$1 AND status=\'cancelled\' AND calendar_event_id=$2',[id,prior.calendar_event_id]);}
+        catch(calendarError){retryCalendar={deleted:false,reason:calendarError.message};}
+      }
       if(status==='confirmed'&&!prior.calendar_event_id){
         try{retryCalendar=await createInspectionCalendarEvent(prior);if(retryCalendar.eventId)await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1 AND calendar_event_id IS NULL',[id,retryCalendar.eventId]);}
         catch(calendarError){retryCalendar={created:false,reason:calendarError.message};}
@@ -99,8 +103,8 @@ export async function PATCH(req) {
       try{calendar=await createInspectionCalendarEvent(row);if(calendar.eventId){await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1 AND calendar_event_id IS NULL',[row.id,calendar.eventId]);row.calendar_event_id=calendar.eventId;}}
       catch(calendarError){calendar={created:false,reason:calendarError.message};warnings.push('Inspection confirmed, but the calendar event could not be created. Retry after checking Google Calendar settings.');}
     }else if(status==='cancelled'&&currentRow.calendar_event_id){
-      try{calendar=await deleteInspectionCalendarEvent(currentRow.calendar_event_id);}
-      catch(calendarError){calendar={deleted:false,reason:calendarError.message};warnings.push('The inspection status changed, but its Google Calendar event could not be removed.');}
+      try{calendar=await deleteInspectionCalendarEvent(currentRow.calendar_event_id);if(calendar.deleted)await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=NULL,updated_at=now() WHERE id=$1 AND status=\'cancelled\' AND calendar_event_id=$2',[id,currentRow.calendar_event_id]);}
+      catch(calendarError){calendar={deleted:false,reason:calendarError.message};warnings.push('The inspection status changed, but its Google Calendar event could not be removed. The event is retained for retry.');}
     }
     const date=String(row.preferred_date).slice(0,10), time=String(row.preferred_time||'').slice(0,5);
     const subject=status==='confirmed'?'Your G-BEST inspection is confirmed':status==='declined'?'Update on your G-BEST inspection request':'Update to your G-BEST inspection request';
