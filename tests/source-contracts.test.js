@@ -272,6 +272,14 @@ test('company brand settings stay aligned with the tenant homepage template', as
 });
 
 
+test('inspection schedule admin UI reflects fixed hours and 30-minute slots', async () => {
+  const page = await source('app/admin/super/page.js');
+  assert.match(page, /Opening time \(WAT\)[\s\S]*value="08:00" disabled readOnly/);
+  assert.match(page, /Closing time \(WAT\)[\s\S]*value="18:00" disabled readOnly/);
+  assert.match(page, /value="30 minutes" disabled readOnly/);
+  assert.match(page, /fixed at Monday–Saturday, 08:00–18:00 WAT, in 30-minute slots/);
+});
+
 test('inspection schedule always enforces the agreed 30-minute duration', async () => {
   const schedule = await source('lib/inspection-schedule.js');
   const adminSchedule = await source('app/api/admin/inspection-schedule/route.js');
