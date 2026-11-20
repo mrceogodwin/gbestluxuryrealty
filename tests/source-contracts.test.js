@@ -330,11 +330,11 @@ test('a rejected inspection upgrade does not lock an existing free client out of
   assert.match(session, /'pending','rejected'/);
 });
 
-test('homepage exposes the in-app CHAT US NOW entry point', async () => {
+test('homepage keeps the single floating Agent entry point without a duplicate hero chat CTA', async () => {
   const home = await source('app/page.js');
   const widget = await source('components/agent-chat-widget.js');
-  assert.match(home, /CHAT US NOW/);
-  assert.match(home, /href="\/\?chat=1"/);
+  assert.doesNotMatch(home, /hero-chat-cta|CHAT US NOW/);
+  assert.match(home, /Agent/);
   assert.match(widget, /Talk to a human/);
 });
 
