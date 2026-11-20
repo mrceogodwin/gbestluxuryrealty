@@ -301,10 +301,9 @@ test('inspection schedule always enforces the agreed 30-minute duration', async 
 
 test('database active-slot index includes contacted inspections', async () => {
   const migration = await source('db/migrations/20261120_contacted_inspections_hold_slots.sql');
-  assert.match(migration,/DROP INDEX IF EXISTS public\\.inspection_requests_tenant_active_slot_unique/);
-  assert.match(migration,/status IN \\(\'pending\', \'contacted\', \'confirmed\'\\)/);
+  assert.ok(migration.includes('DROP INDEX IF EXISTS public.inspection_requests_tenant_active_slot_unique'));
+  assert.ok(migration.includes("status IN ('pending', 'contacted', 'confirmed')"));
 });
-
 test('pending, contacted and confirmed inspections all reserve their time slots', async () => {
   const booking = await source('app/api/inspection-requests/route.js');
   const availability = await source('lib/inspection-schedule.js');
