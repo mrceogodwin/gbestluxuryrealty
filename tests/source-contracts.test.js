@@ -497,3 +497,25 @@ test('available and sold property status is permission-controlled, tenant-scoped
   assert.ok(styles.includes('.property-availability.is-available{background:#e4f4d9'));
   assert.ok(styles.includes('.property-availability.is-sold{background:#fbe5e2'));
 });
+
+test('client email OTP is short-lived, single-use, rate-limited and fails closed without sender configuration', async () => {
+  const request = await source('app/api/client-auth/request-code/route.js');
+  const verify = await source('app/api/client-auth/verify-code/route.js');
+  const mailer = await source('lib/client-registration-email.js');
+  assert.match(request, /CLIENT_AUTH_SECRET/);
+  assert.match(request, /createHmac\('sha256'/);
+  assert.match(request, /randomInt\(0,1000000\)/);
+  assert.match(request, /TTL_MINUTES=10/);
+  assert.match(request, /email_count>=4/);
+  assert.match(request, /ip_count>=12/);
+  assert.match(request, /last_email_request[\s\S]*<60000/);
+  assert.match(request, /used_at=now\(\)/);
+  assert.match(verify, /attempts>=5/);
+  assert.match(verify, /timingSafeEqual/);
+  assert.match(verify, /expires_at/);
+  assert.match(verify, /sameSite:'lax'/);
+  assert.match(verify, /httpOnly:true/);
+  assert.match(mailer, /RESEND_API_KEY/);
+  assert.match(mailer, /RESEND_FROM_EMAIL/);
+  assert.match(mailer, /if\(!process\.env\.RESEND_API_KEY \|\| !process\.env\.RESEND_FROM_EMAIL \|\| !to\)/);
+});
