@@ -109,7 +109,7 @@ export async function POST(req) {
       clientEmail=await sendClientRegistrationEmail({
         to:fields.email,
         subject:'G-BEST received your inspection registration',
-        html:'<p>Hello '+escapeHtml(fullName)+',</p><p>We received your inspection registration and transfer receipt. Payment is <strong>pending manual verification</strong>. Uploading a receipt does not confirm payment. Your inspection registration and private messaging access will be activated after manual payment verification. You can continue browsing published properties and sending general enquiries without paying this inspection fee.</p><p>G-BEST Luxury Realty</p>'
+        html:'<p>Hello '+escapeHtml(fullName)+',</p><p>We received your inspection registration and transfer receipt. Payment is <strong>pending manual verification</strong>. Uploading a receipt does not confirm payment. Your free client profile, general enquiries and private messaging remain available while we review your payment. Physical inspection booking becomes available only after payment is approved and an appointment is confirmed.</p><p>G-BEST Luxury Realty</p>'
       });
     }else{
       clientEmail=await sendClientRegistrationEmail({
