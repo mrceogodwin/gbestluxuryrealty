@@ -51,6 +51,16 @@ export async function PATCH(req) {
       currentRow=current.rows[0];
       if(!allowedPrevious[status].includes(currentRow.status)&&currentRow.status!==status){await client.query('ROLLBACK');return NextResponse.json({error:'This status change is not allowed from '+currentRow.status+'. Refresh the request and choose a valid next action.',currentStatus:currentRow.status},{status:409});}
       if(status==='confirmed'&&currentRow.status!=='confirmed'){
+        // A property can be marked SOLD after the client submits a pending request.
+        // Re-check its live status at approval time, not only at initial submission.
+        const property=await client.query(
+          "SELECT status FROM public.properties WHERE id=$1 AND tenant_id=$2 LIMIT 1",
+          [currentRow.property_id,currentRow.tenant_id]
+        );
+        if(!property.rowCount||!['published','available'].includes(property.rows[0].status)){
+          await client.query('ROLLBACK');
+          return NextResponse.json({error:'This property is no longer available for inspection. It may have been sold, archived or unpublished. Please contact the client before approving.'},{status:409});
+        }
         const eligibility=currentRow.client_registration_id
           ? await client.query("SELECT id FROM public.client_registrations WHERE id=$1::uuid AND tenant_id=$2 AND lower(email)=lower($3) AND payment_status='approved' AND client_status='active' LIMIT 1",[currentRow.client_registration_id,currentRow.tenant_id,currentRow.client_email])
           : await client.query("SELECT id FROM public.client_registrations WHERE tenant_id=$2 AND lower(email)=lower($1) AND payment_status='approved' AND client_status='active' ORDER BY updated_at DESC,created_at DESC LIMIT 1",[currentRow.client_email,currentRow.tenant_id]);
