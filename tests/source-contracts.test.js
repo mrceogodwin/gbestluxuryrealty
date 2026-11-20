@@ -25,6 +25,13 @@ test('inspection requests reject presentation-only sample property IDs', async (
   assert.match(code, /status IN \(\'published\',\'available\'\)/);
 });
 
+test('admin cannot confirm an inspection after its property is sold or unpublished', async () => {
+  const code = await source('app/api/admin/inspection-requests/route.js');
+  assert.match(code, /SELECT status FROM public\.properties WHERE id=\$1 AND tenant_id=\$2/);
+  assert.match(code, /!\['published','available'\]\.includes\(property\.rows\[0\]\.status\)/);
+  assert.match(code, /property is no longer available for inspection/);
+});
+
 test('inspection booking APIs share the Neon pool', async () => {
   for (const path of ['app/api/inspection-requests/route.js', 'app/api/admin/inspection-requests/route.js']) {
     const code = await source(path);
