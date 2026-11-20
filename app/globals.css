@@ -3324,9 +3324,6 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .gb-agent-foot{padding-bottom:max(9px,env(safe-area-inset-bottom))!important}
 }
 
-.hero-chat-cta{display:inline-flex;align-items:center;justify-content:center;margin-left:10px;padding:14px 18px;border:1px solid rgba(255,255,255,.72);border-radius:3px;color:#fff;background:rgba(5,47,31,.5);font-size:10px;font-weight:850;letter-spacing:.14em;text-decoration:none;backdrop-filter:blur(8px);transition:background .2s ease,border-color .2s ease}
-.hero-chat-cta:hover{background:#0c4b32;border-color:#d6f27d}
-@media(max-width:680px){.hero-chat-cta{margin:10px 0 0;width:max-content;max-width:100%}}
 
 
 /* G-BEST availability: compact, consistent public labels and staff controls. */
