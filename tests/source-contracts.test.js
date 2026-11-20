@@ -543,3 +543,21 @@ test('client email OTP is short-lived, single-use, rate-limited and fails closed
   assert.match(mailer, /RESEND_FROM_EMAIL/);
   assert.match(mailer, /if\s*\(\s*!process\.env\.RESEND_API_KEY\s*\|\|\s*!process\.env\.RESEND_FROM_EMAIL\s*\|\|\s*!to\s*\)/);
 });
+
+
+test('client chat mutations require manage permission and history returns newest 500 in chronological order', async () => {
+  const adminChat = await source('app/api/admin/client-chat/route.js');
+  const clientChat = await source('app/api/client-chat/route.js');
+  assert.match(adminChat, /export async function GET(req)[\s\S]*authorizeAdminRequest\(req,\['clients\.view','clients\.manage'\]\)/);
+  assert.match(adminChat, /export async function POST(req)[\s\S]*authorizeAdminRequest\(req,'clients\.manage'\)/);
+  assert.match(adminChat, /export async function PATCH(req)[\s\S]*authorizeAdminRequest\(req,'clients\.manage'\)/);
+  assert.match(adminChat, /ORDER BY created_at DESC,id DESC LIMIT 500/);
+  assert.match(adminChat, /messages\.rows\.reverse\(\)/);
+  assert.match(clientChat, /ORDER BY m\.created_at DESC NULLS LAST,m\.id DESC LIMIT 500/);
+  assert.match(clientChat, /q\.rows\.reverse\(\)/);
+});
+
+test('client OTP login rejects protocol-relative redirect destinations', async () => {
+  const login = await source('app/client-login/page.js');
+  assert.match(login, /next\.startsWith\('\/'\)&&!next\.startsWith\('\/\/'\)/);
+});
