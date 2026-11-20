@@ -33,14 +33,14 @@ export async function GET(req){
   const first=q.rows[0];
   const staff=first?.conversation_id?await pool.query(`SELECT a.id,a.full_name,a.avatar_url,CASE WHEN p.last_seen_at>now()-interval '120 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '120 seconds' THEN p.presence ELSE 'offline' END AS presence,p.last_seen_at
    FROM public.client_chat_conversations c
-   JOIN public.client_chat_participants cp ON cp.conversation_id=c.id AND cp.removed_at IS NULL
-   JOIN public.staff_accounts a ON a.id=cp.staff_id AND a.status='active'
+   JOIN public.client_chat_participants cp ON cp.conversation_id=c.id AND cp.tenant_id=c.tenant_id AND cp.removed_at IS NULL
+   JOIN public.staff_accounts a ON a.id=cp.staff_id AND a.tenant_id=c.tenant_id AND a.status='active'
    LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id
-   WHERE c.id=$1
+   WHERE c.id=$1 AND c.tenant_id=$2
    UNION SELECT a.id,a.full_name,a.avatar_url,CASE WHEN p.last_seen_at>now()-interval '120 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '120 seconds' THEN p.presence ELSE 'offline' END,p.last_seen_at
    FROM public.client_chat_conversations c JOIN public.staff_accounts a ON a.id=c.assigned_staff_id AND a.tenant_id=c.tenant_id AND a.status='active'
-   LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id WHERE c.id=$1`,[first.conversation_id]):{rows:[]};
-  const events=first?.conversation_id?await pool.query(`SELECT e.event_type,e.created_at,a.full_name,a.avatar_url FROM public.client_chat_handover_events e LEFT JOIN public.staff_accounts a ON a.id::text=e.details->>'staffId' WHERE e.conversation_id=$1 AND e.tenant_id=$2 ORDER BY e.created_at DESC LIMIT 12`,[first.conversation_id,client.tenant_id]):{rows:[]};
+   LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id WHERE c.id=$1 AND c.tenant_id=$2`,[first.conversation_id,client.tenant_id]):{rows:[]};
+  const events=first?.conversation_id?await pool.query(`SELECT e.event_type,e.created_at,a.full_name,a.avatar_url FROM public.client_chat_handover_events e LEFT JOIN public.staff_accounts a ON a.id::text=e.details->>'staffId' AND a.tenant_id=e.tenant_id AND a.status='active' WHERE e.conversation_id=$1 AND e.tenant_id=$2 ORDER BY e.created_at DESC LIMIT 12`,[first.conversation_id,client.tenant_id]):{rows:[]};
   return NextResponse.json({conversation:first?{id:first.conversation_id,status:first.status,handoffStatus:first.handoff_status,handoffRequestedAt:first.handoff_requested_at,assignedStaffId:first.assigned_staff_id,assignedAt:first.assigned_at,created_at:first.created_at,last_message_at:first.last_message_at}:null,
    humanAvailable:staff.rows.some(s=>s.presence==='online'),staff:staff.rows,events:events.rows,
    messages:q.rows.filter(x=>x.message_id).map(x=>({id:x.message_id,sender_type:x.sender_type,sender_id:x.sender_id,sender_name:x.sender_name,sender_avatar_url:x.sender_avatar_url,body:x.body,created_at:x.message_created_at,read_at:x.read_at}))},{headers:noStore});
