@@ -459,3 +459,16 @@ test('tenant bootstrap uses balanced PostgreSQL dollar-quoted DO blocks', async 
   assert.equal(opens, closes, 'every DO block has a matching dollar-quote terminator');
   assert.doesNotMatch(code, /DO \$(?!\$)\s+BEGIN/);
 });
+
+
+test('staff can see and atomically claim only unassigned requested human handoffs', async () => {
+  const api = await source('app/api/admin/client-chat/route.js');
+  const page = await source('app/admin/client-chat/page.js');
+  assert.match(api, /c\.assigned_staff_id IS NULL AND c\.handoff_status='requested'/);
+  assert.match(api, /action==='claim'/);
+  assert.match(api, /assigned_staff_id IS NULL AND handoff_status='requested' AND status='open'/);
+  assert.match(api, /client_chat_participants/);
+  assert.match(api, /'staff_joined','staff'/);
+  assert.match(page, /CLAIM WAITING CHAT/);
+  assert.match(page, /action:'claim'/);
+});
