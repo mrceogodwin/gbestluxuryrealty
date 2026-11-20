@@ -517,5 +517,5 @@ test('client email OTP is short-lived, single-use, rate-limited and fails closed
   assert.match(verify, /httpOnly:true/);
   assert.match(mailer, /RESEND_API_KEY/);
   assert.match(mailer, /RESEND_FROM_EMAIL/);
-  assert.match(mailer, /if\(!process\.env\.RESEND_API_KEY \|\| !process\.env\.RESEND_FROM_EMAIL \|\| !to\)/);
+  assert.match(mailer, /if\s*\(\s*!process\.env\.RESEND_API_KEY\s*\|\|\s*!process\.env\.RESEND_FROM_EMAIL\s*\|\|\s*!to\s*\)/);
 });
