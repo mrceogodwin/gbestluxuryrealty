@@ -37,8 +37,8 @@ export async function GET(req){
         OR (c.assigned_staff_id IS NULL AND c.handoff_status='requested'))
     LIMIT 1`,[id,ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
    if(!c.rowCount)return NextResponse.json({error:'Conversation not found.'},{status:404});
-   const messages=await pool.query(`SELECT id,sender_type,sender_id,body,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at ASC LIMIT 500`,[id]);
-   return NextResponse.json({conversation:c.rows[0],messages:messages.rows},{headers:noStore});
+   const messages=await pool.query(`SELECT id,sender_type,sender_id,body,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at DESC,id DESC LIMIT 500`,[id]);
+   return NextResponse.json({conversation:c.rows[0],messages:messages.rows.reverse()},{headers:noStore});
   }
   const q=await pool.query(`SELECT c.id,c.status,c.handoff_status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.client_id,r.full_name,r.email,r.phone,
    a.full_name AS assigned_staff_name,a.avatar_url AS assigned_staff_avatar_url,CASE WHEN $2::boolean THEN a.phone_number END AS assigned_staff_phone_number,
@@ -65,7 +65,7 @@ export async function GET(req){
 }
 export async function POST(req){
  if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
- if(!await authorizeAdminRequest(req,['clients.view','clients.manage']))return NextResponse.json({error:'Unauthorized'},{status:401});
+ if(!await authorizeAdminRequest(req,'clients.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
   const d=await req.json().catch(()=>null),id=String(d?.conversationId||''),message=String(d?.message||'').trim();
   if(!/^[0-9a-f-]{36}$/i.test(id)||!message||message.length>4000)return NextResponse.json({error:'A conversation and a message of 1–4,000 characters are required.'},{status:400});
@@ -90,7 +90,7 @@ export async function POST(req){
 }
 export async function PATCH(req){
  if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
- if(!await authorizeAdminRequest(req,['clients.view','clients.manage']))return NextResponse.json({error:'Unauthorized'},{status:401});
+ if(!await authorizeAdminRequest(req,'clients.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
   const d=await req.json().catch(()=>null),id=String(d?.conversationId||''),action=String(d?.action||'');
   if(!/^[0-9a-f-]{36}$/i.test(id)||!['close','reopen','assign','claim','read'].includes(action))return NextResponse.json({error:'Invalid conversation action.'},{status:400});
