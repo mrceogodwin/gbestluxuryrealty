@@ -298,7 +298,14 @@ test('inspection schedule always enforces the agreed 30-minute duration', async 
   assert.match(adminSchedule, /settings\.slotMinutes!==30/);
 });
 
-test('pending, contacted and confirmed inspections all reserve their time slots', async () => {\n  const booking = await source('app/api/inspection-requests/route.js');\n  const availability = await source('lib/inspection-schedule.js');\n  const approval = await source('app/api/admin/inspection-requests/route.js');\n  for (const code of [booking,availability,approval]) assert.match(code,/status IN \\(\'pending\',\'contacted\',\'confirmed\'\\)/);\n});\n\ntest('inspection approval revalidates schedule and slot conflicts inside the booking lock', async () => {
+test('pending, contacted and confirmed inspections all reserve their time slots', async () => {
+  const booking = await source('app/api/inspection-requests/route.js');
+  const availability = await source('lib/inspection-schedule.js');
+  const approval = await source('app/api/admin/inspection-requests/route.js');
+  for (const code of [booking,availability,approval]) assert.ok(code.includes("status IN ('pending','contacted','confirmed')"));
+});
+
+test('inspection approval revalidates schedule and slot conflicts inside the booking lock', async () => {
   const inspections = await source('app/api/admin/inspection-requests/route.js');
   assert.match(inspections, /pg_advisory_xact_lock\(hashtext\(\$1\),hashtext\('inspection-booking'\)\)/);
   assert.match(inspections, /SELECT id,tenant_id,status[\s\S]*FOR UPDATE/);
