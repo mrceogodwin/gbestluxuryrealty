@@ -8,6 +8,23 @@ export default function ClientDashboard(){
  async function get(url){const r=await fetch(url,{cache:'no-store'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not load your account.');return d;}
  async function load(){setBusy(true);setError('');try{const s=await get('/api/client-auth/session');if(!s.authenticated){window.location.href='/client-login?next=%2Fclient-dashboard';return;}setClient(s.client);const [i,c]=await Promise.all([get('/api/client-inspections'),get('/api/client-chat')]);setRequests(i.requests||[]);setChat(c.conversation);setMessages(c.messages||[]);setStaff(c.staff||[]);}catch(e){setError(e.message)}finally{setBusy(false)}}
  useEffect(()=>{load()},[]);
+ useEffect(()=>{
+  if(!client)return;
+  let active=true;
+  const refresh=async()=>{
+   try{
+    const r=await fetch('/api/client-chat',{cache:'no-store'});
+    if(!r.ok)return;
+    const d=await r.json();
+    if(!active)return;
+    setChat(d.conversation||null);
+    setMessages(d.messages||[]);
+    setStaff(d.staff||[]);
+   }catch{}
+  };
+  const timer=window.setInterval(refresh,10000);
+  return()=>{active=false;window.clearInterval(timer)};
+ },[client]);
  async function send(e){e.preventDefault();const body=message.trim();if(!body||sending)return;setSending(true);setError('');try{const r=await fetch('/api/client-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:body})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Message could not be sent.');setMessage('');const c=await get('/api/client-chat');setChat(c.conversation);setMessages(c.messages||[]);setStaff(c.staff||[]);setNotice('Message sent securely.');}catch(e){setError(e.message)}finally{setSending(false)}}
  async function handoff(){setError('');try{const r=await fetch('/api/client-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'request-human'})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not request a team member.');setNotice(d.message||'Your request has been sent.');const c=await get('/api/client-chat');setChat(c.conversation);setMessages(c.messages||[]);setStaff(c.staff||[]);}catch(e){setError(e.message)}}
  async function logout(){try{await fetch('/api/client-auth/logout',{method:'POST'});}finally{window.location.href='/client-login';}}
