@@ -29,7 +29,8 @@ export async function GET(req){
    FROM public.client_chat_conversations c
    LEFT JOIN public.client_chat_messages m ON m.conversation_id=c.id
    WHERE c.tenant_id=$1 AND c.registration_id=$2
-   ORDER BY m.created_at ASC NULLS FIRST LIMIT 500`,[client.tenant_id,client.id]);
+   ORDER BY m.created_at DESC NULLS LAST,m.id DESC LIMIT 500`,[client.tenant_id,client.id]);
+  q.rows.reverse();
   const first=q.rows[0];
   const staff=first?.conversation_id?await pool.query(`SELECT a.id,a.full_name,a.avatar_url,CASE WHEN p.last_seen_at>now()-interval '120 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '120 seconds' THEN p.presence ELSE 'offline' END AS presence,p.last_seen_at
    FROM public.client_chat_conversations c
