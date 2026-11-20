@@ -548,9 +548,12 @@ test('client email OTP is short-lived, single-use, rate-limited and fails closed
 test('client chat mutations require manage permission and history returns newest 500 in chronological order', async () => {
   const adminChat = await source('app/api/admin/client-chat/route.js');
   const clientChat = await source('app/api/client-chat/route.js');
-  assert.match(adminChat, /export async function GET(req)[\s\S]*authorizeAdminRequest\(req,\['clients\.view','clients\.manage'\]\)/);
-  assert.match(adminChat, /export async function POST(req)[\s\S]*authorizeAdminRequest\(req,'clients\.manage'\)/);
-  assert.match(adminChat, /export async function PATCH(req)[\s\S]*authorizeAdminRequest\(req,'clients\.manage'\)/);
+  const getHandler = adminChat.slice(adminChat.indexOf('export async function GET(req)'), adminChat.indexOf('export async function POST(req)'));
+  const postHandler = adminChat.slice(adminChat.indexOf('export async function POST(req)'), adminChat.indexOf('export async function PATCH(req)'));
+  const patchHandler = adminChat.slice(adminChat.indexOf('export async function PATCH(req)'));
+  assert.ok(getHandler.includes("authorizeAdminRequest(req,['clients.view','clients.manage'])"));
+  assert.ok(postHandler.includes("authorizeAdminRequest(req,'clients.manage')"));
+  assert.ok(patchHandler.includes("authorizeAdminRequest(req,'clients.manage')"));
   assert.match(adminChat, /ORDER BY created_at DESC,id DESC LIMIT 500/);
   assert.match(adminChat, /messages\.rows\.reverse\(\)/);
   assert.match(clientChat, /ORDER BY m\.created_at DESC NULLS LAST,m\.id DESC LIMIT 500/);
