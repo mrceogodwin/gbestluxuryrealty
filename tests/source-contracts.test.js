@@ -475,6 +475,12 @@ test('staff can see and atomically claim only unassigned requested human handoff
 });
 
 
+test('client chat staff identity and handover events remain tenant-scoped', async () => {
+  const api = await source('app/api/client-chat/route.js');
+  assert.match(api, /a\.tenant_id=c\.tenant_id AND a\.status='active'/);
+  assert.match(api, /e\.conversation_id=\$1 AND e\.tenant_id=\$2/);
+});
+
 test('available and sold property status is permission-controlled, tenant-scoped and reflected publicly', async () => {
   const adminApi = await source('app/api/admin/properties/route.js');
   const adminPage = await source('app/admin/super/page.js');
