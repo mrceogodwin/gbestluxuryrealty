@@ -472,3 +472,27 @@ test('staff can see and atomically claim only unassigned requested human handoff
   assert.match(page, /CLAIM WAITING CHAT/);
   assert.match(page, /action:'claim'/);
 });
+
+test('available and sold property status is permission-controlled, tenant-scoped and reflected publicly', async () => {
+  const adminApi = await source('app/api/admin/properties/route.js');
+  const adminPage = await source('app/admin/super/page.js');
+  const layout = await source('app/admin/layout.js');
+  const publicApi = await source('app/api/properties/route.js');
+  const home = await source('app/page.js');
+  const styles = await source('app/globals.css');
+
+  for (const method of ['GET','POST','PATCH']) {
+    assert.match(adminApi, new RegExp('export async function ' + method + '\\(req\\)'));
+  }
+  assert.match(adminApi, /authorizeAdminRequest\(req, 'properties\\.manage'\)/);
+  assert.match(adminApi, /staff\\?\\.tenant_id/);
+  assert.match(adminApi, /WHERE p\\.tenant_id=\\$1/);
+  assert.match(layout, /href==='\\/admin\\/super'\\)return access\\.has\\('properties\\.manage'\\)/);
+  assert.match(adminPage, /value="available">🟢 AVAILABLE/);
+  assert.match(adminPage, /value="sold">🔴 SOLD/);
+  assert.match(adminPage, /saveListingStatus\(x\\.id,e\\.target\\.value\)/);
+  assert.match(publicApi, /status IN \\('published', 'available', 'sold'\\)/);
+  assert.match(home, /x\\.status==='sold'\\?'SOLD':'AVAILABLE'/);
+  assert.match(styles, /property-availability\\.is-available\\{background:#e4f4d9/);
+  assert.match(styles, /property-availability\\.is-sold\\{background:#fbe5e2/);
+});
