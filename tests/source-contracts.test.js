@@ -564,3 +564,12 @@ test('client OTP login rejects protocol-relative redirect destinations', async (
   const login = await source('app/client-login/page.js');
   assert.match(login, /next\.startsWith\('\/'\)&&!next\.startsWith\('\/\/'\)/);
 });
+
+
+test('cancelled inspection calendar events retain their ID until deletion succeeds and can be retried', async () => {
+  const adminInspections = await source('app/api/admin/inspection-requests/route.js');
+  assert.match(adminInspections, /calendar_event_id=COALESCE\(\$4,calendar_event_id\)/);
+  assert.match(adminInspections, /status='cancelled' AND calendar_event_id=\$2/);
+  assert.match(adminInspections, /if\(status==='cancelled'&&prior\.calendar_event_id\)/);
+  assert.match(adminInspections, /if\(calendar\.deleted\)await getDatabasePool\(\)\.query/);
+});
