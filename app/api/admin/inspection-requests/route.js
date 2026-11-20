@@ -125,7 +125,7 @@ export async function PATCH(req) {
     Object.assign(row,counts.rows[0]||{});
     return NextResponse.json({ok:true,request:row,calendar,email,warnings:[...warnings]},{headers:{'Cache-Control':'no-store'}});
   } catch(e) {
-    if(e.code==='23505') return NextResponse.json({error:'That slot is already held by another pending or confirmed request. Choose another slot.'},{status:409});
+    if(e.code==='23505') return NextResponse.json({error:'That slot is already held by another pending, contacted or confirmed request. Choose another slot.'},{status:409});
     console.error('Admin request update failed',e.code||e.message);
     return NextResponse.json({error:'Could not update request'},{status:500});
   }
