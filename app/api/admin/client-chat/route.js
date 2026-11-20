@@ -24,7 +24,7 @@ export async function GET(req){
   const id=url.searchParams.get('conversationId');
   if(id){
    if(!/^[0-9a-f-]{36}$/i.test(id))return NextResponse.json({error:'Invalid conversation ID.'},{status:400});
-   const c=await pool.query(`SELECT c.id,c.status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.id AS registration_id,r.client_id,r.full_name,r.email,r.phone,
+   const c=await pool.query(`SELECT c.id,c.status,c.handoff_status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.id AS registration_id,r.client_id,r.full_name,r.email,r.phone,
     a.full_name AS assigned_staff_name,a.avatar_url AS assigned_staff_avatar_url,CASE WHEN $3::boolean THEN a.phone_number END AS assigned_staff_phone_number,CASE WHEN $3::boolean THEN a.email END AS assigned_staff_email,
     CASE WHEN p.last_seen_at>now()-interval '120 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS assigned_staff_presence,p.last_seen_at AS assigned_staff_last_seen_at
     FROM public.client_chat_conversations c JOIN public.client_registrations r ON r.id=c.registration_id AND r.tenant_id=c.tenant_id
@@ -33,13 +33,14 @@ export async function GET(req){
     WHERE c.id=$1 AND c.tenant_id=$2
       AND ($3::boolean OR c.assigned_staff_id=$4
         OR EXISTS(SELECT 1 FROM public.client_chat_participants cp WHERE cp.conversation_id=c.id AND cp.tenant_id=c.tenant_id AND cp.staff_id=$4 AND cp.removed_at IS NULL)
-        OR EXISTS(SELECT 1 FROM public.client_chat_monitor_access ma WHERE ma.conversation_id=c.id AND ma.tenant_id=c.tenant_id AND ma.staff_id=$4 AND ma.revoked_at IS NULL))
+        OR EXISTS(SELECT 1 FROM public.client_chat_monitor_access ma WHERE ma.conversation_id=c.id AND ma.tenant_id=c.tenant_id AND ma.staff_id=$4 AND ma.revoked_at IS NULL)
+        OR (c.assigned_staff_id IS NULL AND c.handoff_status='requested'))
     LIMIT 1`,[id,ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
    if(!c.rowCount)return NextResponse.json({error:'Conversation not found.'},{status:404});
    const messages=await pool.query(`SELECT id,sender_type,sender_id,body,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at ASC LIMIT 500`,[id]);
    return NextResponse.json({conversation:c.rows[0],messages:messages.rows},{headers:noStore});
   }
-  const q=await pool.query(`SELECT c.id,c.status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.client_id,r.full_name,r.email,r.phone,
+  const q=await pool.query(`SELECT c.id,c.status,c.handoff_status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.client_id,r.full_name,r.email,r.phone,
    a.full_name AS assigned_staff_name,a.avatar_url AS assigned_staff_avatar_url,CASE WHEN $2::boolean THEN a.phone_number END AS assigned_staff_phone_number,
    CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS assigned_staff_presence,
    (SELECT count(*)::int FROM public.client_chat_messages m WHERE m.conversation_id=c.id AND m.sender_type='client' AND m.read_at IS NULL) AS unread_count,
@@ -49,7 +50,8 @@ export async function GET(req){
    LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id
    WHERE c.tenant_id=$1 AND ($2::boolean OR c.assigned_staff_id=$3
      OR EXISTS(SELECT 1 FROM public.client_chat_participants cp WHERE cp.conversation_id=c.id AND cp.tenant_id=c.tenant_id AND cp.staff_id=$3 AND cp.removed_at IS NULL)
-     OR EXISTS(SELECT 1 FROM public.client_chat_monitor_access ma WHERE ma.conversation_id=c.id AND ma.tenant_id=c.tenant_id AND ma.staff_id=$3 AND ma.revoked_at IS NULL))
+     OR EXISTS(SELECT 1 FROM public.client_chat_monitor_access ma WHERE ma.conversation_id=c.id AND ma.tenant_id=c.tenant_id AND ma.staff_id=$3 AND ma.revoked_at IS NULL)
+     OR (c.assigned_staff_id IS NULL AND c.handoff_status='requested'))
    ORDER BY c.last_message_at DESC NULLS LAST,c.created_at DESC LIMIT 200`,[ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
   const tenants=ctx.admin?(await pool.query('SELECT id,display_name,status FROM public.site_tenants ORDER BY created_at')).rows:[];
   const staff=ctx.admin?(await pool.query(`SELECT a.id,a.full_name,a.email,a.phone_number,a.avatar_url,a.role,
@@ -91,14 +93,35 @@ export async function PATCH(req){
  if(!await authorizeAdminRequest(req,['clients.view','clients.manage']))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
   const d=await req.json().catch(()=>null),id=String(d?.conversationId||''),action=String(d?.action||'');
-  if(!/^[0-9a-f-]{36}$/i.test(id)||!['close','reopen','assign','read'].includes(action))return NextResponse.json({error:'Invalid conversation action.'},{status:400});
+  if(!/^[0-9a-f-]{36}$/i.test(id)||!['close','reopen','assign','claim','read'].includes(action))return NextResponse.json({error:'Invalid conversation action.'},{status:400});
   const pool=getDatabasePool(),ctx=await context(req,pool,d?.tenantId);
   if(action==='assign'&&!ctx.admin)return NextResponse.json({error:'Only an administrator can assign conversations.'},{status:403});
+  if(action==='claim'&&(!ctx.staff||ctx.admin))return NextResponse.json({error:'Only a signed-in staff member can claim a waiting conversation.'},{status:403});
   const c=await pool.query(`SELECT c.id FROM public.client_chat_conversations c
    WHERE c.id=$1 AND c.tenant_id=$2 AND ($3::boolean OR c.assigned_staff_id=$4
-     OR EXISTS(SELECT 1 FROM public.client_chat_participants cp WHERE cp.conversation_id=c.id AND cp.tenant_id=c.tenant_id AND cp.staff_id=$4 AND cp.removed_at IS NULL))
+     OR EXISTS(SELECT 1 FROM public.client_chat_participants cp WHERE cp.conversation_id=c.id AND cp.tenant_id=c.tenant_id AND cp.staff_id=$4 AND cp.removed_at IS NULL)
+     OR (c.assigned_staff_id IS NULL AND c.handoff_status='requested'))
    `,[id,ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
   if(!c.rowCount)return NextResponse.json({error:'Conversation not found.'},{status:404});
+  if(action==='claim'){
+   const db=await pool.connect();
+   try{
+    await db.query('BEGIN');
+    const claimed=await db.query(`UPDATE public.client_chat_conversations
+     SET assigned_staff_id=$3,assigned_by=$4,assigned_at=now(),handoff_status='assigned',handoff_resolved_at=NULL,updated_at=now()
+     WHERE id=$1 AND tenant_id=$2 AND assigned_staff_id IS NULL AND handoff_status='requested' AND status='open'
+     RETURNING id`,[id,ctx.tenantId,ctx.staff.id,ctx.staff.email]);
+    if(!claimed.rowCount){await db.query('ROLLBACK');return NextResponse.json({error:'This request has already been claimed or is no longer waiting.'},{status:409,headers:noStore});}
+    await db.query(`INSERT INTO public.client_chat_participants(conversation_id,tenant_id,staff_id,added_by,added_at,removed_at)
+     VALUES($1,$2,$3,$4,now(),NULL) ON CONFLICT(conversation_id,staff_id) DO UPDATE SET added_by=EXCLUDED.added_by,added_at=now(),removed_at=NULL`,[id,ctx.tenantId,ctx.staff.id,ctx.staff.email]);
+    await db.query(`INSERT INTO public.client_chat_handover_events(tenant_id,conversation_id,event_type,actor_type,actor_id,details)
+     VALUES($1,$2,'staff_joined','staff',$3,$4::jsonb)`,[ctx.tenantId,id,ctx.staff.id,JSON.stringify({staffId:ctx.staff.id,fullName:ctx.staff.full_name,claimed:true})]);
+    await db.query(`INSERT INTO public.staff_notifications(tenant_id,staff_id,notification_type,title,body,reference_type,reference_id)
+     VALUES($1,$2,'chat_assigned','Waiting client chat claimed','You claimed a waiting client conversation.','client_chat',$3)`,[ctx.tenantId,ctx.staff.id,id]);
+    await db.query('COMMIT');
+    return NextResponse.json({ok:true,claimed:true},{headers:noStore});
+   }catch(error){await db.query('ROLLBACK').catch(()=>{});throw error;}finally{db.release();}
+  }
   if(action==='close'||action==='reopen')await pool.query('UPDATE public.client_chat_conversations SET status=$3,updated_at=now() WHERE id=$1 AND tenant_id=$2',[id,ctx.tenantId,action==='close'?'closed':'open']);
   if(action==='assign'){
    const staffId=d?.staffId?String(d.staffId):null;
