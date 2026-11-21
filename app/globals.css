@@ -3448,3 +3448,81 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   .gb-booking-calendar-grid .gb-booking-day,
   .gb-booking-calendar-grid .gb-booking-blank{min-height:32px}
 }
+
+
+/* Premium book-inspection actions on property cards */
+.property-booking-cta{
+  display:flex!important;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  width:100%;
+  min-height:48px;
+  box-sizing:border-box;
+  margin-top:14px;
+  padding:13px 16px!important;
+  border:1px solid #c9ad65!important;
+  border-bottom:3px solid #a88943!important;
+  border-radius:2px;
+  background:linear-gradient(115deg,#123d2a 0%,#0b291d 100%)!important;
+  color:#f7f3e8!important;
+  text-align:left;
+  font:800 10px 'DM Mono',ui-monospace,monospace!important;
+  letter-spacing:.12em;
+  line-height:1.2;
+  box-shadow:0 7px 18px rgba(10,43,28,.12);
+  cursor:pointer;
+  transition:background .18s ease,transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+.property-booking-cta span{
+  display:grid;
+  place-items:center;
+  width:25px;
+  height:25px;
+  flex:0 0 25px;
+  border:1px solid rgba(216,243,107,.45);
+  color:#d8f36b;
+  font-size:14px;
+  line-height:1;
+}
+.property-booking-cta:not(:disabled):hover{
+  transform:translateY(-2px);
+  border-color:#e3cf91!important;
+  border-bottom-color:#d8f36b!important;
+  background:linear-gradient(115deg,#1b5338 0%,#103523 100%)!important;
+  box-shadow:0 11px 24px rgba(10,43,28,.2);
+}
+.property-booking-cta:focus-visible{
+  outline:3px solid #d8f36b!important;
+  outline-offset:3px;
+}
+.property-booking-cta:disabled{
+  border-color:#aeb8af!important;
+  border-bottom-color:#8d9990!important;
+  background:#66736a!important;
+  color:#e1e6e1!important;
+  opacity:.72;
+  cursor:not-allowed;
+  box-shadow:none;
+  transform:none;
+}
+.collection-booking-cta{
+  min-height:43px;
+  margin-top:4px;
+  padding:10px 12px!important;
+  font-size:9px!important;
+}
+.property-collection-track-large .collection-booking-cta{
+  min-height:47px;
+  font-size:9px!important;
+}
+@media(max-width:680px){
+  .property-booking-cta{
+    min-height:46px;
+    padding:12px 13px!important;
+    font-size:9px!important;
+  }
+  .collection-booking-cta{
+    min-height:45px;
+  }
+}
