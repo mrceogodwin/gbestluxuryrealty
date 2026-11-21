@@ -26,7 +26,7 @@ function socialVideoSource(value){
 function cmsValue(data,key,field,fallback){const section=data?.[key];if(!section||section.visible===false)return fallback;const value=section[field];return typeof value==='string'&&value.length?value:fallback;}
 
 function GBestBookingCalendar({value,onChange}){
- const today=dateKey(new Date());
+ const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Lagos'}).format(new Date());
  const [month,setMonth]=useState(()=>{const base=value||today;const [y,m]=base.split('-').map(Number);return new Date(y,m-1,1)});
  const year=month.getFullYear(),monthIndex=month.getMonth(),offset=new Date(year,monthIndex,1).getDay(),count=new Date(year,monthIndex+1,0).getDate();
  const cells=[...Array(offset).fill(null),...Array.from({length:count},(_,i)=>i+1)];while(cells.length%7)cells.push(null);
