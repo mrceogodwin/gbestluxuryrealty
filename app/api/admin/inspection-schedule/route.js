@@ -30,7 +30,7 @@ export async function PUT(req){
   const blockedDates=[...new Set((Array.isArray(d.blockedDates)?d.blockedDates:[]).map(String))];
   const settings={timezone:ZONE,workingDays,startTime:String(d.startTime||''),endTime:String(d.endTime||''),slotMinutes:Number(d.slotMinutes),blockedDates};
   const minutes=t=>Number(t.slice(0,2))*60+Number(t.slice(3));
-  if(workingDays.join(',')!=='1,2,3,4,5,6'||settings.startTime!=='08:00'||settings.endTime!=='18:00'||settings.slotMinutes!==30||blockedDates.length>180||blockedDates.some(x=>!/^\d{4}-\d{2}-\d{2}$/.test(x)))return NextResponse.json({error:'Check working days, opening hours, slot length and blocked dates.'},{status:400});
+  if(!workingDays.length||workingDays.some(x=>!Number.isInteger(x)||x<0||x>6)||!validClock(settings.startTime)||!validClock(settings.endTime)||minutes(settings.endTime)<=minutes(settings.startTime)||![15,30,45,60].includes(settings.slotMinutes)||blockedDates.length>180||blockedDates.some(x=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(x))return true;const [y,m,day]=x.split('-').map(Number);return new Date(Date.UTC(y,m-1,day,12)).toISOString().slice(0,10)!==x;}))return NextResponse.json({error:'Choose valid operating days, valid opening hours, a 15/30/45/60-minute slot length and valid blocked dates.'},{status:400});
   // Schema is managed by the database migrations; request handlers must not run DDL.
   await pool.query('INSERT INTO public.inspection_schedule_tenant_settings(tenant_id,settings) VALUES($1,$2::jsonb) ON CONFLICT(tenant_id) DO UPDATE SET settings=EXCLUDED.settings,updated_at=now()',[tenant.id,JSON.stringify(settings)]);
   return NextResponse.json({ok:true,settings,tenant},{headers:{'Cache-Control':'no-store'}});
