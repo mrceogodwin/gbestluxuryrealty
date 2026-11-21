@@ -45,7 +45,7 @@ export async function PATCH(req) {
     try {
       await client.query('BEGIN');
       await client.query("SELECT pg_advisory_xact_lock(hashtext($1),hashtext('inspection-booking'))",[dateKey]);
-      const current=await client.query('SELECT id,tenant_id,status,full_name,contact,client_email,client_registration_id,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1 FOR UPDATE',[id]);
+      const current=await client.query('SELECT id,tenant_id,status,full_name,contact,client_email,client_registration_id,preferred_date,preferred_time,duration_minutes,property_id,message FROM public.inspection_requests WHERE id=$1 FOR UPDATE',[id]);
       if(!current.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Request not found'},{status:404});}
       currentRow=current.rows[0];
       if(!allowedPrevious[status].includes(currentRow.status)&&currentRow.status!==status){await client.query('ROLLBACK');return NextResponse.json({error:'This status change is not allowed from '+currentRow.status+'. Refresh the request and choose a valid next action.',currentStatus:currentRow.status},{status:409});}
