@@ -6,7 +6,6 @@ import {isAdminRequest} from '../../../../lib/admin-auth';
 import {ensureSiteTenants} from '../../../../lib/site-tenants';
 import {getStaffSession} from '../../../../lib/staff-auth';
 import {getSchedule,validClock} from '../../../../lib/inspection-schedule';
-import {createInspectionCalendarEvent,deleteInspectionCalendarEvent} from '../../../../lib/google-calendar';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const safe = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -16,7 +15,7 @@ export async function GET(req) {
   if (!process.env.DATABASE_URL) return NextResponse.json({error:'Database is not configured'},{status:503});
   try {
     const pool=getDatabasePool();await ensureSiteTenants(pool);const admin=await isAdminRequest(req);const url=new URL(req.url);let tenantId=url.searchParams.get('tenantId');if(!admin){const staff=await getStaffSession(req);tenantId=String(staff?.tenant_id||'');}else if(!tenantId){const owner=await pool.query("SELECT id FROM public.site_tenants WHERE tenant_key='gbest' LIMIT 1");tenantId=String(owner.rows[0]?.id||'');}if(!Number.isSafeInteger(Number(tenantId))||Number(tenantId)<1)return NextResponse.json({error:'Choose a valid company workspace.'},{status:400});const tenant=await pool.query('SELECT id FROM public.site_tenants WHERE id=$1',[tenantId]);if(!tenant.rowCount)return NextResponse.json({error:'Company workspace not found.'},{status:404});
-    const q=await pool.query(`SELECT r.id,r.tenant_id,r.full_name,r.contact,r.client_email,r.preferred_date,r.preferred_time,r.duration_minutes,r.property_id,r.message,r.status,r.calendar_event_id,r.created_at,
+    const q=await pool.query(`SELECT r.id,r.tenant_id,r.full_name,r.contact,r.client_email,r.preferred_date,r.preferred_time,r.duration_minutes,r.property_id,r.message,r.status,r.created_at,
       COALESCE(o.sent_count,0)::int AS emails_sent,COALESCE(o.failed_count,0)::int AS emails_failed,COALESCE(o.pending_count,0)::int AS emails_pending
       FROM public.inspection_requests r
       LEFT JOIN LATERAL (SELECT count(*) FILTER (WHERE status='sent') AS sent_count,count(*) FILTER (WHERE status='failed') AS failed_count,count(*) FILTER (WHERE status='pending') AS pending_count FROM public.inspection_email_outbox WHERE inspection_request_id=r.id) o ON true
@@ -73,39 +72,22 @@ export async function PATCH(req) {
         const overlap=await client.query("SELECT 1 FROM public.inspection_requests WHERE tenant_id=$4 AND preferred_date=$1::date AND id<>$5 AND status IN ('pending','contacted','confirmed') AND preferred_time < ($2::time + ($3 * interval '1 minute')) AND (preferred_time + (COALESCE(duration_minutes,30) * interval '1 minute')) > $2::time LIMIT 1",[date,time,duration,currentRow.tenant_id,id]);
         if(overlap.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'This inspection slot is no longer available. Another request is holding the time. Contact the client to choose another slot.'},{status:409});}
       }
-      q=await client.query('UPDATE public.inspection_requests SET status=$2,calendar_event_id=COALESCE($4,calendar_event_id),updated_at=now() WHERE id=$1 AND status=$3 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id',[id,status,currentRow.status,currentRow.calendar_event_id||null]);
+      q=await client.query('UPDATE public.inspection_requests SET status=$2,updated_at=now() WHERE id=$1 AND status=$3 RETURNING id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message',[id,status,currentRow.status]);
       await client.query('COMMIT');
     } catch(transactionError){await client.query('ROLLBACK').catch(()=>{});throw transactionError;}
     finally{client.release();}
-    let calendar={created:false,reason:'Google Calendar is not configured.'};
     if(!q.rowCount) {
-      const existing=await getDatabasePool().query('SELECT id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message,calendar_event_id FROM public.inspection_requests WHERE id=$1',[id]);
+      const existing=await getDatabasePool().query('SELECT id,status,full_name,contact,client_email,preferred_date,preferred_time,duration_minutes,property_id,message FROM public.inspection_requests WHERE id=$1',[id]);
       if(!existing.rowCount) return NextResponse.json({error:'Request not found'},{status:404});
       const prior=existing.rows[0];
       if(prior.status!==status) return NextResponse.json({error:'This status change is not allowed from '+prior.status+'. Refresh the request and choose a valid next action.',currentStatus:prior.status},{status:409});
-      let retryCalendar={created:false,reason:'Google Calendar is not configured.'};
-      if(status==='cancelled'&&prior.calendar_event_id){
-        try{retryCalendar=await deleteInspectionCalendarEvent(prior.calendar_event_id);if(retryCalendar.deleted)await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=NULL,updated_at=now() WHERE id=$1 AND status=\'cancelled\' AND calendar_event_id=$2',[id,prior.calendar_event_id]);}
-        catch(calendarError){retryCalendar={deleted:false,reason:calendarError.message};}
-      }
-      if(status==='confirmed'&&!prior.calendar_event_id){
-        try{retryCalendar=await createInspectionCalendarEvent(prior);if(retryCalendar.eventId)await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1 AND calendar_event_id IS NULL',[id,retryCalendar.eventId]);}
-        catch(calendarError){retryCalendar={created:false,reason:calendarError.message};}
-      }
       const retried=await deliverInspectionEmails(id);
       const counts=await getDatabasePool().query(`SELECT count(*) FILTER (WHERE status='sent')::int AS emails_sent,count(*) FILTER (WHERE status='failed')::int AS emails_failed,count(*) FILTER (WHERE status='pending')::int AS emails_pending FROM public.inspection_email_outbox WHERE inspection_request_id=$1`,[id]);
       Object.assign(prior,counts.rows[0]||{});
-      return NextResponse.json({ok:true,unchanged:true,request:prior,calendar:retryCalendar,email:{retried},warnings:[...(!retryCalendar.created&&status==='confirmed'&&!prior.calendar_event_id?[retryCalendar.reason]:[]),...(retried.failed?['Some emails remain queued for retry.']:[])]},{headers:{'Cache-Control':'no-store'}});
+      return NextResponse.json({ok:true,unchanged:true,request:prior,email:{retried},warnings:retried.failed?['Some emails remain queued for retry.']:[]},{headers:{'Cache-Control':'no-store'}});
     }
     const row=q.rows[0];
     const warnings=[];
-    if(status==='confirmed'&&!row.calendar_event_id){
-      try{calendar=await createInspectionCalendarEvent(row);if(calendar.eventId){await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=$2,updated_at=now() WHERE id=$1 AND calendar_event_id IS NULL',[row.id,calendar.eventId]);row.calendar_event_id=calendar.eventId;}}
-      catch(calendarError){calendar={created:false,reason:calendarError.message};warnings.push('Inspection confirmed, but the calendar event could not be created. Retry after checking Google Calendar settings.');}
-    }else if(status==='cancelled'&&currentRow.calendar_event_id){
-      try{calendar=await deleteInspectionCalendarEvent(currentRow.calendar_event_id);if(calendar.deleted)await getDatabasePool().query('UPDATE public.inspection_requests SET calendar_event_id=NULL,updated_at=now() WHERE id=$1 AND status=\'cancelled\' AND calendar_event_id=$2',[id,currentRow.calendar_event_id]);}
-      catch(calendarError){calendar={deleted:false,reason:calendarError.message};warnings.push('The inspection status changed, but its Google Calendar event could not be removed. The event is retained for retry.');}
-    }
     const date=String(row.preferred_date).slice(0,10), time=String(row.preferred_time||'').slice(0,5);
     const subject=status==='confirmed'?'Your G-BEST inspection is confirmed':status==='declined'?'Update on your G-BEST inspection request':'Update to your G-BEST inspection request';
     const message=status==='confirmed'?'Your physical inspection has been approved for '+date+' at '+time+' WAT. The appointment is '+Number(row.duration_minutes||30)+' minutes.':status==='declined'?'We are sorry, but we cannot approve your requested inspection slot. Please contact our team to arrange another time.':'Your inspection request status has been updated to '+status+'.';
@@ -113,7 +95,7 @@ export async function PATCH(req) {
     try {
       await queueInspectionEmails([
         {requestId:row.id,type:'client',to:row.client_email,subject,html:'<p>Hello '+safe(row.full_name)+',</p><p>'+safe(message)+'</p><p>G-BEST Luxury Realty</p>'},
-        {requestId:row.id,type:'admin',to:process.env.ADMIN_EMAIL,subject:'Inspection request '+status+' — '+row.full_name,html:'<p>Request status: '+safe(status)+'</p><p>Client: '+safe(row.full_name)+' ('+safe(row.client_email)+')</p><p>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p><p>Calendar event: '+(calendar.created?'created':safe(calendar.reason))+'</p>'}
+        {requestId:row.id,type:'admin',to:process.env.ADMIN_EMAIL,subject:'Inspection request '+status+' — '+row.full_name,html:'<p>Request status: '+safe(status)+'</p><p>Client: '+safe(row.full_name)+' ('+safe(row.client_email)+')</p><p>Requested slot: '+safe(date)+' '+safe(time)+' WAT</p>'}
       ]);
       email=await deliverInspectionEmails(row.id);
       if(email.failed||email.skipped)warnings.push('Some emails remain queued for retry.');
@@ -123,7 +105,7 @@ export async function PATCH(req) {
     }
     const counts=await getDatabasePool().query(`SELECT count(*) FILTER (WHERE status='sent')::int AS emails_sent,count(*) FILTER (WHERE status='failed')::int AS emails_failed,count(*) FILTER (WHERE status='pending')::int AS emails_pending FROM public.inspection_email_outbox WHERE inspection_request_id=$1`,[row.id]);
     Object.assign(row,counts.rows[0]||{});
-    return NextResponse.json({ok:true,request:row,calendar,email,warnings:[...warnings]},{headers:{'Cache-Control':'no-store'}});
+    return NextResponse.json({ok:true,request:row,email,warnings:[...warnings]},{headers:{'Cache-Control':'no-store'}});
   } catch(e) {
     if(e.code==='23505') return NextResponse.json({error:'That slot is already held by another pending, contacted or confirmed request. Choose another slot.'},{status:409});
     console.error('Admin request update failed',e.code||e.message);
