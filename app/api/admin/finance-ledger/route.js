@@ -42,7 +42,7 @@ export async function POST(req){
  const c=await context(req);if(c.error)return c.error;
  try{
   const {pool,tenant,staff}=c,d=await req.json(),type=String(d.entry_type||''),category=String(d.category||'').trim().slice(0,80),description=String(d.description||'').trim().slice(0,500),amount=Number(d.amount),currency=String(d.currency||'NGN').toUpperCase(),reference=String(d.reference||'').trim().slice(0,120),date=String(d.entry_date||''),propertyId=d.property_id||null;
-  if(!['income','expense'].includes(type)||!category||!description||!Number.isFinite(amount)||amount<=0||amount>999999999999||!['NGN','USD','GBP','EUR'].includes(currency)||!/^(20\\d{2})-(0[1-9]|1[0-2])-([0-2]\\d|3[01])$/.test(date)||(propertyId&&!/^[0-9a-f-]{36}$/i.test(propertyId)))return NextResponse.json({error:'Enter valid transaction details.'},{status:400});
+  if(!['income','expense'].includes(type)||!category||!description||!Number.isFinite(amount)||amount<=0||amount>999999999999||!['NGN','USD','GBP','EUR'].includes(currency)||!/^(20\d{2})-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(date)||(propertyId&&!/^[0-9a-f-]{36}$/i.test(propertyId)))return NextResponse.json({error:'Enter valid transaction details.'},{status:400});
   if(propertyId){const p=await pool.query('SELECT 1 FROM public.properties WHERE id=$1 AND tenant_id=$2',[propertyId,tenant.id]);if(!p.rowCount)return NextResponse.json({error:'Selected property does not belong to this workspace.'},{status:400});}
   const actor=staff?.email||'super-admin',client=await pool.connect();let entry;
   try{
