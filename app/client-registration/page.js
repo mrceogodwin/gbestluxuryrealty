@@ -1,7 +1,7 @@
 'use client';
 
 import './registration.css';
-import {useEffect,useState} from 'react';
+import {Fragment,useEffect,useState} from 'react';
 
 const DEFAULT_PHONE='+2348131627273';
 const DEFAULT_SOCIALS=[
@@ -45,11 +45,11 @@ export default function ClientRegistrationPage(){
      <div className="registration-bank-details"><div className="registration-fee-top"><span>PHYSICAL INSPECTION REGISTRATION</span><strong>₦15,000</strong></div><div className="registration-account-row"><span>ACCOUNT NAME</span><strong>Gbest Innovation Ltd</strong></div><div className="registration-account-row"><span>ACCOUNT NUMBER</span><strong className="registration-account-number">5601035351</strong><button type="button" onClick={copyAccount} className="registration-copy">{copied?'COPIED ✓':'COPY'}</button></div><div className="registration-account-row"><span>BANK</span><strong>Fidelity Bank Plc</strong></div></div>
      <div className="registration-payment-note"><b>IMPORTANT</b><p>Uploading a receipt does not automatically approve your payment. G-BEST will verify the transfer against the bank account before activating your client account.</p></div>
     </section>
-    <section className="registration-panel"><div className="registration-section-kicker">04 / PAYMENT EVIDENCE</div><h3>Share your payment details.</h3><div className="registration-grid"><label>Transfer reference<input name="payment_reference" required={step===2&&intent==='inspection'} maxLength="120" placeholder="Your bank transfer reference"/></label><label>Upload transfer receipt<input name="receipt" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required={step===2&&intent==='inspection'}/></label></div><p className="registration-help">JPG, PNG, WEBP or PDF · Maximum 5 MB.</p><a className="registration-inline-call" href={'tel:'+PHONE}>Questions about payment? Call {callLabel} ↗</a></section>
+    <section className="registration-panel"><div className="registration-section-kicker">04 / PAYMENT EVIDENCE</div><h3>Share your payment details.</h3><div className="registration-grid"><label>Transfer reference<input name="payment_reference" required={step===2&&intent==='inspection'} maxLength="120" placeholder="Your bank transfer reference"/></label><label>Upload transfer receipt<input name="receipt" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required={step===2&&intent==='inspection'}/></label></div><p className="registration-help">JPG, PNG, WEBP or PDF · Maximum 5 MB.</p><a className="registration-inline-call" href={'tel:'+phone}>Questions about payment? Call {callLabel} ↗</a></section>
     <div className="registration-actions"><button type="button" className="registration-secondary" onClick={()=>{setStep(1);setError('');window.scrollTo({top:0,behavior:'smooth'})}}>← BACK</button><button type="submit" className="registration-primary" disabled={busy}>{busy?'SUBMITTING…':'SUBMIT INSPECTION REGISTRATION ↗'}</button></div>
    </div>
    {error&&<p role="alert" className="registration-error">{error}</p>}
   </form>}
-  <footer className="registration-footer"><div><strong>{companyName.toUpperCase()}</strong><span>{brand.footerDescriptor||'PROPERTY · PEOPLE · PERSPECTIVE'}</span></div><a href={'tel:'+PHONE}>+234 813 162 7273</a><nav aria-label="G-BEST social media">{socials.map(s=><a href={s.href} key={s.label} target="_blank" rel="noreferrer">{s.label}</a>)}</nav></footer>
+  <footer className="registration-footer"><div><strong>{companyName.toUpperCase()}</strong><span>{brand.footerDescriptor||'PROPERTY · PEOPLE · PERSPECTIVE'}</span></div><a href={'tel:'+PHONE}>{callLabel}</a><nav aria-label={companyName+' social media'}>{socials.map(s=><a href={s.href} key={s.label} target="_blank" rel="noreferrer">{s.label}</a>)}</nav></footer>
  </main>
 }
