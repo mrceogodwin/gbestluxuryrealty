@@ -89,3 +89,5 @@
 .registration-brand-type{display:flex;flex-direction:column;align-items:flex-start;gap:5px;line-height:.95}
 .registration-brand-type b{display:block;color:#f7f4e9;font:800 17px/.96 'DM Sans',Arial,sans-serif;letter-spacing:.04em}
 .registration-brand-type small{display:block;margin:0;color:#d5bd78;font:800 8px/1.2 'DM Sans',Arial,sans-serif;letter-spacing:.2em}
+
+.registration-brand-image{display:block;width:auto;max-width:min(220px,42vw);height:auto;max-height:72px;object-fit:contain;object-position:left center}.registration-brand-type{min-width:0}.registration-brand-type b{display:block}
