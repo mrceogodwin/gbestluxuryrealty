@@ -47,7 +47,7 @@ export async function POST(req) {
     try {
       await dbClient.query('BEGIN');
       await dbClient.query("SELECT pg_advisory_xact_lock(hashtext(lower($1)),hashtext('client-registration'))",[fields.email]);
-      const existing=await dbClient.query("SELECT id,tenant_id,registration_intent,payment_status,client_status FROM public.client_registrations WHERE lower(email_normalized)=lower($1) FOR UPDATE",[fields.email]);
+      const existing=await dbClient.query("SELECT id,tenant_id,registration_intent,payment_status,client_status FROM public.client_registrations WHERE tenant_id=$2 AND lower(email_normalized)=lower($1) FOR UPDATE",[fields.email,tenant.id]);
       const fullName=fields.full_name;
       const fee=intent==='inspection'?15000:null;
       if(existing.rowCount){
