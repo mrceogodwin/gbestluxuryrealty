@@ -99,7 +99,7 @@ test('tenant fallback rejects arbitrary Vercel and production preview hostnames'
   const tenants = await source('lib/site-tenants.js');
   assert.match(tenants, /VERCEL_PROJECT_PRODUCTION_URL/);
   assert.match(tenants, /gbestluxuryrealty\.vercel\.app/);
-  assert.match(tenants, /hostname\.endsWith\('\.vercel\.app'\)/);
+  assert.doesNotMatch(tenants, /hostname\.endsWith\('\.vercel\.app'\)/);
   assert.match(tenants, /process\.env\.NODE_ENV!=='production'/);
   assert.doesNotMatch(tenants, /normalizeHostname\(process\.env\.VERCEL_URL/);
 });
