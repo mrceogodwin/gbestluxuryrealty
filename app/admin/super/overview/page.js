@@ -12,7 +12,6 @@ const catalog=[
  {key:'staff',permission:'staff',title:'Staff & permissions',description:'Invite employees and assign access',href:'/admin/super/staff',icon:'♧'},
  {key:'brand-studio',permission:'homepage',title:'Brand & Website Studio',description:'Company logo, identity, contact details, colours and footer',href:'/admin/super/website',icon:'◈'},
  {key:'homepage',permission:'homepage',title:'Homepage content',description:'Edit homepage sections, imagery and publishing',href:'/admin/super/homepage',icon:'▤'},
- {key:'media',permission:'media',title:'Media library',description:'Manage company logos, photos and creative assets',href:'/admin/super/media',icon:'▧'},
  {key:'activity',permission:'audit',title:'Activity & audit',description:'Review changes made across the system',href:'/admin/super/activity',icon:'≋'}
 ];
 function ago(value,now){const seconds=Math.max(0,Math.floor((now-new Date(value).getTime())/1000));if(seconds<60)return seconds+' sec ago';const minutes=Math.floor(seconds/60);if(minutes<60)return minutes+' min ago';const hours=Math.floor(minutes/60);if(hours<24)return hours+' hr ago';return Math.floor(hours/24)+' days ago';}
