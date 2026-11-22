@@ -3590,3 +3590,16 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
  .gb-booking-calendar-grid .gb-booking-blank{min-height:35px}
  .gb-booking-calendar-grid .gb-booking-weekday{font-size:10px}
 }
+
+/* Property gallery controls and inline listing video */
+.collection-property-image{position:relative;overflow:hidden}
+.property-card-gallery-controls{position:absolute;z-index:4;left:9px;right:9px;top:50%;transform:translateY(-50%);display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.property-card-gallery-controls button{pointer-events:auto;width:34px;height:34px;border:1px solid #ffffffa8;border-radius:50%;background:#07130dcc;color:#fff;font-size:24px;line-height:1;display:grid;place-items:center;backdrop-filter:blur(8px);box-shadow:0 3px 12px #0005}
+.property-card-gallery-controls span{font-size:10px;font-weight:800;color:#fff;background:#07130db8;padding:5px 8px;border-radius:30px}
+.property-card-video-badge{position:absolute!important;left:12px!important;bottom:50px!important;top:auto!important;background:#102d20e8!important;color:#e4f1c6!important;border:1px solid #d3e9a355;border-radius:30px;padding:6px 9px;font-size:9px;letter-spacing:.1em;font-weight:850}
+.property-modal-video{margin:24px 0;padding:15px;border:1px solid #dce5d8;border-radius:14px;background:#f5f7f1}
+.property-modal-video-heading{display:flex;justify-content:space-between;gap:10px;margin-bottom:10px;color:#214b34;font-size:10px;font-weight:850;letter-spacing:.12em}
+.property-modal-video-heading small{color:#78877b}
+.property-modal-video video{width:100%;max-height:480px;display:block;background:#050805;border-radius:10px;object-fit:contain}
+.property-modal-gallery{touch-action:pan-y}
+.property-card-gallery-controls button:focus-visible{outline:3px solid #d8f36b;outline-offset:2px}
