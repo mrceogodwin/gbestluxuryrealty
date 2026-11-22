@@ -9,7 +9,7 @@ export async function POST(request){
   if(!origin||!host||new URL(origin).host!==host)return NextResponse.json({error:'Request origin could not be verified.'},{status:403});
   if(Number(request.headers.get('content-length')||0)>4096)return NextResponse.json({error:'Request is too large.'},{status:413});
   const email=String((await request.json())?.email||'').trim().toLowerCase();
-  if(email.length>254||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return NextResponse.json({error:'Enter a valid email address.'},{status:400});
+  if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return NextResponse.json({error:'Enter a valid email address.'},{status:400});
   const pool=getDatabasePool(),tenant=await resolveSiteTenant(pool,host);
   if(!tenant)return NextResponse.json({error:'This website workspace is not available.'},{status:404});
   await pool.query(`INSERT INTO public.newsletter_subscribers(tenant_id,email,email_normalized,source,subscribed_at,updated_at)
