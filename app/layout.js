@@ -39,7 +39,7 @@ export async function generateMetadata(){
   description,
   applicationName:name,
   keywords:['Nigerian real estate','property in Nigeria','homes','property investment',name],
-  ...(image?{icons:brand.faviconUrl?{icon:brand.faviconUrl}:undefined}:{}),
+  ...(brand.faviconUrl?{icons:{icon:brand.faviconUrl}}:{}),
   openGraph:{type:'website',locale:'en_NG',siteName:name,title,description,...(image?{images:[image]}:{})},
   twitter:{card:'summary_large_image',title,description,...(image?{images:[image]}:{})},
   robots:{index:true,follow:true}
