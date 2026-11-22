@@ -50,6 +50,6 @@ export default function ClientRegistrationPage(){
    </div>
    {error&&<p role="alert" className="registration-error">{error}</p>}
   </form>}
-  <footer className="registration-footer"><div><strong>{companyName.toUpperCase()}</strong><span>{brand.footerDescriptor||'PROPERTY · PEOPLE · PERSPECTIVE'}</span></div><a href={'tel:'+PHONE}>{callLabel}</a><nav aria-label={companyName+' social media'}>{socials.map(s=><a href={s.href} key={s.label} target="_blank" rel="noreferrer">{s.label}</a>)}</nav></footer>
+  <footer className="registration-footer"><div><strong>{companyName.toUpperCase()}</strong><span>{brand.footerDescriptor||'PROPERTY · PEOPLE · PERSPECTIVE'}</span></div><a href={'tel:'+phone}>{callLabel}</a><nav aria-label={companyName+' social media'}>{socials.map(s=><a href={s.href} key={s.label} target="_blank" rel="noreferrer">{s.label}</a>)}</nav></footer>
  </main>
 }
