@@ -10,8 +10,9 @@ const catalog=[
  {key:'media',permission:'media',title:'Media library',description:'Manage property photos and company assets',href:'/admin/super/media',icon:'▧'},
  {key:'finance',permission:'finance',title:'Company finance',description:'Review income, expenses and ledger',href:'/admin/super/finance',icon:'₦'},
  {key:'staff',permission:'staff',title:'Staff & permissions',description:'Invite employees and assign access',href:'/admin/super/staff',icon:'♧'},
- {key:'homepage',permission:'homepage',title:'Website content',description:'Update homepage sections and media',href:'/admin/super/homepage',icon:'▤'},
- {key:'modification',permission:'modification',title:'Modification Engine',description:'White-label brand, design, SEO and audio settings',href:'/admin/super/modification-engine',icon:'⚙'},
+ {key:'brand-studio',permission:'homepage',title:'Brand & Website Studio',description:'Company logo, identity, contact details, colours and footer',href:'/admin/super/website',icon:'◈'},
+ {key:'homepage',permission:'homepage',title:'Homepage content',description:'Edit homepage sections, imagery and publishing',href:'/admin/super/homepage',icon:'▤'},
+ {key:'media',permission:'media',title:'Media library',description:'Manage company logos, photos and creative assets',href:'/admin/super/media',icon:'▧'},
  {key:'activity',permission:'audit',title:'Activity & audit',description:'Review changes made across the system',href:'/admin/super/activity',icon:'≋'}
 ];
 function ago(value,now){const seconds=Math.max(0,Math.floor((now-new Date(value).getTime())/1000));if(seconds<60)return seconds+' sec ago';const minutes=Math.floor(seconds/60);if(minutes<60)return minutes+' min ago';const hours=Math.floor(minutes/60);if(hours<24)return hours+' hr ago';return Math.floor(hours/24)+' days ago';}
@@ -23,7 +24,7 @@ export default function AdminOverview(){
  useEffect(()=>{const timer=setInterval(()=>setClock(Date.now()),1000);return()=>clearInterval(timer)},[]);
  useEffect(()=>{const timer=setInterval(()=>load(),30000);return()=>clearInterval(timer)},[load]);
  const permissions=new Set(data?.permissions||[]);
- const cards=catalog.filter(x=>x.key==='staff'?data?.isSuperAdmin: x.key==='homepage'?data?.isSuperAdmin: x.key==='activity'?data?.isSuperAdmin: x.key==='contacts'?data?.isSuperAdmin:x.key==='modification'?data?.isSuperAdmin:permissions.has(x.permission));
+ const cards=catalog.filter(x=>x.key==='staff'?data?.isSuperAdmin: x.key==='homepage'||x.key==='brand-studio'?data?.isSuperAdmin: x.key==='activity'?data?.isSuperAdmin: x.key==='contacts'?data?.isSuperAdmin:permissions.has(x.permission));
  const stats=[];
  if(data?.properties)stats.push({label:'PROPERTIES',value:data.properties.total,detail:(data.properties.published||0)+' published',href:'/admin/super'});
  if(data?.clients)stats.push({label:'CLIENTS',value:data.clients.total,detail:(data.clients.pending||0)+' payment reviews pending',href:'/admin/clients'});
