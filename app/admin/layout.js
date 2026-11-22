@@ -198,6 +198,15 @@ export default function SuperAdminLayout({children}){
   .gb-console .gb-content .homepage-cms article{grid-template-columns:minmax(0,1fr)!important}
  }
 
+
+ /* Sidebar collision guard: every department owns its own vertical space. */
+ .gb-console .gb-sidebar{display:flex!important;flex-direction:column!important;align-items:stretch!important;overflow-x:hidden!important}
+ .gb-console .gb-sidebar nav{position:relative!important;display:flex!important;flex:0 0 auto!important;flex-direction:column!important;align-items:stretch!important;gap:15px!important;width:100%!important;min-width:0!important;height:auto!important;min-height:0!important;overflow:visible!important}
+ .gb-console .gb-sidebar .gb-navgroup{position:relative!important;display:block!important;flex:0 0 auto!important;width:100%!important;min-width:0!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;isolation:isolate}
+ .gb-console .gb-sidebar .gb-navlabel{position:static!important;display:block!important;height:auto!important;min-height:0!important;margin:0 0 7px!important;padding:0 11px!important;line-height:1.5!important;white-space:normal!important}
+ .gb-console .gb-sidebar .gb-navlink{position:relative!important;display:flex!important;flex:0 0 auto!important;width:100%!important;min-width:0!important;height:auto!important;min-height:46px!important;margin:3px 0!important;box-sizing:border-box!important;line-height:1.35!important;white-space:normal!important;overflow-wrap:anywhere!important;z-index:1}
+ .gb-console .gb-sidebar .gb-sidefoot{position:relative!important;display:block!important;flex:0 0 auto!important;width:100%!important;box-sizing:border-box!important;margin:24px 0 0!important;padding:16px 9px calc(18px + env(safe-area-inset-bottom))!important;line-height:1.6!important;white-space:normal!important;z-index:0}
+ @media(max-width:850px){.gb-console .gb-sidebar nav{gap:17px!important}.gb-console .gb-sidebar .gb-navgroup{margin:0!important}.gb-console .gb-sidebar .gb-navlink{min-height:46px!important}.gb-console .gb-sidebar .gb-sidefoot{margin-top:24px!important}}
  `}</style>
  <div className="gb-shell">
  <aside className={'gb-sidebar'+(open?' open':'')}>
