@@ -14,7 +14,7 @@ export default function ClientRegistrationPage(){
  const [step,setStep]=useState(1),[busy,setBusy]=useState(false),[error,setError]=useState(''),[result,setResult]=useState(''),[copied,setCopied]=useState(false),[properties,setProperties]=useState([]),[propertyLoadError,setPropertyLoadError]=useState(''),[intent,setIntent]=useState('general'),[paidRegistration,setPaidRegistration]=useState(false),[brand,setBrand]=useState({});
  const phone=brand.contactPhone||DEFAULT_PHONE;
  const companyName=brand.siteName||'G-BEST Luxury Realty';
- const socials=DEFAULT_SOCIALS.map(item=>({...item,href:brand[item.label.toLowerCase()+'Url']||item.href}));
+ const socials=DEFAULT_SOCIALS.map(item=>({...item,href:(item.label==='TikTok'?brand.tikTokUrl:item.label==='Facebook'?brand.facebookUrl:brand.instagramUrl)||item.href}));
  const callLabel=brand.contactPhoneDisplay||phone;
  useEffect(()=>{let active=true;fetch('/api/homepage',{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||'Brand settings unavailable');if(active)setBrand(d.sections?.site_settings||{});}).catch(()=>{});return()=>{active=false}},[]);
  useEffect(()=>{let active=true;fetch('/api/properties',{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not load properties');if(active)setProperties(Array.isArray(d.properties)?d.properties:[])}).catch(()=>{if(active)setPropertyLoadError('Property listings could not be loaded. You can enter a Property ID manually.')});return()=>{active=false}},[]);
