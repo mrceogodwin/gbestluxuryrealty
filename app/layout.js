@@ -1,6 +1,7 @@
 import './globals.css';
 import AgentChatWidget from '../components/agent-chat-widget';
 import {headers} from 'next/headers';
+import {connection} from 'next/server';
 import {getDatabasePool} from '../lib/db';
 import {resolveSiteTenant} from '../lib/site-tenants';
 
@@ -11,6 +12,10 @@ const FALLBACK={
  seoImage:''
 };
 export async function generateMetadata(){
+ // Tenant-specific metadata depends on the incoming host. Opt into request-time
+ // rendering before reading headers so Next.js does not attempt static metadata
+ // generation and swallow its dynamic-server bailout inside the fallback catch.
+ await connection();
  let brand={...FALLBACK};
  let base=process.env.SITE_URL||'https://gbestluxuryrealty.vercel.app';
  try{
