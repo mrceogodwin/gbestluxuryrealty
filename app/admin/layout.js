@@ -207,7 +207,27 @@ export default function SuperAdminLayout({children}){
  .gb-console .gb-sidebar .gb-navlink{position:relative!important;display:flex!important;flex:0 0 auto!important;width:100%!important;min-width:0!important;height:auto!important;min-height:46px!important;margin:3px 0!important;box-sizing:border-box!important;line-height:1.35!important;white-space:normal!important;overflow-wrap:anywhere!important;z-index:1}
  .gb-console .gb-sidebar .gb-sidefoot{position:relative!important;display:block!important;flex:0 0 auto!important;width:100%!important;box-sizing:border-box!important;margin:24px 0 0!important;padding:16px 9px calc(18px + env(safe-area-inset-bottom))!important;line-height:1.6!important;white-space:normal!important;z-index:0}
  @media(max-width:850px){.gb-console .gb-sidebar nav{gap:17px!important}.gb-console .gb-sidebar .gb-navgroup{margin:0!important}.gb-console .gb-sidebar .gb-navlink{min-height:46px!important}.gb-console .gb-sidebar .gb-sidefoot{margin-top:24px!important}}
- `}</style>
+ `}
+/* Premium control-room shell depth and responsive tactile navigation. */
+.gb-console .gb-sidebar{background:radial-gradient(ellipse at 20% 0%,#294638,#121b16 55%,#0d140f)!important;border-right:1px solid #ffffff18!important;box-shadow:12px 0 32px #0003,inset -1px 0 #ffffff0b!important}
+.gb-console .gb-brand{padding:18px 15px!important;border-radius:16px!important;background:linear-gradient(145deg,#263a2d,#17241b)!important;border:1px solid #ffffff1b!important;box-shadow:0 8px 18px #0005,inset 0 1px #ffffff20!important}
+.gb-console .gb-mark{box-shadow:0 4px 0 #091e13,0 8px 16px #0005,inset 0 1px #ffffff70!important}
+.gb-console .gb-env{border:1px solid #ffffff18!important;border-radius:12px!important;background:#ffffff08!important;padding:12px!important;box-shadow:inset 0 1px #ffffff0c!important}
+.gb-console .gb-navlink{border:1px solid transparent!important;border-radius:11px!important;transition:transform .16s,background .16s,border-color .16s!important}
+.gb-console .gb-navlink:hover{background:#ffffff10!important;border-color:#ffffff19!important;transform:translateX(2px)!important}
+.gb-console .gb-navlink.active{background:linear-gradient(145deg,#d9efad,#a9c878)!important;color:#173522!important;border:1px solid #e7f4cf!important;box-shadow:0 4px 0 #718c4e,0 8px 18px #0004,inset 0 1px #fff!important}
+.gb-console .gb-topbar{background:linear-gradient(110deg,#17231b,#25372a)!important;border-bottom:1px solid #ffffff20!important;box-shadow:0 8px 24px #0003!important;backdrop-filter:blur(18px)!important}
+.gb-console .gb-crumb{color:#c1d0c2!important}
+.gb-console .gb-crumb b{color:#f1f5ec!important}
+.gb-console .gb-secure{background:linear-gradient(145deg,#283b2d,#1a2b20)!important;border:1px solid #6a805c!important;box-shadow:inset 0 1px #ffffff19!important}
+.gb-console .gb-mobiletoggle{border-radius:12px!important;box-shadow:0 4px 0 #091c12,0 8px 14px #0005,inset 0 1px #ffffff40!important}
+@media(max-width:850px){
+ .gb-console .gb-sidebar{box-shadow:18px 0 40px #0008!important}
+ .gb-console .gb-topbar{min-height:68px!important;padding:10px 12px!important}
+ .gb-console .gb-crumb{font-size:9px!important;letter-spacing:.04em!important}
+ .gb-console .gb-secure{font-size:8px!important;padding:8px!important}
+}
+</style>
  <div className="gb-shell">
  <aside className={'gb-sidebar'+(open?' open':'')}>
  <Link className="gb-brand" href="/admin/super" onClick={()=>setOpen(false)}><span className="gb-mark">G</span><span><strong>G-BEST</strong><small>REALTY CONTROL ROOM</small></span></Link>
