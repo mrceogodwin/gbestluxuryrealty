@@ -81,6 +81,56 @@ export default function AdminClientChatPage(){
 .admin-client-chat .chat-detail form textarea{min-width:0!important}
 .admin-client-chat .chat-detail form button{padding:12px!important;font-size:9px!important;white-space:nowrap!important}
 }
+
+/* 2026 flagship client operations workspace */
+.gb-content .admin-client-chat{min-height:100dvh!important;padding:clamp(16px,3vw,40px)!important;background:radial-gradient(ellipse at 88% 0%,#294b37 0,transparent 32%),linear-gradient(145deg,#0d1711,#15251a 62%,#101a13)!important;color:#f5f5ed!important}
+.admin-client-chat>a{display:inline-flex!important;align-items:center!important;gap:8px!important;border:1px solid #ffffff20!important;background:#ffffff0a!important;color:#d8e8cb!important;border-radius:999px!important;padding:10px 15px!important}
+.admin-client-chat header{max-width:1440px!important;margin:22px auto 24px!important;padding:0 2px!important;align-items:flex-end!important}
+.admin-client-chat header h1{font-family:Georgia,serif!important;font-size:clamp(34px,4.5vw,58px)!important;letter-spacing:-.035em!important}
+.admin-client-chat header>div>p:last-child{font-size:14px!important}
+.admin-client-chat .chat-layout{max-width:1440px!important;margin:0 auto!important;grid-template-columns:minmax(300px,370px) minmax(0,1fr)!important;gap:18px!important;min-height:660px!important;align-items:stretch!important}
+.admin-client-chat .chat-inbox,.admin-client-chat .chat-detail{border-radius:22px!important;border:1px solid #dbe5d9!important;box-shadow:0 22px 55px #0006,0 3px 0 #6e806c,inset 0 1px #fff!important;background:linear-gradient(155deg,#fff,#f2f6f0)!important;color:#173b2b!important}
+.admin-client-chat .chat-inbox{max-height:calc(100dvh - 250px)!important;overflow:auto!important;position:sticky!important;top:18px!important}
+.admin-client-chat .chat-inbox>div:first-child{position:sticky!important;top:0!important;z-index:2!important;padding:18px 20px!important;font-size:12px!important;letter-spacing:.14em!important;background:linear-gradient(120deg,#123b29,#24553b)!important}
+.admin-client-chat .team-availability{padding:16px!important;background:linear-gradient(180deg,#f2f7ef,#fff)!important;border-bottom:1px solid #e4ebe1!important}
+.admin-client-chat .team-availability-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;margin-bottom:12px!important}
+.admin-client-chat .team-availability-head b{font-size:10px!important;letter-spacing:.12em!important}
+.admin-client-chat .online-count{border-radius:99px!important;padding:7px 10px!important;background:#e5f2df!important;color:#245c37!important;font-size:9px!important;font-weight:900!important}
+.admin-client-chat .team-person{display:flex!important;align-items:center!important;gap:9px!important;padding:9px!important;border:1px solid #e4ebe1!important;border-radius:14px!important;background:#fff!important;margin-top:8px!important}
+.admin-client-chat .team-person img,.admin-client-chat .team-avatar{width:38px!important;height:38px!important;flex:0 0 38px!important;border-radius:50%!important;object-fit:cover!important}
+.admin-client-chat .team-person-copy{min-width:0!important;flex:1!important}
+.admin-client-chat .team-person-copy b{display:block!important;font-size:11px!important}
+.admin-client-chat .team-person-copy small{font-size:9px!important}
+.admin-client-chat .team-person button{border-radius:10px!important;padding:9px 10px!important;background:#173f2c!important;color:#fff!important;font-size:9px!important}
+.admin-client-chat .team-footnote,.admin-client-chat .team-empty{font-size:10px!important;line-height:1.5!important;color:#7a897d!important}
+.admin-client-chat .chat-inbox>button{padding:17px 18px!important;border-bottom:1px solid #e8eee6!important;background:#fff!important;transition:background .15s ease!important}
+.admin-client-chat .chat-inbox>button[style*="background: rgb(232"]{background:#edf4e9!important}
+.admin-client-chat .chat-inbox>button b{font-size:14px!important}
+.admin-client-chat .chat-inbox>button p{font-size:11px!important;line-height:1.45!important}
+.admin-client-chat .chat-detail{min-height:660px!important;max-height:calc(100dvh - 190px)!important}
+.admin-client-chat .chat-detail>div[style*="background"]{background:linear-gradient(120deg,#123b29,#24553b)!important;color:#fff!important;padding:18px 20px!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]{flex:1 1 auto!important;min-height:280px!important;background:radial-gradient(ellipse at 50% 0%,#eaf2e7,#f8faf7 68%)!important;padding:22px!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]>div{max-width:min(78%,620px)!important;border-radius:18px!important;padding:14px 16px!important;box-shadow:0 8px 20px #183c2815!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]>div[style*="rgb(23, 59, 43)"]{border-bottom-right-radius:5px!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]>div[style*="rgb(237, 241, 233)"]{border-bottom-left-radius:5px!important}
+.admin-client-chat .chat-detail form{background:#fff!important;border-top:1px solid #e6ece3!important;padding:16px!important;align-items:flex-end!important}
+.admin-client-chat .chat-detail form textarea{border-radius:16px!important;padding:14px!important;min-height:58px!important;background:#f7faf5!important;font-size:14px!important}
+.admin-client-chat .chat-detail form button{border-radius:13px!important;padding:15px 20px!important;background:linear-gradient(145deg,#24583b,#123b29)!important;box-shadow:0 4px 0 #0b2a1b,0 8px 18px #173b2b30!important;font-size:10px!important}
+.admin-client-chat .chat-detail select{max-width:100%!important}
+@media(max-width:760px){
+ .gb-content .admin-client-chat{padding:16px 12px calc(24px + env(safe-area-inset-bottom))!important}
+ .admin-client-chat header{margin:18px 2px 18px!important;gap:14px!important}
+ .admin-client-chat header h1{font-size:36px!important}
+ .admin-client-chat .chat-layout{display:block!important;min-height:0!important}
+ .admin-client-chat .chat-inbox.is-hidden-mobile{display:none!important}
+ .admin-client-chat .chat-detail:not(.is-active-mobile){display:none!important}
+ .admin-client-chat .chat-inbox{position:static!important;max-height:none!important}
+ .admin-client-chat .chat-detail.is-active-mobile{display:flex!important;min-height:calc(100dvh - 220px)!important;height:calc(100dvh - 220px)!important;max-height:850px!important}
+ .admin-client-chat .chat-detail>div[style*="overflowY"]{min-height:150px!important;max-height:none!important;padding:14px!important}
+ .admin-client-chat .chat-detail>div[style*="overflowY"]>div{max-width:88%!important}
+ .admin-client-chat .team-person button{padding:8px!important}
+}
+@media(prefers-reduced-motion:reduce){.admin-client-chat *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 `}</style>
  </main>
 }
