@@ -13,7 +13,7 @@ export default function AdminClientChatPage(){
  async function claimChat(){if(!selected)return;setBusy(true);setError('');try{const r=await fetch('/api/admin/client-chat',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:selected,tenantId:tenantId||undefined,action:'claim'})});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not claim this conversation');await open(selected);await load()}catch(e){setError(e.message)}finally{setBusy(false)}}
  async function assignStaff(staffId){if(!selected)return;try{const r=await fetch('/api/admin/client-chat',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:selected,tenantId:tenantId||undefined,action:'assign',staffId:staffId||null})});const d=await r.json();if(!r.ok)throw Error(d.error||'Assignment failed');await open(selected);await load()}catch(e){setError(e.message)}}
  const active=items.find(x=>x.id===selected);
- return <main style={{minHeight:'100vh',background:'#f4f3e9',color:'#173b2b',padding:'28px clamp(14px,4vw,54px)',fontFamily:'Inter,Arial,sans-serif'}}>
+ return <main className="admin-client-chat" style={{minHeight:'100vh',background:'#f4f3e9',color:'#173b2b',padding:'28px clamp(14px,4vw,54px)',fontFamily:'Inter,Arial,sans-serif'}}>
   <a href="/admin/super/overview" style={{color:'#173b2b',fontWeight:800,textDecoration:'none',fontSize:12}}>← CONTROL ROOM</a>
   <header style={{display:'flex',justifyContent:'space-between',alignItems:'end',gap:16,flexWrap:'wrap',margin:'24px 0'}}>
    <div><p style={{fontSize:10,letterSpacing:'.2em',fontWeight:800,color:'#a18442'}}>G-BEST / CLIENT OPERATIONS</p><h1 style={{fontFamily:'Georgia,serif',fontSize:'clamp(32px,5vw,54px)',margin:'8px 0'}}>CLIENT <i>MESSAGES.</i></h1><p style={{color:'#647468',fontSize:13}}>Private conversations from Agent and approved clients</p></div>
@@ -40,6 +40,44 @@ export default function AdminClientChatPage(){
    </section>
   </div>
   <style jsx>{'@media(max-width:760px){.chat-layout{display:block!important;min-height:0!important}.chat-inbox.is-hidden-mobile{display:none!important}.chat-detail:not(.is-active-mobile){display:none!important}.chat-detail{min-height:calc(100dvh - 210px)!important}.mobile-inbox-back{display:block!important}.chat-detail>div[style*=overflowY]{max-height:48dvh!important;min-height:180px}}.mobile-inbox-back{display:none;margin:12px 14px 0;padding:10px 12px;border:1px solid #d7e2d5;border-radius:9px;background:#f3f7f1;color:#173b2b;font-size:11px;font-weight:800;align-self:flex-start}'}</style>
+<style jsx global>{`
+.gb-content .admin-client-chat{isolation:isolate!important;min-height:calc(100dvh - 68px)!important;background:radial-gradient(ellipse at 95% 0%,#284332 0,transparent 28%),linear-gradient(145deg,#101712,#17221a 58%,#101612)!important;color:#f1f5ed!important;padding:clamp(18px,3vw,38px)!important}
+.admin-client-chat>a{color:#c5dfa0!important;border:1px solid #ffffff22!important;background:#ffffff09!important;border-radius:30px!important;padding:9px 14px!important;font-size:10px!important}
+.admin-client-chat header{align-items:flex-end!important;margin:24px 0 26px!important}
+.admin-client-chat header p:first-child{color:#d2b66d!important;font-size:10px!important;letter-spacing:.22em!important}
+.admin-client-chat header h1{font-family:Georgia,serif!important;font-size:clamp(34px,5vw,54px)!important;color:#f5f2e8!important;line-height:1!important}
+.admin-client-chat header>div>p:last-child{color:#aebcaf!important}
+.admin-client-chat header button{background:linear-gradient(145deg,#d8edaa,#a9c879)!important;color:#183624!important;border:1px solid #e8f5d1!important;border-radius:12px!important;box-shadow:0 5px 0 #708d4c,0 10px 20px #0005!important;padding:13px 17px!important}
+.admin-client-chat .chat-layout{grid-template-columns:minmax(280px,360px) minmax(0,1fr)!important;gap:18px!important;min-height:620px!important}
+.admin-client-chat .chat-inbox,.admin-client-chat .chat-detail{background:linear-gradient(150deg,#fdfefb,#eef3ec)!important;border:1px solid #d8e4d7!important;border-radius:20px!important;overflow:hidden!important;box-shadow:0 18px 40px #0005,0 3px 0 #6d806d,inset 0 1px #fff!important;color:#183a29!important}
+.admin-client-chat .chat-inbox>div:first-child,.admin-client-chat .chat-detail>div[style*="background"]{background:linear-gradient(115deg,#123b28,#24553b)!important;color:#f6f4e9!important;padding:18px 20px!important}
+.admin-client-chat .chat-inbox>button{display:block!important;width:100%!important;text-align:left!important;padding:18px!important;border:0!important;border-bottom:1px solid #e2eae0!important;background:linear-gradient(145deg,#fff,#f5f8f3)!important;color:#183a29!important;cursor:pointer!important}
+.admin-client-chat .chat-inbox>button:hover{background:#e8f0e5!important}
+.admin-client-chat .chat-inbox>button b{font-size:15px!important;color:#173c29!important}
+.admin-client-chat .chat-inbox>button small{display:block!important;margin-top:5px!important;font-size:11px!important}
+.admin-client-chat .chat-inbox>button p{font-size:12px!important;line-height:1.5!important;margin-top:10px!important}
+.admin-client-chat .chat-detail{min-height:620px!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]{background:radial-gradient(ellipse at 50% 0%,#e7f0e4,#f8faf6 70%)!important;min-height:300px!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]>div{box-shadow:0 4px 12px #163b2517!important;border-radius:16px!important;padding:14px 16px!important;max-width:min(82%,560px)!important}
+.admin-client-chat .chat-detail form{background:#fff!important;align-items:flex-end!important;padding:16px!important;gap:12px!important}
+.admin-client-chat .chat-detail form textarea{min-height:54px!important;max-height:140px!important;border-radius:16px!important;background:#f8faf6!important;border:1px solid #d6e3d4!important;color:#173b2b!important;font-size:14px!important}
+.admin-client-chat .chat-detail form button{min-height:48px!important;border-radius:13px!important;background:linear-gradient(145deg,#1d5437,#103b27)!important;box-shadow:0 4px 0 #092819,0 8px 14px #173b2b25!important;color:#fff!important}
+@media(max-width:760px){
+.gb-content .admin-client-chat{padding:17px 12px calc(28px + env(safe-area-inset-bottom))!important;min-height:calc(100dvh - 60px)!important}
+.admin-client-chat header{margin:18px 2px 20px!important;align-items:flex-start!important;flex-direction:column!important}
+.admin-client-chat header h1{font-size:36px!important}
+.admin-client-chat .chat-layout{display:block!important;min-height:0!important}
+.admin-client-chat .chat-inbox.is-hidden-mobile{display:none!important}
+.admin-client-chat .chat-detail:not(.is-active-mobile){display:none!important}
+.admin-client-chat .chat-inbox,.admin-client-chat .chat-detail{border-radius:18px!important;min-height:0!important}
+.admin-client-chat .chat-detail.is-active-mobile{display:flex!important;min-height:calc(100dvh - 245px)!important;height:calc(100dvh - 245px)!important;max-height:780px!important}
+.admin-client-chat .mobile-inbox-back{display:block!important;margin:12px 14px!important;padding:10px 14px!important;border:1px solid #cbdcc9!important;border-radius:12px!important;background:linear-gradient(145deg,#fff,#edf4eb)!important;color:#173b2b!important;font-size:11px!important;font-weight:800!important;box-shadow:0 3px 0 #d6e1d4!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]{flex:1 1 auto!important;min-height:120px!important;max-height:none!important;padding:14px!important;overflow-y:auto!important}
+.admin-client-chat .chat-detail form{padding:12px!important}
+.admin-client-chat .chat-detail form textarea{min-width:0!important}
+.admin-client-chat .chat-detail form button{padding:12px!important;font-size:9px!important;white-space:nowrap!important}
+}
+`}</style>
  </main>
 }
 const panel={background:'#fff',border:'1px solid #e0e7dc',borderRadius:12,overflow:'hidden',boxShadow:'0 8px 28px #173b2b0b'};
