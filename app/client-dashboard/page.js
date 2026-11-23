@@ -56,6 +56,55 @@ export default function ClientDashboard(){
   .notice{margin:12px 0;padding:10px 13px;border-radius:10px;background:#edf5e9;color:#315e3b;font-size:11px}.loading-card{padding:30px;text-align:center;color:#738477;font-size:12px}
   @media(min-width:900px){.app-content{padding-top:34px}.welcome-card{min-height:205px}.bottom-dock{left:50%;right:auto;transform:translateX(-50%);bottom:16px;width:min(540px,calc(100% - 40px));border:1px solid #e0e8df;border-radius:22px;padding:9px 14px calc(9px + env(safe-area-inset-bottom));box-shadow:0 12px 40px #173b2b20}.client-app{padding-bottom:120px}}
   @media(max-width:600px){.appbar{height:64px;padding:0 16px}.secure-pill{display:none}.app-content{padding:16px 14px 24px}.screen-heading{margin:5px 2px 15px}.screen-heading h1{font-size:22px}.welcome-card{border-radius:18px;padding:23px 20px;min-height:165px}.welcome-card h2{font-size:31px}.welcome-card p{font-size:12px;max-width:280px}.welcome-art{right:8px;font-size:130px}.quick-stats{gap:7px}.quick-stats article{padding:12px 10px;border-radius:13px}.quick-stats span{font-size:8px}.quick-stats b{font-size:15px}.quick-stats small{font-size:9px}.action-grid{gap:8px}.action-grid button{padding:14px;border-radius:14px}.action-grid b{font-size:13px}.action-grid small{font-size:10px;line-height:1.4}.info-strip{align-items:flex-start;flex-wrap:wrap}.info-strip p{min-width:calc(100% - 55px)}.info-strip button{margin-left:46px}.app-card{padding:16px;border-radius:15px}.card-top{align-items:flex-start;flex-direction:column}.card-top h2{font-size:20px}.request-list article{align-items:flex-start;flex-wrap:wrap}.request-list em{margin-left:50px}.chat-thread{max-height:52vh;min-height:300px;padding:13px}.bubble{max-width:90%}.bottom-dock button small{font-size:9px}.signout{padding:9px 10px;font-size:10px}}
+
+  /* Premium native-app finish: layered depth, tactile surfaces and generous mobile rhythm. */
+  .client-app{background:radial-gradient(ellipse at 8% 12%,#e3ede2 0,transparent 34%),radial-gradient(ellipse at 100% 52%,#e8eee5 0,transparent 36%),linear-gradient(180deg,#f7f9f5,#edf2ec);padding-bottom:calc(108px + env(safe-area-inset-bottom))}
+  .appbar{box-shadow:0 5px 20px #173b2b0b;backdrop-filter:blur(18px);background:#ffffffed}
+  .brand-mark{box-shadow:0 5px 0 #0b2c1c,0 9px 18px #153c2b30,inset 0 1px 1px #ffffff65}
+  .welcome-card{border:1px solid #ffffff30;box-shadow:0 18px 32px #153c2b27,inset 0 1px 1px #ffffff30,inset 0 -8px 20px #061d1230;transform:translateZ(0)}
+  .welcome-card:after{content:"";position:absolute;inset:1px;border-radius:inherit;pointer-events:none;background:linear-gradient(135deg,#ffffff1c,transparent 38%,#ffffff08 70%,transparent)}
+  .quick-stats article,.app-card,.action-grid button,.info-strip,.chat-card{border:1px solid #ffffffd9;box-shadow:0 9px 18px #183c2810,0 2px 4px #183c2808,inset 0 1px 0 #fff;transition:transform .18s ease,box-shadow .18s ease}
+  .quick-stats article{background:linear-gradient(150deg,#fff,#f8fbf7);border-radius:17px}
+  .action-grid button{background:linear-gradient(150deg,#fff,#f7faf6);min-height:164px;border-radius:19px;box-shadow:0 10px 22px #173b2b12,0 3px 0 #dce7dc,inset 0 1px 0 #fff}
+  .action-grid button:active,.bottom-dock button:active{transform:translateY(2px)}
+  .action-icon{box-shadow:inset 0 2px 4px #fff,0 3px 8px #173b2b10}
+  .bottom-dock{background:linear-gradient(180deg,#132b20,#07130d);border:1px solid #34503d;border-bottom:0;box-shadow:0 -10px 28px #0a201655,inset 0 1px 0 #ffffff25;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+  .bottom-dock button{color:#b8c8ba;min-height:54px;border-radius:14px}
+  .bottom-dock button.active{color:#153c2b;background:linear-gradient(180deg,#f8fbf5,#dfeadd);box-shadow:0 4px 0 #a6bea8,0 7px 14px #0005,inset 0 1px #fff}
+  .bottom-dock button>span{font-size:0;width:24px;height:24px;display:grid;place-items:center}
+  .bottom-dock button>span:before{font-size:21px;line-height:1}
+  .bottom-dock button:nth-child(1)>span:before{content:"⌂"}
+  .bottom-dock button:nth-child(2)>span:before{content:"▤"}
+  .bottom-dock button:nth-child(3)>span:before{content:"✉"}
+  .bottom-dock button:nth-child(4)>span:before{content:"◉"}
+  .bottom-dock button small{font-size:10px;letter-spacing:.01em}
+  .chat-card{border-radius:20px;box-shadow:0 16px 35px #173b2b17,0 3px 0 #dce6da}
+  .chat-head{background:linear-gradient(115deg,#123925,#24583d);box-shadow:inset 0 1px #ffffff2b}
+  .message-compose{background:#fff}
+  .message-compose button{box-shadow:0 4px 0 #0b2c1c,0 7px 12px #173b2b25}
+  .app-card{border-radius:20px;box-shadow:0 12px 28px #173b2b12,0 3px 0 #dce6da}
+  .screen-heading h1{letter-spacing:-.055em}
+  @media(max-width:600px){
+   .app-content{padding:20px 15px 28px}
+   .screen-heading{margin:8px 2px 19px}
+   .screen-heading h1{font-size:27px}
+   .welcome-card{min-height:190px;padding:27px 22px;border-radius:22px}
+   .welcome-card h2{font-size:37px}
+   .welcome-card p{font-size:14px;line-height:1.7;max-width:290px}
+   .quick-stats{gap:9px;margin:17px 0}
+   .quick-stats article{padding:15px 11px;min-height:128px}
+   .quick-stats span{font-size:8px;line-height:1.5}
+   .quick-stats b{font-size:17px;line-height:1.25}
+   .quick-stats small{font-size:10px;line-height:1.4}
+   .action-grid{gap:10px;margin-top:15px}
+   .action-grid button{padding:16px;min-height:178px}
+   .action-grid b{font-size:14px}
+   .action-grid small{font-size:11px;line-height:1.55}
+   .bottom-dock{left:10px;right:10px;bottom:8px;border:1px solid #526657;border-radius:22px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));}
+   .bottom-dock button{min-height:58px}
+   .bottom-dock button small{font-size:9px}
+  }
+  @media(prefers-reduced-motion:no-preference){.action-grid button:hover{transform:translateY(-3px);box-shadow:0 15px 26px #173b2b1b,0 4px 0 #dce7dc}}
   `}</style>
  </main>
 }
