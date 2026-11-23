@@ -66,6 +66,39 @@ export async function POST(req){
   return NextResponse.json({staff:r.rows[0],emailSent:false,message:'Staff invitation created for '+tenant.display_name+'. Share the secure invitation link with the employee.',invitationUrl:inviteUrl.toString()},{status:201});
  }catch(e){if(e.code==='23505')return NextResponse.json({error:'A staff account with that email already exists.'},{status:409});console.error('Staff admin POST',e.code||e.message);return NextResponse.json({error:'Could not create staff invitation.'},{status:500});}
 }
+
+export async function DELETE(req){
+ const admin=await isAdminRequest(req);
+ if(!admin)return NextResponse.json({error:'Only the master Super Admin can permanently delete staff accounts.'},{status:403});
+ let d;try{d=await req.json()}catch{return NextResponse.json({error:'Invalid request body.'},{status:400})}
+ const id=clean(d.id,50);
+ if(!/^[0-9a-f-]{36}$/i.test(id))return NextResponse.json({error:'Invalid staff ID.'},{status:400});
+ const p=getDatabasePool(),client=await p.connect();
+ try{
+  await ensureSiteTenants(p);
+  const tenant=await selectedTenant(p,d.tenant_id,req,true);
+  await client.query('BEGIN');
+  const prior=await client.query('SELECT id,full_name,email,role,status FROM public.staff_accounts WHERE id=$1 AND tenant_id=$2 FOR UPDATE',[id,tenant.id]);
+  if(!prior.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Staff account not found in this company.'},{status:404});}
+  const staff=prior.rows[0];
+  if(staff.role==='super_admin'){await client.query('ROLLBACK');return NextResponse.json({error:'The master Super Admin account is protected and cannot be deleted here.'},{status:403});}
+  await client.query(
+   "INSERT INTO public.staff_audit_events(actor_type,actor_email,action,target_type,target_id,details,tenant_id) VALUES('super_admin','master-admin','staff.deleted','staff',$1,$2::jsonb,$3)",
+   [id,JSON.stringify({full_name:staff.full_name,email:staff.email,role:staff.role,status:staff.status,deletedAt:new Date().toISOString()}),tenant.id]
+  );
+  // Related permissions, sessions, invitations, presence, notifications and chat
+  // memberships cascade from staff_accounts; chat messages retain history with
+  // sender_staff_id set to NULL by the existing FK.
+  await client.query('DELETE FROM public.staff_accounts WHERE id=$1 AND tenant_id=$2',[id,tenant.id]);
+  await client.query('COMMIT');
+  return NextResponse.json({ok:true,message:'Staff account permanently deleted.',deletedStaffId:id});
+ }catch(e){
+  await client.query('ROLLBACK').catch(()=>{});
+  console.error('Staff admin DELETE',e.code||e.message);
+  return NextResponse.json({error:'Could not delete staff account.'},{status:500});
+ }finally{client.release();}
+}
+
 export async function PATCH(req){
  const admin=await isAdminRequest(req);if(!admin&&!await authorizeAdminRequest(req,'staff.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
  let d;try{d=await req.json()}catch{return NextResponse.json({error:'Invalid request body.'},{status:400})}
