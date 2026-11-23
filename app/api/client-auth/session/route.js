@@ -60,7 +60,7 @@ export async function GET(req){
       }
     },{headers:{'Cache-Control':'no-store','Pragma':'no-cache'}});
   }catch(error){
-    console.error('Client session lookup failed',error.code||error.message);
+    console.error('Client session lookup failed',error.code||'DB_ERROR',error.message);
     return NextResponse.json(
       {error:'We could not verify your client session. Please try again.'},
       {status:503,headers:{'Cache-Control':'no-store','Pragma':'no-cache'}}
