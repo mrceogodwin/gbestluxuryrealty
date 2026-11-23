@@ -208,7 +208,7 @@ export default function SuperAdminLayout({children}){
  .gb-console .gb-sidebar .gb-sidefoot{position:relative!important;display:block!important;flex:0 0 auto!important;width:100%!important;box-sizing:border-box!important;margin:24px 0 0!important;padding:16px 9px calc(18px + env(safe-area-inset-bottom))!important;line-height:1.6!important;white-space:normal!important;z-index:0}
  @media(max-width:850px){.gb-console .gb-sidebar nav{gap:17px!important}.gb-console .gb-sidebar .gb-navgroup{margin:0!important}.gb-console .gb-sidebar .gb-navlink{min-height:46px!important}.gb-console .gb-sidebar .gb-sidefoot{margin-top:24px!important}}
  `}
-/* Premium control-room shell depth and responsive tactile navigation. */
+<style jsx global>{`/* Premium control-room shell depth and responsive tactile navigation. */
 .gb-console .gb-sidebar{background:radial-gradient(ellipse at 20% 0%,#294638,#121b16 55%,#0d140f)!important;border-right:1px solid #ffffff18!important;box-shadow:12px 0 32px #0003,inset -1px 0 #ffffff0b!important}
 .gb-console .gb-brand{padding:18px 15px!important;border-radius:16px!important;background:linear-gradient(145deg,#263a2d,#17241b)!important;border:1px solid #ffffff1b!important;box-shadow:0 8px 18px #0005,inset 0 1px #ffffff20!important}
 .gb-console .gb-mark{box-shadow:0 4px 0 #091e13,0 8px 16px #0005,inset 0 1px #ffffff70!important}
@@ -227,7 +227,7 @@ export default function SuperAdminLayout({children}){
  .gb-console .gb-crumb{font-size:9px!important;letter-spacing:.04em!important}
  .gb-console .gb-secure{font-size:8px!important;padding:8px!important}
 }
-</style>
+`}</style>
  <div className="gb-shell">
  <aside className={'gb-sidebar'+(open?' open':'')}>
  <Link className="gb-brand" href="/admin/super" onClick={()=>setOpen(false)}><span className="gb-mark">G</span><span><strong>G-BEST</strong><small>REALTY CONTROL ROOM</small></span></Link>
