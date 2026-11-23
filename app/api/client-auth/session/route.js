@@ -25,7 +25,7 @@ export async function GET(req){
     const tokenHash=createHash('sha256').update(token).digest('hex');
     const result=await pool.query(`SELECT r.id,r.client_id,r.full_name,r.email,r.phone,r.registration_intent,r.payment_status
       FROM public.client_sessions s
-      JOIN public.client_registrations r ON r.id::text=s.registration_id
+      JOIN public.client_registrations r ON r.id=s.registration_id
       WHERE s.token_hash=$1
         AND s.revoked_at IS NULL
         AND s.expires_at>now()
