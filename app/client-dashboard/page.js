@@ -30,7 +30,7 @@ export default function ClientDashboard(){
  return <main className="client-app">
   <header className="appbar"><Link href="/" className="appbrand"><span className="brand-mark">G</span><span><b>G-BEST</b><small>LUXURY REALTY</small></span></Link><div className="appbar-right"><span className="secure-pill"><i/> PRIVATE CLIENT</span><button onClick={logout} className="signout">Sign out</button></div></header>
   <div className="app-content">
-   <div className="screen-heading"><div><small>G-BEST CLIENT SPACE</small><h1>{title}</h1></div><span className="client-initial">{client?.fullName?.slice(0,1)||'G'}</span></div>
+   <div className="screen-heading"><div><small>G-BEST CLIENT SPACE</small><h1>{title}</h1></div><span className="client-initial">{client?.avatarUrl?<img src={client.avatarUrl} alt="Your profile"/>:(client?.fullName?.slice(0,1)||'G')}</span></div>
    {error&&<div className="page-alert" role="alert">{error}<button onClick={load}>Retry</button></div>}
    {notice&&<div className="notice" role="status">{notice}</div>}
    {busy?<div className="loading-card">Loading your private space…</div>:client&&<>
