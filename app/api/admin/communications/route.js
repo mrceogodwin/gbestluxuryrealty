@@ -10,6 +10,7 @@ const clean=(v,n=4000)=>String(v??'').trim().slice(0,n);
 async function actor(req,tenantRequested){
  const admin=await isAdminRequest(req),staff=admin?null:await getStaffSession(req);
  if(!admin&&!staff)return null;
+ if(staff){const {hasStaffPermission}=await import('../../../../lib/staff-auth');if(!await hasStaffPermission(staff,'communications.use'))return null;}
  const pool=getDatabasePool();await ensureSiteTenants(pool);
  let tenantId=admin?String(tenantRequested||''):String(staff.tenant_id);
  let t;
