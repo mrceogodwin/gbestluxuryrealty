@@ -5,7 +5,6 @@ import {getDatabasePool} from '../../../../lib/db';
 import {isAdminRequest} from '../../../../lib/admin-auth';
 import {getStaffSession} from '../../../../lib/staff-auth';
 import {ensureSiteTenants} from '../../../../lib/site-tenants';
-import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 const MAX_BYTES=5*1024*1024;
@@ -13,7 +12,7 @@ const TYPES={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/avi
 export async function POST(req){
  const admin=await isAdminRequest(req);
  const staff=admin?null:await getStaffSession(req);
- if(!admin&&(!staff||!await authorizeAdminRequest(req,'staff.manage')))return NextResponse.json({error:'You are not authorized to update this staff profile.'},{status:403});
+ if(!admin&&!staff)return NextResponse.json({error:'Please sign in to update your profile.'},{status:401});
  try{
   const form=await req.formData(),file=form.get('photo');
   if(!file||typeof file.arrayBuffer!=='function')return NextResponse.json({error:'Choose a profile photo to upload.'},{status:400});
