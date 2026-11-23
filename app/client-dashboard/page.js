@@ -19,7 +19,7 @@ export default function ClientDashboard(){
   }catch(e){setError(e.message)}finally{setBusy(false)}
  }
  useEffect(()=>{load()},[]);
- useEffect(()=>{if(!client)return;let active=true;const refresh=async()=>{try{const r=await fetch('/api/client-chat',{cache:'no-store'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not load messages.');if(!active)return;setChat(d.conversation||null);setMessages(d.messages||[]);setStaff(d.staff||[]);setChatError('')}catch(e){if(active)setChatError(e.message||'Messages are temporarily unavailable.')}};const timer=window.setInterval(refresh,15000);return()=>{active=false;window.clearInterval(timer)}},[client]);
+ useEffect(()=>{if(!client)return;let active=true;let previous='';const refresh=async()=>{try{const r=await fetch('/api/client-chat',{cache:'no-store'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not load messages.');if(!active)return;const snapshot=JSON.stringify([d.conversation||null,d.messages||[],d.staff||[]]);if(snapshot!==previous){previous=snapshot;setChat(d.conversation||null);setMessages(d.messages||[]);setStaff(d.staff||[])}setChatError('')}catch(e){if(active)setChatError(e.message||'Messages are temporarily unavailable.')}};const timer=window.setInterval(refresh,20000);return()=>{active=false;window.clearInterval(timer)}},[client]);
  async function send(e){e.preventDefault();const body=message.trim();if(!body||sending)return;setSending(true);setChatError('');try{const r=await fetch('/api/client-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:body})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Message could not be sent.');setMessage('');const c=await get('/api/client-chat');setChat(c.conversation);setMessages(c.messages||[]);setStaff(c.staff||[]);setNotice('Message sent securely.')}catch(e){setChatError(e.message)}finally{setSending(false)}}
  async function handoff(){setChatError('');try{const r=await fetch('/api/client-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'request-human'})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not request a team member.');setNotice(d.message||'Your request has been sent.');const c=await get('/api/client-chat');setChat(c.conversation);setMessages(c.messages||[]);setStaff(c.staff||[])}catch(e){setChatError(e.message)}}
  async function logout(){try{await fetch('/api/client-auth/logout',{method:'POST'})}finally{window.location.href='/client-login'}}
@@ -105,6 +105,62 @@ export default function ClientDashboard(){
    .bottom-dock button small{font-size:9px}
   }
   @media(prefers-reduced-motion:no-preference){.action-grid button:hover{transform:translateY(-3px);box-shadow:0 15px 26px #173b2b1b,0 4px 0 #dce7dc}}
-  `}</style>
+  
+/* Cohesive mobile-first client app shell */
+.client-app{min-height:100dvh!important;background:linear-gradient(180deg,#f8faf6 0%,#eef3ed 100%)!important;color:#173b2b!important;padding-bottom:calc(100px + env(safe-area-inset-bottom))!important}
+.client-app .appbar{height:74px!important;padding:0 clamp(16px,4vw,44px)!important;background:#fbfcfa!important;border-bottom:1px solid #e3eae1!important;box-shadow:0 4px 18px #173b2b0a!important}
+.client-app .app-content{max-width:1040px!important;padding:28px clamp(16px,3.8vw,34px) 34px!important}
+.client-app .screen-heading{margin:4px 0 22px!important}
+.client-app .screen-heading h1{font-size:clamp(25px,4vw,34px)!important;letter-spacing:-.05em!important}
+.client-app .welcome-card{min-height:196px!important;border-radius:24px!important;padding:30px!important;background:linear-gradient(125deg,#123b29 0%,#1d5037 58%,#286344 100%)!important;box-shadow:0 16px 34px #123b2928,inset 0 1px #ffffff30,0 3px 0 #0e3021!important}
+.client-app .welcome-card h2{font-size:clamp(34px,5vw,44px)!important}
+.client-app .quick-stats{gap:12px!important;margin:18px 0!important}
+.client-app .quick-stats article{border-radius:18px!important;padding:18px!important;min-width:0!important;background:linear-gradient(145deg,#fff,#f7faf6)!important;box-shadow:0 7px 18px #173b2b0c,0 2px 0 #dce7dc!important}
+.client-app .quick-stats b{font-size:clamp(16px,2vw,21px)!important;line-height:1.25!important;overflow-wrap:anywhere!important}
+.client-app .action-grid{gap:12px!important;margin-top:14px!important}
+.client-app .action-grid button{min-height:160px!important;border-radius:19px!important;padding:19px!important;background:linear-gradient(150deg,#fff,#f7faf6)!important;box-shadow:0 8px 18px #173b2b0d,0 2px 0 #dce7dc!important}
+.client-app .app-card,.client-app .chat-card{border-radius:22px!important;box-shadow:0 12px 28px #173b2b12,0 2px 0 #dce6da!important}
+.client-app .chat-card{display:flex!important;flex-direction:column!important;min-height:min(690px,calc(100dvh - 190px))!important;overflow:hidden!important}
+.client-app .chat-head{position:sticky!important;top:0!important;z-index:2!important;min-height:76px!important;padding:16px 18px!important;background:linear-gradient(120deg,#123b29,#24583d)!important}
+.client-app .agent-presence{min-height:52px!important;padding:12px 16px!important;background:#f5f8f3!important}
+.client-app .chat-thread{flex:1 1 auto!important;min-height:300px!important;max-height:none!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:20px!important;background:linear-gradient(180deg,#f6f9f4,#eef4ed)!important}
+.client-app .bubble{max-width:min(82%,560px)!important;border-radius:17px!important;padding:12px 14px!important;box-shadow:0 4px 12px #173b2b0c!important}
+.client-app .bubble.incoming{border-bottom-left-radius:5px!important}
+.client-app .bubble.outgoing{border-bottom-right-radius:5px!important;background:linear-gradient(145deg,#e5f1df,#d7e9d1)!important}
+.client-app .message-compose{position:sticky!important;bottom:0!important;z-index:3!important;padding:13px 15px!important;background:#fff!important;border-top:1px solid #e5ece3!important}
+.client-app .message-compose input{min-height:48px!important;border-radius:25px!important;background:#f8faf7!important;padding:13px 17px!important}
+.client-app .message-compose button{width:48px!important;height:48px!important;flex:0 0 48px!important;border-radius:50%!important;background:linear-gradient(145deg,#24583b,#123b29)!important;box-shadow:0 3px 0 #0b2b1b,0 6px 12px #173b2b22!important}
+.client-app .human-button{align-self:flex-start!important;margin:0 15px 10px!important}
+.client-app .chat-footnote{padding:0 14px 14px!important}
+.client-app .bottom-dock{left:12px!important;right:12px!important;bottom:8px!important;max-width:560px!important;margin:auto!important;border:1px solid #45614d!important;border-radius:22px!important;background:linear-gradient(180deg,#183c2a,#0d2418)!important;box-shadow:0 12px 30px #071b12a0,inset 0 1px #ffffff2b!important;padding:8px 9px calc(8px + env(safe-area-inset-bottom))!important}
+.client-app .bottom-dock button{min-height:58px!important;border-radius:15px!important;color:#d0ddcf!important;gap:5px!important}
+.client-app .bottom-dock button.active{background:linear-gradient(180deg,#fff,#e5eee2)!important;color:#173b2b!important;box-shadow:0 3px 0 #a9bea8,0 6px 12px #0004!important}
+.client-app .bottom-dock button>span{font-size:19px!important}
+.client-app .bottom-dock button small{font-size:10px!important;font-weight:750!important}
+.client-app button,.client-app a{touch-action:manipulation}
+.client-app button:focus-visible,.client-app a:focus-visible,.client-app input:focus-visible{outline:3px solid #b7d18b!important;outline-offset:3px!important}
+@media(max-width:600px){
+ .client-app .appbar{height:66px!important;padding:0 15px!important}
+ .client-app .app-content{padding:18px 14px 28px!important}
+ .client-app .screen-heading{margin:5px 2px 17px!important}
+ .client-app .welcome-card{min-height:178px!important;padding:24px 20px!important;border-radius:21px!important}
+ .client-app .welcome-card p{font-size:13px!important;line-height:1.65!important;max-width:290px!important}
+ .client-app .quick-stats{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important}
+ .client-app .quick-stats article{padding:13px 9px!important;min-height:122px!important}
+ .client-app .quick-stats span{font-size:7px!important;letter-spacing:.06em!important}
+ .client-app .quick-stats b{font-size:14px!important}
+ .client-app .quick-stats small{font-size:9px!important;line-height:1.35!important}
+ .client-app .action-grid{gap:9px!important}
+ .client-app .action-grid button{min-height:158px!important;padding:14px!important}
+ .client-app .action-grid b{font-size:13px!important}
+ .client-app .action-grid small{font-size:10px!important;line-height:1.45!important}
+ .client-app .chat-card{min-height:calc(100dvh - 190px)!important;border-radius:18px!important}
+ .client-app .chat-thread{min-height:300px!important;padding:14px!important}
+ .client-app .bubble{max-width:90%!important}
+ .client-app .bottom-dock{left:9px!important;right:9px!important;bottom:7px!important}
+ .client-app .bottom-dock button{min-height:55px!important}
+}
+@media(prefers-reduced-motion:reduce){.client-app *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+`}</style>
  </main>
 }
