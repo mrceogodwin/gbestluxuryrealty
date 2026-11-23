@@ -28,6 +28,7 @@ export async function GET(req){
    m.id AS message_id,m.sender_type,m.sender_id,m.body,m.created_at AS message_created_at,m.read_at,ms.full_name AS sender_name,ms.avatar_url AS sender_avatar_url
    FROM public.client_chat_conversations c
    LEFT JOIN public.client_chat_messages m ON m.conversation_id=c.id
+   LEFT JOIN public.staff_accounts ms ON ms.id::text=m.sender_id AND ms.tenant_id=c.tenant_id
    WHERE c.tenant_id=$1 AND c.registration_id=$2
    ORDER BY m.created_at DESC NULLS LAST,m.id DESC LIMIT 500`,[client.tenant_id,client.id]);
   q.rows.reverse();
