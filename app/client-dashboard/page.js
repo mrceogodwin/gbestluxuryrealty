@@ -184,7 +184,7 @@ export default function ClientDashboard(){
 @media(max-width:600px){.client-app nav.bottom-dock{left:12px!important;right:12px!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;height:64px!important;min-height:64px!important}.client-app nav.bottom-dock button{height:50px!important}.client-app .app-content{padding-bottom:18px!important}}
 @media(min-width:601px){.client-app nav.bottom-dock{left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:min(520px,calc(100% - 40px))!important}}
 @media(prefers-reduced-motion:reduce){.client-app *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
-`}/* Final native-app shell: single SVG icon layer, compact branded dock and clear profile hierarchy. */
+/* Final native-app shell: single SVG icon layer, compact branded dock and clear profile hierarchy. */
 .client-app{padding-bottom:calc(82px + env(safe-area-inset-bottom))!important}
 .client-app .appbar{height:76px!important;padding:0 22px!important;background:linear-gradient(180deg,#fff,#f8fbf7)!important;border-bottom:1px solid #dce7dc!important;box-shadow:0 5px 18px #123b2910!important}
 .client-app .appbrand{gap:12px!important;letter-spacing:.12em!important}.client-app .brand-mark{width:44px!important;height:44px!important;border-radius:13px!important;font-size:27px!important;background:linear-gradient(145deg,#1d563b,#0d3423)!important;box-shadow:0 4px 0 #09291b,0 8px 15px #153c2b24!important}
@@ -208,6 +208,6 @@ export default function ClientDashboard(){
 .client-app .profile-signout{display:block!important;width:100%!important;margin:20px 0 0!important;background:#fff7f6!important;border:1px solid #efd8d5!important;color:#994b43!important;border-radius:12px!important;padding:13px 16px!important;font-size:11px!important;font-weight:800!important}
 @media(min-width:900px){.client-app .bottom-dock{left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:min(520px,calc(100% - 40px))!important;bottom:18px!important}}
 @media(max-width:600px){.client-app{padding-bottom:calc(88px + env(safe-area-inset-bottom))!important}.client-app .appbar{height:70px!important;padding:0 16px!important}.client-app .bottom-dock{height:66px!important;bottom:calc(7px + env(safe-area-inset-bottom))!important;left:10px!important;right:10px!important;border-radius:18px!important}.client-app .bottom-dock button{height:52px!important;min-height:52px!important}.client-app .bottom-dock button small{font-size:8.5px!important}.client-app .profile-card{padding:18px!important}.client-app .profile-avatar{width:66px!important;height:66px!important;flex-basis:66px!important}.client-app .profile-row{font-size:11px!important}}
-</style>
+`}</style>
  </main>
 }
