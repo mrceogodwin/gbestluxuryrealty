@@ -6,7 +6,7 @@ import {ensureSiteTenants} from '../../../../lib/site-tenants';
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
 import {getStaffSession} from '../../../../lib/staff-auth';
 export const runtime='nodejs';export const dynamic='force-dynamic';
-const PERMISSIONS=['dashboard.view','properties.manage','inspections.view','inspections.manage','clients.view','clients.manage','payments.review','contacts.view','contacts.manage','media.manage','homepage.manage','staff.manage','audit.view','settings.manage'];
+const PERMISSIONS=['dashboard.view','properties.manage','inspections.view','inspections.manage','clients.view','clients.manage','payments.review','contacts.view','contacts.manage','media.manage','homepage.manage','staff.manage','audit.view','settings.manage','communications.use'];
 const ROLES=['administrator','moderator'];
 const clean=(v,n=180)=>String(v??'').trim().slice(0,n);
 async function selectedTenant(pool,requested,req,admin){
