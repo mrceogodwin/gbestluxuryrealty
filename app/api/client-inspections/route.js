@@ -11,7 +11,7 @@ export async function GET(req){
   const pool=getDatabasePool(),host=req.headers.get('x-forwarded-host')||req.headers.get('host')||'',tenant=await resolveSiteTenant(pool,host);
   if(!tenant)return NextResponse.json({error:'Company workspace unavailable.'},{status:404});
   const hash=createHash('sha256').update(token).digest('hex');
-  const session=await pool.query(`SELECT r.id FROM public.client_sessions s JOIN public.client_registrations r ON r.id::text=s.registration_id
+  const session=await pool.query(`SELECT r.id FROM public.client_sessions s JOIN public.client_registrations r ON r.id=s.registration_id
    WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND r.tenant_id=$2 AND r.client_status='active'
    AND r.payment_status IN ('approved','not_required','pending','rejected') LIMIT 1`,[hash,tenant.id]);
   if(!session.rowCount)return NextResponse.json({error:'Your client session has expired. Please sign in again.'},{status:401});
