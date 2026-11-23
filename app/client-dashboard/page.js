@@ -160,6 +160,18 @@ export default function ClientDashboard(){
  .client-app .bottom-dock{left:9px!important;right:9px!important;bottom:7px!important}
  .client-app .bottom-dock button{min-height:55px!important}
 }
+@media(max-width:600px){
+ .client-app .quick-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:stretch!important}
+ .client-app .quick-stats article:first-child{grid-column:1/-1!important;min-height:94px!important}
+ .client-app .quick-stats article:first-child b{font-size:19px!important}
+ .client-app .quick-stats article:not(:first-child){min-height:112px!important}
+ .client-app .screen-heading h1{line-height:1.12!important}
+ .client-app .chat-head{flex:0 0 auto!important}
+ .client-app .chat-thread{scrollbar-gutter:stable!important}
+ .client-app .message-compose{padding-bottom:max(13px,env(safe-area-inset-bottom))!important}
+ .client-app .bottom-dock{backdrop-filter:blur(18px)!important}
+}
+@media(min-width:601px){.client-app .quick-stats{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
 @media(prefers-reduced-motion:reduce){.client-app *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 `}</style>
  </main>
