@@ -3603,3 +3603,15 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 .property-modal-video video{width:100%;max-height:480px;display:block;background:#050805;border-radius:10px;object-fit:contain}
 .property-modal-gallery{touch-action:pan-y}
 .property-card-gallery-controls button:focus-visible{outline:3px solid #d8f36b;outline-offset:2px}
+
+/* iOS Safari: prevent automatic page zoom when focusing form controls.
+   Applies globally to public pages, client portal, staff and admin screens. */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea,
+  [contenteditable="true"],
+  [role="textbox"] {
+    font-size: 16px !important;
+  }
+}
