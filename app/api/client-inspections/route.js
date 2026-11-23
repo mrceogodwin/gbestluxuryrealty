@@ -21,5 +21,5 @@ export async function GET(req){
    FROM public.inspection_requests i LEFT JOIN public.properties p ON p.id=i.property_id AND p.tenant_id=i.tenant_id
    WHERE i.tenant_id=$1 AND i.client_registration_id=$2 ORDER BY i.created_at DESC LIMIT 50`,[tenant.id,session.rows[0].id]);
   return NextResponse.json({requests:q.rows},{headers:{'Cache-Control':'no-store','Pragma':'no-cache'}});
- }catch(e){console.error('Client inspection history failed',e.code||e.message);return NextResponse.json({error:'Could not load inspection history right now.'},{status:503});}
+ }catch(e){console.error('Client inspection history failed',e.code||'DB_ERROR',e.message);return NextResponse.json({error:'Could not load inspection history right now.'},{status:503});}
 }
