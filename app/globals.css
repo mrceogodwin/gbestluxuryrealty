@@ -3337,6 +3337,15 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
 .gb-console .availability-control select:focus{outline:2px solid #9bc98b;outline-offset:2px}
 
 
+
+/* Restore the established G-BEST green on the two requested inspection CTAs only. */
+.gbest-site-root .why-left .goldbtn,
+.gbest-site-root .gbest-footer-cta{
+  background:#174b32!important;
+  border-color:#174b32!important;
+  color:#fff!important;
+}
+
 /* G-BEST public inspection date calendar */
 .gb-booking-calendar{
   width:100%;
