@@ -31,7 +31,9 @@ LIVE LISTINGS (only these may be described as currently published):
 ${JSON.stringify(properties)}`;
   {
    const normalise=value=>String(value||'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9₦]+/g,' ').trim();
-   const priorClientText=context.filter(x=>x.sender_type==='client').slice(0,-1).map(x=>x.body).join(' ');
+   const clientTurns=context.filter(x=>x.sender_type==='client');
+   const priorClientText=clientTurns.slice(0,-1).map(x=>x.body).join(' ');
+   const previousClientMessage=clientTurns.length>1?clientTurns[clientTurns.length-2].body:'';
    const priorAgentText=context.filter(x=>x.sender_type==='agent').map(x=>x.body).join(' ');
    const stop=new Set(['what','where','when','which','with','from','this','that','have','does','there','their','about','show','tell','please','want','need','looking','find','property','properties','listing','listings','price','cost','much','your','you','for','and','the','are','can','how','get','any','all','our','g','best']);
    const words=normalise(priorClientText+' '+message).split(/\s+/).filter(w=>w.length>2&&!stop.has(w));
@@ -74,7 +76,8 @@ ${JSON.stringify(properties)}`;
    let reply='';
    if(knowledgeMatch&&knowledgeMatch._score>=3)reply=knowledgeMatch.answer;
    else if(wantsInspection)reply='I can help you arrange a physical inspection. Choose a property from our published listings, then use its inspection request option. The team confirms the appointment; please do not treat a request as confirmed until G-BEST approves it.';
-   else if(greetingOnly&&/hello|welcome|good (morning|afternoon|evening)/i.test(priorAgentText))reply='Hello again — I’m here to help. Are you looking to buy or rent, and which city or area should I search?';
+   else if(greetingOnly&&priorClientText.trim())reply='Hi again — I still have your earlier message in mind: “'+safeText(previousClientMessage||priorClientText,180)+'”. Would you like to continue with that request?';
+   else if(greetingOnly&&/hello|welcome|good (morning|afternoon|evening)/i.test(priorAgentText))reply='Hello again — I’m here to help. What would you like to explore next?';
    else if(shortAck)reply='You’re welcome. Whenever you’re ready, send me the area, whether you want to buy or rent, and your budget. I’ll use those details to narrow the published listings.';
    else if(wantsHouse&&requestedArea&&filteredRanked.length===0&&edoAlternatives.length)reply='I understand you want a house in '+requestedArea+'. I do not have a matching live house listing there. The live Edo State catalogue also has listings in Ekpoma and Auchi; I can check whether either fits your exact house requirement. Would either area work, or should I keep the search in Benin City?';
    else if(wantsHouse&&requestedArea&&filteredRanked.length===0)reply='I understand you want a house in '+requestedArea+'. I do not have a matching live house listing to show right now. Would you like to buy or rent, and what budget range should I use?';
