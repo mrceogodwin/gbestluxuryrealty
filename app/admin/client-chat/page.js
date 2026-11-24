@@ -206,9 +206,6 @@ export default function AdminClientChatPage(){
    .gb-conversation-tools>div{flex-wrap:wrap}
   }
   @media(prefers-reduced-motion:reduce){.gb-chat-sidebar,.gb-chat-main,.gb-bottom-dock button{transition:none!important}}
-  `}
-
-  
    :global(.gb-content .gb-ios-chat),:global(.gb-content .gb-ios-chat *){filter:none!important}
    :global(.gb-content .gb-ios-chat .gb-chat-sidebar),:global(.gb-content .gb-ios-chat .gb-chat-main){box-shadow:none!important}
    :global(.gb-content .gb-ios-chat .gb-search),:global(.gb-content .gb-ios-chat .gb-filter-row button),:global(.gb-content .gb-ios-chat .gb-thread),:global(.gb-content .gb-ios-chat .gb-inbox-note),:global(.gb-content .gb-ios-chat .gb-message-bubble),:global(.gb-content .gb-ios-chat .gb-conversation-tools button),:global(.gb-content .gb-ios-chat .gb-composer button){box-shadow:none!important;filter:none!important}
@@ -220,6 +217,9 @@ export default function AdminClientChatPage(){
    :global(.gb-content .gb-ios-chat .gb-message-row.incoming .gb-message-bubble){background:#fff!important;color:#172b20!important;border:1px solid #d7e2d4!important}
    .gb-settings-list .gb-sound-setting{display:grid;gap:7px}.gb-sound-setting button{justify-self:start;border:1px solid #cbdcc6;border-radius:10px;background:#eaf4e4;color:#174b32;padding:9px 12px;font-weight:750}
    @media(max-width:760px){:global(.gb-content .gb-ios-chat .gb-message-bubble p){font-size:15px!important;line-height:1.55!important}:global(.gb-content .gb-ios-chat .gb-message-bubble time){font-size:10px!important}}
+  `}
+
+  
 
   </style>
  </main>;
