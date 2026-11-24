@@ -10,7 +10,8 @@ function DockIcon({name}){const p={width:22,height:22,viewBox:'0 0 24 24',fill:'
 
 export default function AdminClientChatPage(){
  const [items,setItems]=useState([]),[selected,setSelected]=useState(''),[detail,setDetail]=useState(null),[draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[tenants,setTenants]=useState([]),[staff,setStaff]=useState([]),[tenantId,setTenantId]=useState(''),[tab,setTab]=useState('chats'),[search,setSearch]=useState(''),[filter,setFilter]=useState('all'),[showInfo,setShowInfo]=useState(false);
- const openRequest=useRef(0),messageScrollRef=useRef(null);
+ const openRequest=useRef(0),messageScrollRef=useRef(null),fileInputRef=useRef(null);
+ const [pendingFiles,setPendingFiles]=useState([]);
  const load=useCallback(async()=>{try{const r=await fetch('/api/admin/client-chat'+(tenantId?'?tenantId='+encodeURIComponent(tenantId):''),{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not load conversations');setItems(d.conversations||[]);setTenants(d.tenants||[]);setStaff(d.staff||[]);if(d.activeTenantId&&String(d.activeTenantId)!==tenantId)setTenantId(String(d.activeTenantId));if(selected&&!(d.conversations||[]).some(x=>x.id===selected)){setSelected('');setDetail(null)}}catch(e){setError(e.message)}},[tenantId,selected]);
  const open=useCallback(async(id)=>{const request=++openRequest.current;setSelected(id);setDetail(null);setError('');setNotice('');try{const q=new URLSearchParams({conversationId:id});if(tenantId)q.set('tenantId',tenantId);const r=await fetch('/api/admin/client-chat?'+q.toString(),{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not open conversation');if(request!==openRequest.current)return;setDetail(d);await fetch('/api/admin/client-chat',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:id,tenantId:tenantId||undefined,action:'read'})});if(request===openRequest.current)setItems(old=>old.map(x=>x.id===id?{...x,unread_count:0}:x))}catch(e){if(request===openRequest.current){setSelected('');setDetail(null);setError(e.message)}}},[tenantId]);
  useEffect(()=>{load()},[load]);
@@ -19,7 +20,28 @@ export default function AdminClientChatPage(){
  const visible=useMemo(()=>items.filter(x=>{const q=search.toLowerCase();const match=!q||[x.full_name,x.email,x.client_id,x.last_message].some(v=>String(v||'').toLowerCase().includes(q));const f=filter==='unread'?Number(x.unread_count)>0:filter==='assigned'?!!x.assigned_staff_id:filter==='unassigned'?!x.assigned_staff_id:true;return match&&f}),[items,search,filter]);
  const online=staff.filter(s=>s.presence==='online');
  const activity=useMemo(()=>[...items].sort((a,b)=>new Date(b.last_message_at||b.updated_at||0)-new Date(a.last_message_at||a.updated_at||0)),[items]);
- async function send(e){e.preventDefault();if(!draft.trim()||!selected||busy)return;setBusy(true);setError('');try{const r=await fetch('/api/admin/client-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:selected,tenantId:tenantId||undefined,message:draft.trim()})});const d=await r.json();if(!r.ok)throw Error(d.error||'Reply failed');setDraft('');await open(selected);await load()}catch(e){setError(e.message)}finally{setBusy(false)}}
+ async function send(e){
+  e.preventDefault();
+  if((!draft.trim()&&!pendingFiles.length)||!selected||busy)return;
+  setBusy(true);setError('');
+  try{
+   const attachments=[];
+   for(const file of pendingFiles){
+    const base={conversationId:selected,tenantId:tenantId||undefined,fileName:file.name,mimeType:file.type,fileSize:file.size};
+    const presign=await fetch('/api/admin/client-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...base,action:'attachment-presign'})});
+    const uploadData=await presign.json();if(!presign.ok)throw Error(uploadData.error||'Could not prepare this attachment');
+    const uploaded=await fetch(uploadData.upload.url,{method:'PUT',headers:uploadData.upload.headers,body:file});
+    if(!uploaded.ok)throw Error('The file upload failed. Please try again.');
+    const complete=await fetch('/api/admin/client-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...base,action:'attachment-complete',objectKey:uploadData.objectKey})});
+    const completed=await complete.json();if(!complete.ok)throw Error(completed.error||'Could not verify this attachment');
+    attachments.push(completed.attachment);
+   }
+   const r=await fetch('/api/admin/client-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:selected,tenantId:tenantId||undefined,message:draft.trim(),attachments})});
+   const d=await r.json();if(!r.ok)throw Error(d.error||'Reply failed');
+   setDraft('');setPendingFiles([]);if(fileInputRef.current)fileInputRef.current.value='';
+   await open(selected);await load();
+  }catch(e){setError(e.message)}finally{setBusy(false)}
+ }
  async function action(actionName,staffId){if(!selected)return;setBusy(true);setError('');try{const body={conversationId:selected,tenantId:tenantId||undefined,action:actionName};if(staffId!==undefined)body.staffId=staffId||null;const r=await fetch('/api/admin/client-chat',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not update conversation');await open(selected);await load();setNotice(actionName==='assign'?'Conversation assignment updated.':actionName==='close'?'Conversation closed.':actionName==='reopen'?'Conversation reopened.':'Conversation updated.')}catch(e){setError(e.message)}finally{setBusy(false)}}
  const active=items.find(x=>x.id===selected);
  const startNew=()=>{setTab('chats');setSelected('');setDetail(null);setNotice('Choose a conversation from your inbox to start replying.')};
@@ -37,10 +59,11 @@ export default function AdminClientChatPage(){
     {!detail?<><div className="gb-welcome"><span className="gb-welcome-icon">✉</span><h2>Your messages, in one place.</h2><p>Select a client conversation to read, reply, or manage its assignment.</p><div className="gb-welcome-stats"><span><b>{items.length}</b><small>Conversations</small></span><span><b>{items.filter(x=>Number(x.unread_count)>0).length}</b><small>Unread</small></span><span><b>{online.length}</b><small>Team online</small></span></div></div>{selected&&<div className="gb-chat-loading" role="status"><span className="gb-loading-dot"/>Loading conversation…</div>}</>:<>
      <div className="gb-conversation-head"><button className="gb-back-btn" onClick={()=>{openRequest.current++;setSelected('');setDetail(null);setShowInfo(false)}} aria-label="Back to chats">‹</button><span className="gb-avatar">{initials(detail.conversation.full_name)}</span><button className="gb-person-title" onClick={()=>setShowInfo(v=>!v)}><b>{detail.conversation.full_name}</b><small>{detail.conversation.email||detail.conversation.client_id||'G-BEST client'}</small></button><span className="gb-status-chip">{detail.conversation.status==='open'?'Open':'Closed'}</span><button className="gb-icon-btn gb-info-toggle" onClick={()=>setShowInfo(v=>!v)} aria-label="Conversation details">ⓘ</button></div>
      {showInfo&&<div className="gb-info-panel"><div><small>CLIENT ID</small><b>{detail.conversation.client_id||'—'}</b></div><div><small>PHONE</small><b>{detail.conversation.phone||'Not provided'}</b></div><div><small>CONVERSATION OWNER</small><b>{detail.conversation.assigned_staff_name||'Agent assistant'}</b></div><div className="gb-assignment-title"><small>HUMAN ASSIGNMENT</small></div><label>ASSIGN TEAM MEMBER<select value={detail.conversation.assigned_staff_id||''} onChange={e=>action('assign',e.target.value)} disabled={busy}><option value="">Agent assistant · No human assigned</option>{detail.conversation.assigned_staff_id&&!online.some(s=>String(s.id)===String(detail.conversation.assigned_staff_id))&&<option value={detail.conversation.assigned_staff_id} disabled>{detail.conversation.assigned_staff_name||'Assigned colleague'} · Offline</option>}{online.map(s=><option key={s.id} value={s.id}>{s.full_name} · Online</option>)}</select></label>{detail.conversation.assigned_staff_phone_number&&<a className="gb-whatsapp-link" href={'https://wa.me/'+String(detail.conversation.assigned_staff_phone_number).replace(/\D/g,'')} target="_blank" rel="noreferrer">WHATSAPP</a>}</div>}
-     <div className="gb-message-scroll" ref={messageScrollRef}>{detail.messages.map((m,i)=><div key={m.id} className={'gb-message-row '+(m.sender_type==='client'?'incoming':'outgoing')}><div className="gb-message-bubble"><small>{m.sender_type==='client'?'CLIENT':m.sender_type==='staff'?'TEAM':'G-BEST'}</small><p>{m.body}</p><time>{clock(m.created_at)}</time></div></div>)}{detail.messages.length===0&&<div className="gb-empty"><b>No messages yet</b><small>Send the first reply to this client.</small></div>}</div>
+     <div className="gb-message-scroll" ref={messageScrollRef}>{detail.messages.map((m,i)=><div key={m.id} className={'gb-message-row '+(m.sender_type==='client'?'incoming':'outgoing')}><div className="gb-message-bubble"><small>{m.sender_type==='client'?'CLIENT':m.sender_type==='staff'?'TEAM':'G-BEST'}</small><p>{m.body}</p>{Array.isArray(m.attachments)&&m.attachments.length>0&&<div className="gb-message-attachments">{m.attachments.map((a,i)=><a key={a.objectKey||i} href={a.url} target="_blank" rel="noreferrer">{a.kind==='image'?<img src={a.url} alt={a.fileName||'Chat attachment'}/>:<span>{a.kind==='video'?'▶':a.kind==='audio'?'♫':'PDF'}</span>}<small>{a.fileName||'Open attachment'}</small></a>)}</div>}<time>{clock(m.created_at)}</time></div></div>)}{detail.messages.length===0&&<div className="gb-empty"><b>No messages yet</b><small>Send the first reply to this client.</small></div>}</div>
      {notice&&<p className="gb-notice">{notice}</p>}
      <div className="gb-conversation-tools"><span>{detail.conversation.assigned_staff_name?'Assigned to '+detail.conversation.assigned_staff_name:'Not assigned to a staff member'}</span><div>{detail.conversation.handoff_status==='requested'&&!detail.conversation.assigned_staff_id&&<button onClick={()=>action('claim')} disabled={busy}>CLAIM WAITING CHAT</button>}<button onClick={()=>action(detail.conversation.status==='open'?'close':'reopen')} disabled={busy}>{detail.conversation.status==='open'?'Close chat':'Reopen chat'}</button></div></div>
-     <form className="gb-composer" onSubmit={send}><textarea value={draft} onChange={e=>setDraft(e.target.value)} maxLength={4000} rows={1} placeholder={detail.conversation.status==='open'?'Message…':'Reopen this chat to reply'} disabled={detail.conversation.status!=='open'||busy}/><button type="submit" disabled={busy||!draft.trim()||detail.conversation.status!=='open'} aria-label="Send message">➤</button></form>
+     {pendingFiles.length>0&&<div className="gb-pending-files">{pendingFiles.map((file,i)=><span key={file.name+i}>{file.name}<button type="button" onClick={()=>setPendingFiles(old=>old.filter((_,n)=>n!==i))} aria-label={'Remove '+file.name}>×</button></span>)}</div>}
+     <form className="gb-composer" onSubmit={send}><input ref={fileInputRef} className="gb-file-input" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,audio/mpeg,audio/mp4,audio/wav,audio/ogg,audio/webm,video/mp4,video/webm" onChange={e=>{const next=Array.from(e.target.files||[]);setPendingFiles(old=>[...old,...next].slice(0,5));e.target.value=''}}/><button className="gb-attach" type="button" onClick={()=>fileInputRef.current?.click()} disabled={detail.conversation.status!=='open'||busy} aria-label="Attach files" title="Attach photos, documents, audio or video">＋</button><textarea value={draft} onChange={e=>setDraft(e.target.value)} maxLength={4000} rows={1} placeholder={detail.conversation.status==='open'?'Message…':'Reopen this chat to reply'} disabled={detail.conversation.status!=='open'||busy}/><button type="submit" disabled={busy||(!draft.trim()&&!pendingFiles.length)||detail.conversation.status!=='open'} aria-label="Send message">➤</button></form>
     </>}
    </section>
   </div>
@@ -140,6 +163,16 @@ export default function AdminClientChatPage(){
    .gb-inbox-note>div{display:grid;gap:4px;min-width:0}
    .gb-inbox-note b{font-size:10px;color:#31543a;line-height:1.3}
    .gb-inbox-note small{font-size:9px;color:#7a897d;line-height:1.45}
+   .gb-file-input{display:none!important}
+   .gb-attach{display:grid!important;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid #dbe5d8!important;border-radius:50%;background:#f4f7f2!important;color:#315b3c!important;font-size:22px!important;line-height:1}
+   .gb-pending-files{display:flex;gap:7px;flex-wrap:wrap;padding:7px 11px;background:#fff;border-top:1px solid #edf1eb}
+   .gb-pending-files>span{display:flex;align-items:center;gap:6px;max-width:100%;padding:5px 8px;border:1px solid #dbe5d8;border-radius:9px;background:#f7faf5;color:#31543a;font-size:10px;overflow-wrap:anywhere}
+   .gb-pending-files button{border:0;background:transparent;color:#8b4c42;font-size:15px}
+   .gb-message-attachments{display:grid;gap:7px;margin:8px 0}
+   .gb-message-attachments a{display:flex;align-items:center;gap:8px;max-width:100%;padding:7px;border:1px solid #dbe5d8;border-radius:10px;background:#ffffffa8;color:#31543a;text-decoration:none;overflow-wrap:anywhere}
+   .gb-message-attachments img{width:58px;height:48px;object-fit:cover;border-radius:7px}
+   .gb-message-attachments a>span{display:grid;place-items:center;width:38px;height:38px;border-radius:8px;background:#e8f0e4;font-weight:800}
+   .gb-message-attachments small{font-size:10px;line-height:1.35;overflow-wrap:anywhere}
    .gb-bottom-dock{backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%)}
   }
   /* Final iPhone layout corrections: the conversation gets the full screen; navigation belongs to the inbox. */
