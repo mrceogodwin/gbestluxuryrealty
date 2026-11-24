@@ -3877,3 +3877,21 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   .admin-client-chat header button{padding:8px 9px!important;font-size:8px!important}
   .admin-client-chat .team-availability{padding:10px 11px!important}
 }
+
+
+/* Mobile property card: inspection CTA occupies the open right-hand slot */
+@media(max-width:680px){
+  .pad{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;column-gap:12px!important;row-gap:0!important}
+  .pad>.loc,.pad>h3,.pad>p,.pad>.facts{grid-column:1/-1!important}
+  .pad>.property-card-reference{grid-column:1!important;grid-row:5!important;width:100%!important;min-width:0!important;min-height:64px!important;margin:0!important;align-self:stretch!important;padding:8px 9px!important}
+  .pad>.property-card-reference>span{font-size:7px!important}
+  .pad>.property-card-reference>strong{font-size:clamp(11px,3.2vw,15px)!important;letter-spacing:.02em!important}
+  .pad>.property-card-reference .copy-property-id{min-width:0!important;padding:5px 6px!important;font-size:7px!important}
+  .pad>.property-booking-cta{grid-column:2!important;grid-row:5!important;width:100%!important;min-width:0!important;min-height:64px!important;height:64px!important;margin:0!important;padding:8px 9px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:5px!important;border:1px solid #0b5735!important;border-bottom:3px solid #032e1d!important;border-radius:3px!important;background:#075b35!important;color:#fff!important;box-shadow:3px 3px 0 #14251b!important;font-size:8px!important;line-height:1.25!important;letter-spacing:.04em!important;text-align:left!important}
+  .pad>.property-booking-cta span{width:19px!important;height:19px!important;flex:0 0 19px!important;border:1px solid #c8ed83!important;color:#d8f36b!important;font-size:11px!important}
+  .pad>.price{grid-column:1/-1!important;grid-row:6!important;margin-top:13px!important;padding-top:11px!important}
+}
+@media(max-width:380px){
+ .pad{column-gap:8px!important}
+ .pad>.property-booking-cta{padding:7px!important;font-size:7px!important}
+}
