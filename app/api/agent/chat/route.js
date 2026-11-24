@@ -26,10 +26,14 @@ export async function POST(req){
     AND COALESCE(description,'') !~* '(sample showcase listing|illustrative|design preview|test listing)'
    ORDER BY updated_at DESC,id DESC LIMIT 35`,[tenant.id]);
   const properties=q.rows.map(p=>({name:p.title,location:[p.location,p.state].filter(Boolean).join(', '),type:p.property_type,price:p.price,beds:Number(p.bedrooms||0),baths:Number(p.bathrooms||0),size:p.size,description:safeText(p.description,900),status:p.status,image:p.image_url||(Array.isArray(p.images)?p.images[0]:null),images:Array.isArray(p.images)?p.images.slice(0,5):[],url:p.slug?'/properties/'+encodeURIComponent(p.slug):null}));
-  const company=`Company: ${tenant.display_name||'G-BEST Luxury Realty'}. Market: Nigeria. Published property records currently available: ${properties.length}.\nLIVE LISTINGS (only these may be described as currently published):\n${JSON.stringify(properties)}`;
+  const company=`Company: ${tenant.display_name||'G-BEST Luxury Realty'}. Market: Nigeria. Published property records currently available: ${properties.length}.
+LIVE LISTINGS (only these may be described as currently published):
+${JSON.stringify(properties)}`;
   {
    const normalise=value=>String(value||'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9₦]+/g,' ').trim();
-   const priorClientText=context.filter(x=>x.sender_type==='client').slice(0,-1).map(x=>x.body).join(' ');\n   const priorAgentText=context.filter(x=>x.sender_type==='agent').map(x=>x.body).join(' ');\n   const stop=new Set(['what','where','when','which','with','from','this','that','have','does','there','their','about','show','tell','please','want','need','looking','find','property','properties','listing','listings','price','cost','much','your','you','for','and','the','are','can','how','get','any','all','our','g','best']);
+   const priorClientText=context.filter(x=>x.sender_type==='client').slice(0,-1).map(x=>x.body).join(' ');
+   const priorAgentText=context.filter(x=>x.sender_type==='agent').map(x=>x.body).join(' ');
+   const stop=new Set(['what','where','when','which','with','from','this','that','have','does','there','their','about','show','tell','please','want','need','looking','find','property','properties','listing','listings','price','cost','much','your','you','for','and','the','are','can','how','get','any','all','our','g','best']);
    const words=normalise(priorClientText+' '+message).split(/\s+/).filter(w=>w.length>2&&!stop.has(w));
    const ranked=properties.map(p=>{
     const hay=normalise([p.name,p.location,p.type,p.price,p.size,p.description].join(' '));
@@ -49,7 +53,7 @@ export async function POST(req){
    const greetingOnly=/^(hello|hi|hey|good morning|good afternoon|good evening)[.! ]*$/.test(n);
    const shortAck=/^(ok|okay|alright|thanks|thank you|noted|sure|fine)[.! ]*$/.test(n);
    const locationNames=['Benin City, Edo State','Lagos','Abuja','Port Harcourt','Ibadan','Enugu','Owerri','Asaba','Warri','Uyo','Calabar','Akure','Abeokuta','Kaduna','Kano'];
-   const requestedArea=locationNames.find(name=>{const token=normalise(name).split(' ')[0];return n.includes(normalise(name))||(token==='benin'&&/\bbenin\b/.test(n))||(token!=='benin'&&new RegExp('\b'+token+'\b').test(n))})
+   const requestedArea=locationNames.find(name=>{const token=normalise(name).split(' ')[0];return n.includes(normalise(name))||(token==='benin'&&/\bbenin\b/.test(n))||(token!=='benin'&&new RegExp('\\b'+token+'\\b').test(n))})
     ||locationNames.find(name=>{const token=normalise(name).split(' ')[0];return normalise(priorClientText).includes(normalise(name))||(token==='benin'&&/\bbenin\b/.test(normalise(priorClientText)))});
    const wantsHouse=/\b(house|home|duplex|bungalow|terrace|detached|semi detached)\b/.test(fullEnquiry);
    const wantsProperty=/\b(property|properties|house|home|land|plot|apartment|flat|duplex|bungalow|villa|real estate)\b/.test(n);
@@ -71,11 +75,15 @@ export async function POST(req){
    else if(wantsInspection)reply='I can help you arrange a physical inspection. Choose a property from our published listings, then use its inspection request option. The team confirms the appointment; please do not treat a request as confirmed until G-BEST approves it.';
    else if(greetingOnly&&/hello|welcome|good (morning|afternoon|evening)/i.test(priorAgentText))reply='Hello again — I’m here to help. Are you looking to buy or rent, and which city or area should I search?';
    else if(shortAck)reply='You’re welcome. Whenever you’re ready, send me the area, whether you want to buy or rent, and your budget. I’ll use those details to narrow the published listings.';
-   else if(requestedArea&&filteredRanked.length===0)reply='I checked the live published catalogue for '+requestedArea+'. I do not have a matching published listing in that area to show right now. Are you looking to buy or rent, and what budget should I use? I can also help you send the request to our team for confirmation of upcoming options.';
    else if(wantsHouse&&requestedArea&&filteredRanked.length===0)reply='I understand you want a house in '+requestedArea+'. I do not have a matching published house listing to show right now. Would you like to buy or rent, and what budget range should I use?';
+   else if(requestedArea&&filteredRanked.length===0)reply='I checked the live published catalogue for '+requestedArea+'. I do not have a matching published listing in that area to show right now. Are you looking to buy or rent, and what budget should I use? I can also help you send the request to our team for confirmation of upcoming options.';
    else if(filteredRanked.length){
-    const found=filteredRanked.map(p=>p.name+' — '+p.location+' — '+p.type+' — '+p.price+(p.beds?' — '+p.beds+' bedroom(s)':'')+(p.url?' — '+p.url:'')+(p.image?' — Photo: '+p.image:'')).join('\n');
-    reply='Here are the closest matches in G-BEST’s live published catalogue:\n'+found+'\n\nWould you like details about one of these, or should I narrow the search by location, property type or budget? Listing details and prices should be reconfirmed with our team before payment.';
+    const found=filteredRanked.map(p=>p.name+' — '+p.location+' — '+p.type+' — '+p.price+(p.beds?' — '+p.beds+' bedroom(s)':'')+(p.url?' — '+p.url:'')+(p.image?' — Photo: '+p.image:'')).join('
+');
+    reply='Here are the closest matches in G-BEST’s live published catalogue:
+'+found+'
+
+Would you like details about one of these, or should I narrow the search by location, property type or budget? Listing details and prices should be reconfirmed with our team before payment.';
    }else if(budgetLimit&&relevant.length&&filteredRanked.length===0){
     reply='I found listings that may fit the property type, but their recorded prices are missing or above your stated budget. I won’t label them as budget matches without a verifiable price. Would you like to raise the budget or ask our team to confirm current prices?';
    }else if((wantsLand||wantsApartment||wantsRent||wantsBuy)&&relevant.length===0){
