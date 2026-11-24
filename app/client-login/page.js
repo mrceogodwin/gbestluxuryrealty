@@ -10,6 +10,13 @@ export default function ClientLogin() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [brand, setBrand] = useState({});
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/client-auth/session', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(data => { if (active && data?.authenticated) { const next = new URLSearchParams(window.location.search).get('next'); window.location.replace(next && next.startsWith('/') && !next.startsWith('//') ? next : '/client-dashboard'); } else if (active) setCheckingSession(false); }).catch(() => { if (active) setCheckingSession(false); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -75,6 +82,8 @@ export default function ClientLogin() {
     setError('');
     setMessage('');
   }
+
+  if (checkingSession) return <main className="client-access-page"><div className="client-access-loading">Checking your secure client session…</div></main>;
 
   return (
     <main className="client-access-page">
