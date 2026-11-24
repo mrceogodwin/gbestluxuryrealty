@@ -475,7 +475,7 @@ test('Google Calendar integration never blocks a saved inspection status when th
 
 test('client login returns clients to the intended next page', async () => {
   const login = await source('app/client-login/page.js');
-  assert.ok(login.includes("next&&next.startsWith"));
+  assert.match(login, /window\\.location\\.href = next && next\\.startsWith/);
   assert.match(login, /api\/client-auth\/verify-code/);
 });
 
