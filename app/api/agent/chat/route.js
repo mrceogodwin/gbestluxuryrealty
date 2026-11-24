@@ -45,17 +45,15 @@ export async function POST(req){
     return {...x,_score:score};
    }).filter(x=>x._score>0).sort((a,b)=>b._score-a._score)[0];
    const n=normalise(message);
-   const priorClientText=context.filter(x=>x.sender_type==='client').slice(0,-1).map(x=>x.body).join(' ');
-   const priorAgentText=context.filter(x=>x.sender_type==='agent').map(x=>x.body).join(' ');
    const fullEnquiry=normalise(priorClientText+' '+message);
    const greetingOnly=/^(hello|hi|hey|good morning|good afternoon|good evening)[.! ]*$/.test(n);
    const shortAck=/^(ok|okay|alright|thanks|thank you|noted|sure|fine)[.! ]*$/.test(n);
    const locationNames=['Benin City, Edo State','Lagos','Abuja','Port Harcourt','Ibadan','Enugu','Owerri','Asaba','Warri','Uyo','Calabar','Akure','Abeokuta','Kaduna','Kano'];
-   const requestedArea=locationNames.find(name=>{const token=normalise(name).split(' ')[0];return n.includes(normalise(name))||(token==='benin'&&/\\bbenin\\b/.test(n))||(token!=='benin'&&new RegExp('\\b'+token+'\\b').test(n))})
-    ||locationNames.find(name=>{const token=normalise(name).split(' ')[0];return normalise(priorClientText).includes(normalise(name))||(token==='benin'&&/\\bbenin\\b/.test(normalise(priorClientText)))});
-   const wantsHouse=/\\b(house|home|duplex|bungalow|terrace|detached|semi detached)\\b/.test(fullEnquiry);
-   const wantsProperty=/\\b(property|properties|house|home|land|plot|apartment|flat|duplex|bungalow|villa|real estate)\\b/.test(n);
-   const priorPropertyIntent=/\\b(property|properties|house|home|land|plot|apartment|flat|duplex|buy|rent|looking for)\\b/.test(normalise(priorClientText));
+   const requestedArea=locationNames.find(name=>{const token=normalise(name).split(' ')[0];return n.includes(normalise(name))||(token==='benin'&&/\bbenin\b/.test(n))||(token!=='benin'&&new RegExp('\b'+token+'\b').test(n))})
+    ||locationNames.find(name=>{const token=normalise(name).split(' ')[0];return normalise(priorClientText).includes(normalise(name))||(token==='benin'&&/\bbenin\b/.test(normalise(priorClientText)))});
+   const wantsHouse=/\b(house|home|duplex|bungalow|terrace|detached|semi detached)\b/.test(fullEnquiry);
+   const wantsProperty=/\b(property|properties|house|home|land|plot|apartment|flat|duplex|bungalow|villa|real estate)\b/.test(n);
+   const priorPropertyIntent=/\b(property|properties|house|home|land|plot|apartment|flat|duplex|buy|rent|looking for)\b/.test(normalise(priorClientText));
    const wantsRent=/\b(rent|rental|lease|tenant)\b/.test(n);
    const wantsBuy=/\b(buy|purchase|sale|sell)\b/.test(n);
    const wantsLand=/\b(land|plot|plots)\b/.test(n);
