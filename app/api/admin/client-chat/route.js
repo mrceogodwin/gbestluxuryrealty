@@ -33,9 +33,7 @@ async function signMessageAttachments(rows){
 async function accessibleConversation(pool,id,ctx){
  const q=await pool.query(`SELECT c.id,c.status FROM public.client_chat_conversations c
   WHERE c.id=$1 AND c.tenant_id=$2 AND ($3::boolean OR c.assigned_staff_id=$4
-   OR EXISTS(SELECT 1 FROM public.client_chat_participants cp WHERE cp.conversation_id=c.id AND cp.tenant_id=c.tenant_id AND cp.staff_id=$4 AND cp.removed_at IS NULL)
-   OR EXISTS(SELECT 1 FROM public.client_chat_monitor_access ma WHERE ma.conversation_id=c.id AND ma.tenant_id=c.tenant_id AND ma.staff_id=$4 AND ma.revoked_at IS NULL)
-   OR (c.assigned_staff_id IS NULL AND c.handoff_status='requested')) LIMIT 1`,[id,ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
+   OR EXISTS(SELECT 1 FROM public.client_chat_participants cp WHERE cp.conversation_id=c.id AND cp.tenant_id=c.tenant_id AND cp.staff_id=$4 AND cp.removed_at IS NULL)) LIMIT 1`,[id,ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
  return q.rows[0]||null;
 }
 
