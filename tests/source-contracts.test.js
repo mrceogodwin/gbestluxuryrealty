@@ -432,7 +432,10 @@ test('staff can only access client conversations assigned to or shared with them
   assert.match(api, /client_chat_participants/);
   assert.match(api, /client_chat_monitor_access/);
   assert.match(api, /staff_notifications/);
-  assert.match(page, /setInterval\(load,15000\)/);\n  assert.match(page, /setInterval\(poll,7000\)/);\n  assert.match(page, /playTone\('incoming'\)/);\n  assert.match(page, /playTone\('sent'\)/);
+  assert.match(page, /setInterval\(load,15000\)/);
+  assert.match(page, /setInterval\(poll,7000\)/);
+  assert.match(page, /playTone\('incoming'\)/);
+  assert.match(page, /playTone\('sent'\)/);
   assert.match(migration, /ALTER COLUMN assigned_staff_id TYPE uuid/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.staff_notifications/);
 });
