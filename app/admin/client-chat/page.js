@@ -53,11 +53,25 @@ export default function AdminClientChatPage(){
   <header className="gb-chat-top"><a className="gb-chat-brand" href="/admin/super/overview"><span className="gb-brand-mark">G</span><span><b>G-BEST</b><small>MESSAGES</small></span></a><div className="gb-top-actions">{tenants.length>1&&<select aria-label="Company workspace" value={tenantId} onChange={e=>{setTenantId(e.target.value);setSelected('');setDetail(null);setPendingFiles([]);if(fileInputRef.current)fileInputRef.current.value=''}}>{tenants.map(t=><option key={t.id} value={t.id}>{t.display_name}</option>)}</select>}<span className="gb-admin-pill"><i/> Admin</span><a href="/admin/super/overview" className="gb-top-link">Control room</a></div></header>
   <div className="gb-chat-app">
    <aside className={'gb-chat-sidebar '+(selected?'gb-mobile-hide':'')}>
-    <div className="gb-sidebar-title"><div><h1>{tab==='chats'?'Chats':tab==='team'?'Team':tab==='activity'?'Activity':'Settings'}</h1><p>{tab==='chats'?'Private client conversations':tab==='team'?'Staff availability and assignments':tab==='activity'?'Recent client communication':'Messaging workspace'}</p></div><button className="gb-icon-btn" onClick={startNew} aria-label="New conversation">＋</button></div>
+    <div className="gb-sidebar-title"><div><h1>{tab==='chats'?'Chats':tab==='team'?'Team':tab==='activity'?'Activity':'Settings'}</h1><p>{tab==='chats'?'Private client conversations':tab==='team'?'Staff availability and assignments':tab==='activity'?'Recent client communication':'Messaging workspace'}</p></div>{tab==='chats'&&<button className="gb-icon-btn" onClick={startNew} aria-label="New conversation">＋</button>}</div>
     {tab==='chats'&&<><label className="gb-search"><span>⌕</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search clients or messages"/></label><div className="gb-filter-row">{[['all','All'],['unread','Unread'],['assigned','Assigned'],['unassigned','Unassigned']].map(([v,l])=><button key={v} onClick={()=>setFilter(v)} className={filter===v?'active':''}>{l}</button>)}</div><div className="gb-inbox-meta"><span>MESSAGES</span><span>{items.length} conversations</span></div><div className="gb-thread-list">{visible.length===0?<div className="gb-empty"><span>◎</span><b>No conversations found</b><small>New client messages will appear here.</small></div>:visible.map(x=><button key={x.id} className={'gb-thread '+(selected===x.id?'selected':'')} onClick={()=>open(x.id)}><span className="gb-avatar">{initials(x.full_name)}</span><span className="gb-thread-copy"><span className="gb-thread-line"><b>{x.full_name}</b><time>{clock(x.last_message_at||x.updated_at)}</time></span><span className="gb-thread-preview">{x.last_message||'Conversation opened'}</span><span className="gb-thread-id">{x.client_id||x.email||'G-BEST client'}{x.assigned_staff_name?' · '+x.assigned_staff_name:''}</span></span>{Number(x.unread_count)>0&&<i className="gb-unread">{x.unread_count}</i>}</button>)}{visible.length>0&&<div className="gb-inbox-note"><span>✦</span><div><b>Your inbox is up to date</b><small>New client messages appear here automatically. This inbox refreshes every 30 seconds.</small></div></div>}</div></>}
     {tab==='team'&&<div className="gb-team-list"><div className="gb-presence-summary"><b>{online.length} online</b><span>{staff.length} team members</span></div>{staff.length===0?<div className="gb-empty"><b>No team members yet</b><small>Active staff accounts will appear here.</small></div>:staff.map(s=><div className="gb-team-row" key={s.id}><span className="gb-avatar">{s.avatar_url?<img src={s.avatar_url} alt=""/>:initials(s.full_name)}</span><span><b>{s.full_name}</b><small><i className={s.presence==='online'?'online':''}/>{s.presence==='online'?'Available now':'Offline'} · {s.assigned_count||0} chats</small></span></div>)}</div>}
     {tab==='activity'&&<div className="gb-activity-list">{activity.length===0?<div className="gb-empty"><b>No activity yet</b></div>:activity.map(x=><button key={x.id} className="gb-activity-row" onClick={()=>open(x.id)}><span className="gb-activity-dot"/><span><b>{x.full_name}</b><small>{x.last_message||'Conversation updated'}</small><time>{dateLabel(x.last_message_at||x.updated_at)} · {clock(x.last_message_at||x.updated_at)}</time></span></button>)}</div>}
-    {tab==='settings'&&<div className="gb-settings-list"><div><b>Workspace</b><small>G-BEST Luxury Realty</small></div><div><b>Auto refresh</b><small>Inbox refreshes every 15 seconds; open chats refresh every 7 seconds</small></div><div className="gb-sound-setting"><b>Message sounds</b><small>Incoming client messages and sent replies</small><button type="button" aria-pressed={soundEnabled} onClick={()=>{setSoundEnabled(v=>!v);if(!soundEnabled)playTone('sent')}}>{soundEnabled?'Sound on · Tap to mute':'Muted · Tap to enable'}</button></div><div><b>Team availability</b><small>{online.length} team members currently online</small></div><a href="/admin/super/overview">Return to Control Room ↗</a></div>}
+    {tab==='settings'&&<div className="gb-settings-list">
+      <div className="gb-settings-intro"><div><span className="gb-settings-kicker">WORKSPACE PREFERENCES</span><h2>Messaging, organised.</h2><p>Manage how your team receives and handles client conversations.</p></div><span className="gb-settings-live"><i/> WORKSPACE ACTIVE</span></div>
+      <section className="gb-settings-group"><div className="gb-settings-group-title"><span>01</span><div><h3>Workspace</h3><p>Your messaging environment and live activity</p></div></div><div className="gb-settings-card-grid">
+       <article className="gb-settings-card"><span className="gb-settings-icon">⌂</span><div><small>COMPANY WORKSPACE</small><b>G-BEST Luxury Realty</b><p>Private client conversations for your team.</p></div><span className="gb-settings-card-tag">ACTIVE</span></article>
+       <article className="gb-settings-card"><span className="gb-settings-icon">↻</span><div><small>LIVE SYNCHRONISATION</small><b>Automatic refresh</b><p>Inbox every 15 seconds · Open chats every 7 seconds.</p></div><span className="gb-settings-card-tag">ON</span></article>
+      </div></section>
+      <section className="gb-settings-group"><div className="gb-settings-group-title"><span>02</span><div><h3>Notifications</h3><p>Stay aware of client activity without missing a reply</p></div></div>
+       <article className="gb-settings-card gb-settings-sound"><span className="gb-settings-icon">♫</span><div><small>MESSAGE AUDIO</small><b>Message sounds</b><p>Play a tone when a new client message arrives or when your reply is sent.</p></div><button className={'gb-sound-toggle '+(soundEnabled?'is-on':'')} type="button" aria-pressed={soundEnabled} onClick={()=>{const next=!soundEnabled;soundRef.current=next;setSoundEnabled(next);if(next)playTone('sent')}}><span className="gb-sound-toggle-dot"/>{soundEnabled?'Sounds on':'Enable sounds'}</button></article>
+      </section>
+      <section className="gb-settings-group"><div className="gb-settings-group-title"><span>03</span><div><h3>Team & support</h3><p>Know who is available and return to administration</p></div></div><div className="gb-settings-card-grid">
+       <article className="gb-settings-card"><span className="gb-settings-icon">◎</span><div><small>TEAM PRESENCE</small><b>{online.length} team members online</b><p>{staff.length} team members in this workspace.</p></div><span className="gb-settings-card-tag">{online.length?'LIVE':'QUIET'}</span></article>
+       <a className="gb-settings-card gb-settings-return" href="/admin/super/overview"><span className="gb-settings-icon">↗</span><div><small>ADMINISTRATION</small><b>Return to Control Room</b><p>Manage properties, inspections, clients and company settings.</p></div><span className="gb-settings-arrow">→</span></a>
+      </div></section>
+      <div className="gb-settings-footnote">G-BEST MESSAGING <span>·</span> Workspace preferences</div>
+     </div>}
    </aside>
    <section className={'gb-chat-main '+(selected?'gb-mobile-show':'')}>
     {!detail?<><div className="gb-welcome"><span className="gb-welcome-icon">✉</span><h2>Your messages, in one place.</h2><p>Select a client conversation to read, reply, or manage its assignment.</p><div className="gb-welcome-stats"><span><b>{items.length}</b><small>Conversations</small></span><span><b>{items.filter(x=>Number(x.unread_count)>0).length}</b><small>Unread</small></span><span><b>{online.length}</b><small>Team online</small></span></div></div>{selected&&<div className="gb-chat-loading" role="status"><span className="gb-loading-dot"/>Loading conversation…</div>}</>:<>
@@ -206,6 +220,57 @@ export default function AdminClientChatPage(){
    .gb-conversation-tools>div{flex-wrap:wrap}
   }
   @media(prefers-reduced-motion:reduce){.gb-chat-sidebar,.gb-chat-main,.gb-bottom-dock button{transition:none!important}}
+      .gb-settings-list{padding:22px 20px 30px;display:grid;align-content:start;gap:24px;background:#f5f7f3;overflow:auto;min-height:0}
+   .gb-settings-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding:4px 2px 20px;border-bottom:1px solid #dfe7dc}
+   .gb-settings-kicker,.gb-settings-card small{display:block;font-size:9px;font-weight:850;letter-spacing:.14em;color:#718276}
+   .gb-settings-intro h2{margin:7px 0 5px;font-size:25px;line-height:1.08;letter-spacing:-.045em;color:#172d20}
+   .gb-settings-intro p,.gb-settings-group-title p{margin:0;color:#647568;font-size:12px;line-height:1.55}
+   .gb-settings-live{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;padding:8px 11px;border:1px solid #d7e5d1;border-radius:30px;background:#edf5e9;color:#315d3d;font-size:9px;font-weight:850;letter-spacing:.06em}
+   .gb-settings-live i{width:7px;height:7px;border-radius:50%;background:#5caa65;box-shadow:0 0 0 3px #5caa6520}
+   .gb-settings-group{display:grid;gap:12px}
+   .gb-settings-group-title{display:flex;align-items:flex-start;gap:11px}
+   .gb-settings-group-title>span{display:grid;place-items:center;flex:0 0 29px;width:29px;height:29px;border-radius:9px;background:#e5eee0;color:#376347;font-size:10px;font-weight:850}
+   .gb-settings-group-title h3{margin:0 0 3px;color:#1d3626;font-size:15px;letter-spacing:-.02em}
+   .gb-settings-group-title p{font-size:11px}
+   .gb-settings-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+   .gb-settings-card{display:flex;align-items:flex-start;gap:12px;min-width:0;min-height:112px;padding:16px;border:1px solid #dce6d8;border-radius:16px;background:linear-gradient(145deg,#fff,#fbfcfa);color:#203729;text-decoration:none;box-shadow:0 3px 10px #173b2b08}
+   .gb-settings-icon{display:grid;place-items:center;flex:0 0 37px;width:37px;height:37px;border-radius:12px;background:#edf4e9;color:#285c39;font-size:20px;font-weight:750}
+   .gb-settings-card>div{display:grid;gap:5px;min-width:0;flex:1}
+   .gb-settings-card small{font-size:8px;color:#78877b}
+   .gb-settings-card b{font-size:13px;line-height:1.35;color:#203b2a}
+   .gb-settings-card p{margin:0;color:#68796d;font-size:11px;line-height:1.5}
+   .gb-settings-card-tag{margin-left:auto;padding:5px 7px;border-radius:20px;background:#edf5e9;color:#3c7046;font-size:8px;font-weight:850;letter-spacing:.06em}
+   .gb-settings-sound{align-items:center;min-height:118px}
+   .gb-settings-sound>div{margin-right:auto}
+   .gb-sound-toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:0 0 auto;min-height:42px;padding:0 14px;border:1px solid #cbdcc5;border-radius:12px;background:#f0f4ed;color:#536b57;font-size:11px;font-weight:800;white-space:nowrap}
+   .gb-sound-toggle-dot{width:8px;height:8px;border-radius:50%;background:#89978b}
+   .gb-sound-toggle.is-on{background:#e9f5df;border-color:#c6dfb7;color:#205b35}
+   .gb-sound-toggle.is-on .gb-sound-toggle-dot{background:#51a45c;box-shadow:0 0 0 3px #51a45c20}
+   .gb-settings-return{align-items:center;border-color:#cbdcc6;background:linear-gradient(120deg,#f7fbf3,#fff)}
+   .gb-settings-arrow{margin-left:auto;color:#2d7042;font-size:20px;font-weight:800}
+   .gb-settings-footnote{padding-top:13px;border-top:1px solid #e0e8dd;color:#7d8a80;font-size:9px;font-weight:750;letter-spacing:.1em}
+   .gb-settings-footnote span{padding:0 5px;color:#b3c0b0}
+   @media(max-width:760px){
+    .gb-settings-list{padding:20px 15px calc(26px + env(safe-area-inset-bottom));gap:23px;background:#f3f6f1}
+    .gb-settings-intro{display:grid;align-items:start;gap:12px;padding:3px 2px 17px}
+    .gb-settings-intro h2{font-size:26px}
+    .gb-settings-intro p{max-width:320px;font-size:12px}
+    .gb-settings-live{justify-self:start}
+    .gb-settings-group{gap:10px}
+    .gb-settings-group-title h3{font-size:14px}
+    .gb-settings-group-title p{font-size:10px}
+    .gb-settings-card-grid{grid-template-columns:minmax(0,1fr);gap:9px}
+    .gb-settings-card{min-height:88px;padding:14px;border-radius:15px;gap:11px;align-items:center}
+    .gb-settings-card b{font-size:13px}
+    .gb-settings-card p{font-size:11px}
+    .gb-settings-icon{width:36px;height:36px;flex-basis:36px}
+    .gb-settings-sound{align-items:center;flex-wrap:wrap}
+    .gb-settings-sound>div{flex:1 1 calc(100% - 50px)}
+    .gb-sound-toggle{margin:4px 0 0 47px;min-height:40px}
+    .gb-settings-card-tag{font-size:8px}
+    .gb-settings-footnote{font-size:8px}
+   }
+   @media(min-width:761px){.gb-settings-list{padding:24px}.gb-settings-card-grid{grid-template-columns:1fr}}
    :global(.gb-content .gb-ios-chat),:global(.gb-content .gb-ios-chat *){filter:none!important}
    :global(.gb-content .gb-ios-chat .gb-chat-sidebar),:global(.gb-content .gb-ios-chat .gb-chat-main){box-shadow:none!important}
    :global(.gb-content .gb-ios-chat .gb-search),:global(.gb-content .gb-ios-chat .gb-filter-row button),:global(.gb-content .gb-ios-chat .gb-thread),:global(.gb-content .gb-ios-chat .gb-inbox-note),:global(.gb-content .gb-ios-chat .gb-message-bubble),:global(.gb-content .gb-ios-chat .gb-conversation-tools button),:global(.gb-content .gb-ios-chat .gb-composer button){box-shadow:none!important;filter:none!important}
