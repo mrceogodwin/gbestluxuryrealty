@@ -1,4 +1,6 @@
 import {NextResponse} from 'next/server';
+import {S3Client,GetObjectCommand} from '@aws-sdk/client-s3';
+import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
 import {createHash} from 'node:crypto';
 import {getDatabasePool} from '../../../lib/db';
 import {resolveSiteTenant} from '../../../lib/site-tenants';
@@ -6,6 +8,20 @@ export const runtime='nodejs';
 export const dynamic='force-dynamic';
 const COOKIE='gbest_client_session';
 const noStore={'Cache-Control':'no-store','Pragma':'no-cache'};
+
+function chatAttachmentStorage(){
+ const endpoint=process.env.NEON_STORAGE_ENDPOINT,region=process.env.NEON_STORAGE_REGION,bucket=process.env.NEON_STORAGE_BUCKET;
+ const accessKeyId=process.env.NEON_STORAGE_ACCESS_KEY_ID,secretAccessKey=process.env.NEON_STORAGE_SECRET_ACCESS_KEY;
+ if(!endpoint||!region||!bucket||!accessKeyId||!secretAccessKey)throw new Error('Chat file storage is not configured.');
+ return {s3:new S3Client({region,endpoint,forcePathStyle:true,credentials:{accessKeyId,secretAccessKey}}),bucket};
+}
+async function signClientMessageAttachments(rows){
+ const list=Array.isArray(rows)?rows:[];
+ if(!list.some(m=>Array.isArray(m.attachments)&&m.attachments.length))return list;
+ const {s3,bucket}=chatAttachmentStorage();
+ return Promise.all(list.map(async m=>({...m,attachments:await Promise.all((Array.isArray(m.attachments)?m.attachments:[]).map(async a=>({...a,url:await getSignedUrl(s3,new GetObjectCommand({Bucket:bucket,Key:a.objectKey,ResponseContentDisposition:'inline'}),{expiresIn:3600})})))})));
+}
+
 async function clientContext(req){
  const token=req.cookies.get(COOKIE)?.value;
  if(!token||token.length<32||token.length>128)return null;
@@ -32,6 +48,7 @@ export async function GET(req){
    WHERE c.tenant_id=$1 AND c.registration_id=$2
    ORDER BY m.created_at DESC NULLS LAST,m.id DESC LIMIT 500`,[client.tenant_id,client.id]);
   q.rows.reverse();
+  const signedMessages=await signClientMessageAttachments(q.rows);
   const first=q.rows[0];
   const staff=first?.conversation_id?await pool.query(`SELECT a.id,a.full_name,a.avatar_url,CASE WHEN p.last_seen_at>now()-interval '120 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '120 seconds' THEN p.presence ELSE 'offline' END AS presence,p.last_seen_at
    FROM public.client_chat_conversations c
@@ -45,7 +62,7 @@ export async function GET(req){
   const events=first?.conversation_id?await pool.query(`SELECT e.event_type,e.created_at,a.full_name,a.avatar_url FROM public.client_chat_handover_events e LEFT JOIN public.staff_accounts a ON a.id::text=e.details->>'staffId' AND a.tenant_id=e.tenant_id AND a.status='active' WHERE e.conversation_id=$1 AND e.tenant_id=$2 ORDER BY e.created_at DESC LIMIT 12`,[first.conversation_id,client.tenant_id]):{rows:[]};
   return NextResponse.json({conversation:first?{id:first.conversation_id,status:first.status,handoffStatus:first.handoff_status,handoffRequestedAt:first.handoff_requested_at,assignedStaffId:first.assigned_staff_id,assignedAt:first.assigned_at,created_at:first.created_at,last_message_at:first.last_message_at}:null,
    humanAvailable:staff.rows.some(s=>s.presence==='online'),staff:staff.rows,events:events.rows,
-   messages:q.rows.filter(x=>x.message_id).map(x=>({id:x.message_id,sender_type:x.sender_type,sender_id:x.sender_id,sender_name:x.sender_name,sender_avatar_url:x.sender_avatar_url,body:x.body,attachments:Array.isArray(x.attachments)?x.attachments:[],created_at:x.message_created_at,read_at:x.read_at}))},{headers:noStore});
+   messages:signedMessages.filter(x=>x.message_id).map(x=>({id:x.message_id,sender_type:x.sender_type,sender_id:x.sender_id,sender_name:x.sender_name,sender_avatar_url:x.sender_avatar_url,body:x.body,attachments:Array.isArray(x.attachments)?x.attachments:[],created_at:x.message_created_at,read_at:x.read_at}))},{headers:noStore});
  }catch(e){console.error('Client chat load failed',e.code||'DB_ERROR',e.message);return NextResponse.json({error:'Could not load your messages right now.'},{status:503,headers:noStore});}
 }
 export async function POST(req){
