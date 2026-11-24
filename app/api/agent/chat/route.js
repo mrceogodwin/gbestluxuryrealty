@@ -29,8 +29,8 @@ export async function POST(req){
   const company=`Company: ${tenant.display_name||'G-BEST Luxury Realty'}. Market: Nigeria. Published property records currently available: ${properties.length}.\nLIVE LISTINGS (only these may be described as currently published):\n${JSON.stringify(properties)}`;
   {
    const normalise=value=>String(value||'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9₦]+/g,' ').trim();
-   const stop=new Set(['what','where','when','which','with','from','this','that','have','does','there','their','about','show','tell','please','want','need','looking','find','property','properties','listing','listings','price','cost','much','your','you','for','and','the','are','can','how','get','any','all','our','g','best']);
-   const words=normalise(message).split(/\s+/).filter(w=>w.length>2&&!stop.has(w));
+   const priorClientText=context.filter(x=>x.sender_type==='client').slice(0,-1).map(x=>x.body).join(' ');\n   const priorAgentText=context.filter(x=>x.sender_type==='agent').map(x=>x.body).join(' ');\n   const stop=new Set(['what','where','when','which','with','from','this','that','have','does','there','their','about','show','tell','please','want','need','looking','find','property','properties','listing','listings','price','cost','much','your','you','for','and','the','are','can','how','get','any','all','our','g','best']);
+   const words=normalise(priorClientText+' '+message).split(/\s+/).filter(w=>w.length>2&&!stop.has(w));
    const ranked=properties.map(p=>{
     const hay=normalise([p.name,p.location,p.type,p.price,p.size,p.description].join(' '));
     const tokens=new Set(hay.split(/\s+/));
@@ -51,7 +51,7 @@ export async function POST(req){
    const greetingOnly=/^(hello|hi|hey|good morning|good afternoon|good evening)[.! ]*$/.test(n);
    const shortAck=/^(ok|okay|alright|thanks|thank you|noted|sure|fine)[.! ]*$/.test(n);
    const locationNames=['Benin City, Edo State','Lagos','Abuja','Port Harcourt','Ibadan','Enugu','Owerri','Asaba','Warri','Uyo','Calabar','Akure','Abeokuta','Kaduna','Kano'];
-   const requestedArea=locationNames.find(name=>{const token=normalise(name).split(' ')[0];return n.includes(normalise(name))||(token==='benin'&&/\\bbenin\\b/.test(n))||(token!=='benin'&&new RegExp('\\\\b'+token+'\\\\b').test(n))})
+   const requestedArea=locationNames.find(name=>{const token=normalise(name).split(' ')[0];return n.includes(normalise(name))||(token==='benin'&&/\\bbenin\\b/.test(n))||(token!=='benin'&&new RegExp('\\b'+token+'\\b').test(n))})
     ||locationNames.find(name=>{const token=normalise(name).split(' ')[0];return normalise(priorClientText).includes(normalise(name))||(token==='benin'&&/\\bbenin\\b/.test(normalise(priorClientText)))});
    const wantsHouse=/\\b(house|home|duplex|bungalow|terrace|detached|semi detached)\\b/.test(fullEnquiry);
    const wantsProperty=/\\b(property|properties|house|home|land|plot|apartment|flat|duplex|bungalow|villa|real estate)\\b/.test(n);
