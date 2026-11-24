@@ -619,6 +619,7 @@ test('client and public Agent chats preserve recent context and location-specifi
   assert.match(agent, /requestedArea&&filteredRanked\.length===0/);
   assert.match(agent, /greetingOnly&&/);
   assert.match(agent, /priorClientText/);
+  assert.match(agent, /edoAlternatives/);
 });
 
 test('Control Room shows a responsive loading skeleton while authorised data is fetched', async () => {
