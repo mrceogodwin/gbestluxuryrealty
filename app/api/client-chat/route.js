@@ -1,4 +1,6 @@
 import {NextResponse} from 'next/server';
+import {S3Client,GetObjectCommand} from '@aws-sdk/client-s3';
+import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
 import {createHash} from 'node:crypto';
 import {getDatabasePool} from '../../../lib/db';
 import {resolveSiteTenant} from '../../../lib/site-tenants';
@@ -6,6 +8,20 @@ export const runtime='nodejs';
 export const dynamic='force-dynamic';
 const COOKIE='gbest_client_session';
 const noStore={'Cache-Control':'no-store','Pragma':'no-cache'};
+
+function chatAttachmentStorage(){
+ const endpoint=process.env.NEON_STORAGE_ENDPOINT,region=process.env.NEON_STORAGE_REGION,bucket=process.env.NEON_STORAGE_BUCKET;
+ const accessKeyId=process.env.NEON_STORAGE_ACCESS_KEY_ID,secretAccessKey=process.env.NEON_STORAGE_SECRET_ACCESS_KEY;
+ if(!endpoint||!region||!bucket||!accessKeyId||!secretAccessKey)throw new Error('Chat file storage is not configured.');
+ return {s3:new S3Client({region,endpoint,forcePathStyle:true,credentials:{accessKeyId,secretAccessKey}}),bucket};
+}
+async function signClientMessageAttachments(rows){
+ const list=Array.isArray(rows)?rows:[];
+ if(!list.some(m=>Array.isArray(m.attachments)&&m.attachments.length))return list;
+ const {s3,bucket}=chatAttachmentStorage();
+ return Promise.all(list.map(async m=>({...m,attachments:await Promise.all((Array.isArray(m.attachments)?m.attachments:[]).map(async a=>({...a,url:await getSignedUrl(s3,new GetObjectCommand({Bucket:bucket,Key:a.objectKey,ResponseContentDisposition:'inline'}),{expiresIn:3600})})))})));
+}
+
 async function clientContext(req){
  const token=req.cookies.get(COOKIE)?.value;
  if(!token||token.length<32||token.length>128)return null;
@@ -25,13 +41,14 @@ export async function GET(req){
   const pool=getDatabasePool();
   await pool.query("UPDATE public.client_chat_messages m SET read_at=COALESCE(m.read_at,now()) FROM public.client_chat_conversations c WHERE m.conversation_id=c.id AND c.tenant_id=$1 AND c.registration_id=$2 AND m.sender_type IN ('admin','staff') AND m.read_at IS NULL",[client.tenant_id,client.id]);
   const q=await pool.query(`SELECT c.id AS conversation_id,c.status,c.handoff_status,c.handoff_requested_at,c.assigned_staff_id,c.assigned_at,c.created_at,c.last_message_at,
-   m.id AS message_id,m.sender_type,m.sender_id,m.body,m.created_at AS message_created_at,m.read_at,ms.full_name AS sender_name,ms.avatar_url AS sender_avatar_url
+   m.id AS message_id,m.sender_type,m.sender_id,m.body,m.attachments,m.created_at AS message_created_at,m.read_at,ms.full_name AS sender_name,ms.avatar_url AS sender_avatar_url
    FROM public.client_chat_conversations c
    LEFT JOIN public.client_chat_messages m ON m.conversation_id=c.id
    LEFT JOIN public.staff_accounts ms ON ms.id::text=m.sender_id AND ms.tenant_id=c.tenant_id
    WHERE c.tenant_id=$1 AND c.registration_id=$2
    ORDER BY m.created_at DESC NULLS LAST,m.id DESC LIMIT 500`,[client.tenant_id,client.id]);
   q.rows.reverse();
+  const signedMessages=await signClientMessageAttachments(q.rows);
   const first=q.rows[0];
   const staff=first?.conversation_id?await pool.query(`SELECT a.id,a.full_name,a.avatar_url,CASE WHEN p.last_seen_at>now()-interval '120 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '120 seconds' THEN p.presence ELSE 'offline' END AS presence,p.last_seen_at
    FROM public.client_chat_conversations c
@@ -45,7 +62,7 @@ export async function GET(req){
   const events=first?.conversation_id?await pool.query(`SELECT e.event_type,e.created_at,a.full_name,a.avatar_url FROM public.client_chat_handover_events e LEFT JOIN public.staff_accounts a ON a.id::text=e.details->>'staffId' AND a.tenant_id=e.tenant_id AND a.status='active' WHERE e.conversation_id=$1 AND e.tenant_id=$2 ORDER BY e.created_at DESC LIMIT 12`,[first.conversation_id,client.tenant_id]):{rows:[]};
   return NextResponse.json({conversation:first?{id:first.conversation_id,status:first.status,handoffStatus:first.handoff_status,handoffRequestedAt:first.handoff_requested_at,assignedStaffId:first.assigned_staff_id,assignedAt:first.assigned_at,created_at:first.created_at,last_message_at:first.last_message_at}:null,
    humanAvailable:staff.rows.some(s=>s.presence==='online'),staff:staff.rows,events:events.rows,
-   messages:q.rows.filter(x=>x.message_id).map(x=>({id:x.message_id,sender_type:x.sender_type,sender_id:x.sender_id,sender_name:x.sender_name,sender_avatar_url:x.sender_avatar_url,body:x.body,created_at:x.message_created_at,read_at:x.read_at}))},{headers:noStore});
+   messages:signedMessages.filter(x=>x.message_id).map(x=>({id:x.message_id,sender_type:x.sender_type,sender_id:x.sender_id,sender_name:x.sender_name,sender_avatar_url:x.sender_avatar_url,body:x.body,attachments:Array.isArray(x.attachments)?x.attachments:[],created_at:x.message_created_at,read_at:x.read_at}))},{headers:noStore});
  }catch(e){console.error('Client chat load failed',e.code||'DB_ERROR',e.message);return NextResponse.json({error:'Could not load your messages right now.'},{status:503,headers:noStore});}
 }
 export async function POST(req){
@@ -82,6 +99,7 @@ export async function POST(req){
     VALUES($1,$2,now()) ON CONFLICT(tenant_id,registration_id) DO UPDATE SET updated_at=now()
     RETURNING id,status`,[client.tenant_id,client.id]);
    if(conv.rows[0].status!=='open'){await db.query('ROLLBACK');return NextResponse.json({error:'This conversation is closed. Please contact G-BEST to reopen it.'},{status:409});}
+   const history=await db.query(`SELECT sender_type,body FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at DESC,id DESC LIMIT 8`,[conv.rows[0].id]);
    const saved=await db.query(`INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body)
     VALUES($1,'client',$2,$3) RETURNING id,sender_type,body,created_at,read_at`,[conv.rows[0].id,String(client.id),message]);
    await db.query('UPDATE public.client_chat_conversations SET last_message_at=now(),last_client_message_at=now(),updated_at=now() WHERE id=$1',[conv.rows[0].id]);
@@ -100,7 +118,7 @@ export async function POST(req){
    await db.query('COMMIT');
    let agentMessage=null,suggestHuman=false;
    try{
-    const agentResponse=await fetch(new URL('/api/agent/chat',req.nextUrl.origin),{method:'POST',headers:{'Content-Type':'application/json','Origin':req.nextUrl.origin},body:JSON.stringify({message}),signal:AbortSignal.timeout(9000)});
+    const agentResponse=await fetch(new URL('/api/agent/chat',req.nextUrl.origin),{method:'POST',headers:{'Content-Type':'application/json','Origin':req.nextUrl.origin},body:JSON.stringify({message,context:[...history.rows.reverse(),{sender_type:'client',body:message}]}),signal:AbortSignal.timeout(9000)});
     const agentData=await agentResponse.json();
     if(agentResponse.ok&&agentData.reply){suggestHuman=Boolean(agentData.suggestHuman);
      const stored=await pool.query("INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body) VALUES($1,'agent','agent',$2) RETURNING id,sender_type,sender_id,body,created_at,read_at",[conv.rows[0].id,String(agentData.reply).slice(0,4000)]);

@@ -63,9 +63,9 @@ test('public contact submissions are validated and stored using parameterized SQ
 test('business contact administration is protected and supports status updates', async () => {
   const code = await source('app/api/admin/business-contacts/route.js');
   assert.match(code, /isAdminRequest/);
-  assert.match(code, /Only the Super Admin/);
+  assert.match(code, /Super Admin authentication is required/);
   assert.match(code, /UPDATE public\.business_contact_submissions/);
-  assert.match(code, /status=\$2/);
+  assert.match(code, /SET status=\$3,admin_note=\$4/);
 });
 
 test('global brand settings are restricted while tenant audio remains editable', async () => {
@@ -432,7 +432,7 @@ test('staff can only access client conversations assigned to or shared with them
   assert.match(api, /client_chat_participants/);
   assert.match(api, /client_chat_monitor_access/);
   assert.match(api, /staff_notifications/);
-  assert.match(page, /setInterval\(\(\)=>load\(\),30000\)/);
+  assert.match(page, /setInterval\(load,30000\)/);
   assert.match(migration, /ALTER COLUMN assigned_staff_id TYPE uuid/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.staff_notifications/);
 });
@@ -451,31 +451,25 @@ test('Super Admin client intelligence reports registrations, engagement, online 
   assert.match(home, /setInterval\(beat,90000\)/);
 });
 
-test('inspection approvals create idempotent Google Calendar events and retain Neon as source of truth', async () => {
-  const calendar = await source('lib/google-calendar.js');
+test('inspection approvals commit Neon status before queueing notification delivery', async () => {
   const admin = await source('app/api/admin/inspection-requests/route.js');
-  assert.match(calendar, /GOOGLE_CLIENT_ID/);
-  assert.match(calendar, /GOOGLE_CLIENT_SECRET/);
-  assert.match(calendar, /GOOGLE_REFRESH_TOKEN/);
-  assert.match(calendar, /GOOGLE_CALENDAR_ID/);
-  assert.match(calendar, /timeZone:zone/);
-  assert.match(calendar, /id,\s*summary:/);
-  assert.match(admin, /createInspectionCalendarEvent/);
-  assert.match(admin, /deleteInspectionCalendarEvent/);
-  assert.match(admin, /calendar_event_id/);
-  assert.match(admin, /Inspection confirmed, but the calendar event could not be created/);
+  assert.match(admin, /await client\.query\('COMMIT'\)/);
+  assert.match(admin, /queueInspectionEmails\(/);
+  assert.match(admin, /deliverInspectionEmails\(/);
+  assert.match(admin, /catch\(notificationError\)/);
+  assert.match(admin, /status was saved, but notification emails could not be queued/);
 });
 
 test('Google Calendar integration never blocks a saved inspection status when the calendar is unavailable', async () => {
   const admin = await source('app/api/admin/inspection-requests/route.js');
-  assert.match(admin, /catch\(calendarError\)/);
+  assert.match(admin, /catch\(notificationError\)/);
   assert.match(admin, /Inspection status saved but email queueing failed/);
   assert.match(admin, /status was saved, but notification emails could not be queued/);
 });
 
 test('client login returns clients to the intended next page', async () => {
   const login = await source('app/client-login/page.js');
-  assert.ok(login.includes("next&&next.startsWith"));
+  assert.match(login, /window\.location\.href = next && next\.startsWith/);
   assert.match(login, /api\/client-auth\/verify-code/);
 });
 
@@ -508,7 +502,8 @@ test('staff can see and atomically claim only unassigned requested human handoff
   assert.match(api, /client_chat_participants/);
   assert.match(api, /'staff_joined','staff'/);
   assert.match(page, /CLAIM WAITING CHAT/);
-  assert.match(page, /action:'claim'/);
+  assert.match(page, /action\('claim'\)/);
+  assert.match(page, /action:actionName/);
 });
 
 
@@ -584,15 +579,119 @@ test('client chat mutations require manage permission and history returns newest
 
 test('client OTP login rejects protocol-relative redirect destinations', async () => {
   const login = await source('app/client-login/page.js');
-  assert.match(login, /next\.startsWith\('\/'\)&&!next\.startsWith\('\/\/'\)/);
+  assert.match(login, /next && next\.startsWith\('\/'\) && !next\.startsWith\('\/\/'\)/);
 });
 
 
-test('cancelled inspection calendar events retain their ID until deletion succeeds and can be retried', async () => {
+test('inspection cancellation remains an allowed status transition with notification delivery', async () => {
   const adminInspections = await source('app/api/admin/inspection-requests/route.js');
-  assert.match(adminInspections, /calendar_event_id=COALESCE\(\$4,calendar_event_id\)/);
-  assert.match(adminInspections, /\[id,status,currentRow\.status,currentRow\.calendar_event_id\|\|null\]\);/);
-  assert.ok(adminInspections.includes("status=\\'cancelled\\' AND calendar_event_id=$2"), 'calendar event reference is cleared only while the request remains cancelled and the same event is still attached');
-  assert.match(adminInspections, /if\(status==='cancelled'&&prior\.calendar_event_id\)/);
-  assert.match(adminInspections, /if\(calendar\.deleted\)await getDatabasePool\(\)\.query/);
+  assert.match(adminInspections, /allowedPrevious=\{[\s\S]*cancelled:\['pending','confirmed','contacted'\]/);
+  assert.match(adminInspections, /queueInspectionEmails\(/);
+  assert.match(adminInspections, /deliverInspectionEmails\(/);
+});
+
+test('mobile admin client chat reserves the admin shell and dock lanes while keeping the composer touch-ready', async () => {
+  const page = await source('app/admin/client-chat/page.js');
+  const layout = await source('app/admin/layout.js');
+  assert.match(page, /height:calc\(100dvh - 60px\)/);
+  assert.match(page, /height:calc\(100dvh - 240px\)/);
+  assert.match(page, /gb-console \.gb-content>\.gb-ios-chat/);
+  assert.match(page, /\.gb-composer\{display:flex!important/);
+  assert.match(page, /font:16px\/1\.35/);
+  assert.match(page, /env\(safe-area-inset-bottom\)/);
+  assert.match(layout, /\.gb-topbar\{height:60px!important/);
+});
+
+test('client and public Agent chats preserve recent context and location-specific property follow-ups', async () => {
+  const clientChat = await source('app/api/client-chat/route.js');
+  const publicWidget = await source('components/agent-chat-widget.js');
+  const agent = await source('app/api/agent/chat/route.js');
+  assert.match(clientChat, /context:\[\.\.\.history\.rows\.reverse\(\)/);
+  assert.match(publicWidget, /context:\[\.\.\.messages\.map/);
+  assert.match(agent, /Benin City, Edo State/);
+  assert.match(agent, /requestedArea&&filteredRanked\.length===0/);
+  assert.match(agent, /greetingOnly&&/);
+  assert.match(agent, /priorClientText/);
+  assert.match(agent, /edoAlternatives/);
+});
+
+test('Control Room shows a responsive loading skeleton while authorised data is fetched', async () => {
+  const page = await source('app/admin/super/overview/page.js');
+  assert.match(page, /loading-skeleton/);
+  assert.match(page, /role="status" aria-label="Loading authorised workspace"/);
+  assert.match(page, /skeleton-departments/);
+  assert.match(page, /prefers-reduced-motion:reduce/);
+});
+
+test('mobile admin chat keeps the composer visible and removes dock obstruction inside a conversation', async () => {
+  const page = await source('app/admin/client-chat/page.js');
+  assert.match(page, /className="gb-composer"/);
+  assert.match(page, /gb-dock-chat-open/);
+  assert.match(page, /gb-bottom-dock\.gb-dock-chat-open\{display:none!important\}/);
+  assert.match(page, /messageScrollRef/);
+  assert.match(page, /openRequest\.current\+\+/);
+});
+
+test('Agent follow-up greetings retain the client’s previous request', async () => {
+  const agent = await source('app/api/agent/chat/route.js');
+  assert.match(agent, /previousClientMessage/);
+  assert.match(agent, /I still have your earlier message in mind/);
+  assert.match(agent, /Would you like to continue with that request/);
+});
+
+test('Agent short acknowledgements continue the active property enquiry instead of resetting intake', async () => {
+  const agent = await source('app/api/agent/chat/route.js');
+  assert.match(agent, /previousAgentMessage/);
+  assert.match(agent, /shortAck&&priorPropertyIntent/);
+  assert.match(agent, /Great — is the property for purchase or rent/);
+  assert.match(agent, /include nearby Edo locations such as Ekpoma and Auchi/);
+});
+
+test('admin login confirms its session cookie before opening the Control Room', async () => {
+  const login = await source('app/admin/login/page.js');
+  const layout = await source('app/admin/layout.js');
+  assert.match(login, /fetch\('\/api\/admin\/session',\{cache:'no-store'\}\)/);
+  assert.match(login, /session\.authenticated/);
+  assert.match(login, /router\.refresh\(\)/);
+  assert.match(layout, /setTimeout\(resolve,180\)/);
+});
+
+test('admin chat attachments use tenant-scoped signed storage and verified object metadata', async () => {
+  const api = await source('app/api/admin/client-chat/route.js');
+  const client = await source('app/api/client-chat/route.js');
+  const page = await source('app/admin/client-chat/page.js');
+  const widget = await source('components/agent-chat-widget.js');
+  const migration = await source('db/migrations/20261124_client_chat_attachments.sql');
+  assert.match(api, /attachment-presign/);
+  assert.match(api, /attachment-complete/);
+  assert.match(api, /HeadObjectCommand/);
+  assert.match(api, /GetObjectCommand/);
+  assert.match(client, /GetObjectCommand/);
+  assert.match(api, /expiresIn:3600/);
+  assert.ok(api.includes("prefix='chat/'+ctx.tenantId+'/'+id+'/"));
+  assert.match(api, /attachments\) VALUES/);
+  assert.match(client, /m\.attachments/);
+  assert.match(page, /type="file" multiple/);
+  assert.match(page, /gb-message-attachments/);
+  assert.match(widget, /attachments:Array\.isArray\(m\.attachments\)/);
+  assert.match(migration, /ADD COLUMN IF NOT EXISTS attachments jsonb/);
+});
+
+test('admin chat attachments are cleared when switching conversations and can be sent without text', async () => {
+  const page = await source('app/admin/client-chat/page.js');
+  const api = await source('app/api/admin/client-chat/route.js');
+  assert.match(page, /setPendingFiles\(\[\]\)/);
+  assert.match(page, /!draft\.trim\(\)&&!pendingFiles\.length/);
+  assert.match(page, /attachment-presign/);
+  assert.match(page, /attachment-complete/);
+  assert.match(api, /message\|\|'Shared an attachment'/);
+  assert.match(api, /inputAttachments\.length>5/);
+});
+
+test('Agent never carries an old property location or matching terms into unrelated account questions', async () => {
+  const agent = await source('app/api/agent/chat/route.js');
+  assert.match(agent, /accountHelpRequest=.*register\|sign up\|account\|login\|sign in/);
+  assert.match(agent, /matchingText=explicitPropertyFollowup\?priorClientText/);
+  assert.match(agent, /currentArea=accountHelpRequest\?null/);
+  assert.match(agent, /areaAnswer&&agentAskedPropertyFollowup/);
 });
