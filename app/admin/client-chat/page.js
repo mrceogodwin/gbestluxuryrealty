@@ -164,7 +164,7 @@ export default function AdminClientChatPage(){
    .gb-inbox-note b{font-size:10px;color:#31543a;line-height:1.3}
    .gb-inbox-note small{font-size:9px;color:#7a897d;line-height:1.45}
    .gb-file-input{display:none!important}
-   .gb-attach{display:grid!important;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid #dbe5d8!important;border-radius:50%;background:#f4f7f2!important;color:#315b3c!important;font-size:22px!important;line-height:1}
+   .gb-composer .gb-attach{display:grid!important;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid #dbe5d8!important;border-radius:50%;background:#f4f7f2!important;color:#315b3c!important;font-size:22px!important;line-height:1}
    .gb-pending-files{display:flex;gap:7px;flex-wrap:wrap;padding:7px 11px;background:#fff;border-top:1px solid #edf1eb}
    .gb-pending-files>span{display:flex;align-items:center;gap:6px;max-width:100%;padding:5px 8px;border:1px solid #dbe5d8;border-radius:9px;background:#f7faf5;color:#31543a;font-size:10px;overflow-wrap:anywhere}
    .gb-pending-files button{border:0;background:transparent;color:#8b4c42;font-size:15px}
