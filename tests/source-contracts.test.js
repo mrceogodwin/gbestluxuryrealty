@@ -584,7 +584,7 @@ test('client chat mutations require manage permission and history returns newest
 
 test('client OTP login rejects protocol-relative redirect destinations', async () => {
   const login = await source('app/client-login/page.js');
-  assert.match(login, /next\.startsWith\('\/'\)&&!next\.startsWith\('\/\/'\)/);
+  assert.match(login, /next && next\.startsWith\('\/'\) && !next\.startsWith\('\/\/'\)/);
 });
 
 
