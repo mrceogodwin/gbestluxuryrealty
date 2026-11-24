@@ -137,7 +137,6 @@ export default function AdminClientChatPage(){
    .gb-activity-row small,.gb-activity-row time{color:#718075!important;font-size:10px;line-height:1.4;overflow-wrap:anywhere}
    .gb-bottom-dock{backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%)}
   }
-  `}
   /* Final iPhone layout corrections: the conversation gets the full screen; navigation belongs to the inbox. */
   @media(max-width:760px){
    .gb-ios-chat{height:calc(100vh - 58px);height:calc(100dvh - 58px);min-height:0;max-height:none;display:flex;flex-direction:column;overflow:hidden;padding:0!important}
@@ -165,6 +164,7 @@ export default function AdminClientChatPage(){
    .gb-conversation-tools>div{flex-wrap:wrap}
   }
   @media(prefers-reduced-motion:reduce){.gb-chat-sidebar,.gb-chat-main,.gb-bottom-dock button{transition:none!important}}
+  `}
 
   </style>
  </main>;
