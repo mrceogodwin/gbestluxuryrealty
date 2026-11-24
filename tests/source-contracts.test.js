@@ -687,3 +687,11 @@ test('admin chat attachments are cleared when switching conversations and can be
   assert.match(api, /message\|\|'Shared an attachment'/);
   assert.match(api, /inputAttachments\.length>5/);
 });
+
+test('Agent never carries an old property location or matching terms into unrelated account questions', async () => {
+  const agent = await source('app/api/agent/chat/route.js');
+  assert.match(agent, /accountHelpRequest=.*register\|sign up\|account\|login\|sign in/);
+  assert.match(agent, /matchingText=explicitPropertyFollowup\?priorClientText/);
+  assert.match(agent, /currentArea=accountHelpRequest\?null/);
+  assert.match(agent, /areaAnswer&&agentAskedPropertyFollowup/);
+});
