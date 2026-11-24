@@ -146,7 +146,7 @@ export default function ClientLogin() {
                       maxLength={6}
                       required
                       value={code}
-                      onChange={(event) => setCode(event.target.value.replace(/\\D/g, '').slice(0, 6))}
+                      onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
                       autoComplete="one-time-code"
                       placeholder="000000"
                       aria-label="Six-digit email code"
