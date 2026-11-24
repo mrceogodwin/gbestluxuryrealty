@@ -705,3 +705,21 @@ test('client OTP input strips every non-digit before enforcing six digits', asyn
   assert.ok(login.includes("replace(/\\D/g, '')"), 'OTP input must remove all non-digit characters');
   assert.match(login, /\.slice\(0,\s*6\)/);
 });
+
+
+test('admin client activity shows full-width client profiles, presence and read receipts', async () => {
+  const page = await source('app/admin/client-chat/page.js');
+  const adminApi = await source('app/api/admin/client-chat/route.js');
+  const clientApi = await source('app/api/client-chat/route.js');
+  const dashboard = await source('app/client-dashboard/page.js');
+  assert.match(page, /gb-activity-overview/);
+  assert.match(page, /gb-activity-row\{width:100%/);
+  assert.match(page, /client_avatar_url/);
+  assert.match(page, /client_presence/);
+  assert.match(page, /gb-read-state/);
+  assert.match(adminApi, /client_presence/);
+  assert.match(adminApi, /r\.avatar_url AS client_avatar_url/);
+  assert.match(clientApi, /INSERT INTO public\.client_presence/);
+  assert.match(dashboard, /setInterval\(\(\)=>postPresence/);
+  assert.match(clientApi, /sender_type IN \('admin','staff','agent'\)/);
+});
