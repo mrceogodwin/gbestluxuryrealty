@@ -63,9 +63,9 @@ test('public contact submissions are validated and stored using parameterized SQ
 test('business contact administration is protected and supports status updates', async () => {
   const code = await source('app/api/admin/business-contacts/route.js');
   assert.match(code, /isAdminRequest/);
-  assert.match(code, /Only the Super Admin/);
+  assert.match(code, /Super Admin authentication is required/);
   assert.match(code, /UPDATE public\.business_contact_submissions/);
-  assert.match(code, /status=\$2/);
+  assert.match(code, /SET status=\$3,admin_note=\$4/);
 });
 
 test('global brand settings are restricted while tenant audio remains editable', async () => {
@@ -508,7 +508,8 @@ test('staff can see and atomically claim only unassigned requested human handoff
   assert.match(api, /client_chat_participants/);
   assert.match(api, /'staff_joined','staff'/);
   assert.match(page, /CLAIM WAITING CHAT/);
-  assert.match(page, /action:'claim'/);
+  assert.match(page, /action\('claim'\)/);
+  assert.match(page, /action:actionName/);
 });
 
 
