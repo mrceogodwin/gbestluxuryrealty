@@ -50,5 +50,5 @@ export async function generateMetadata(){
   robots:{index:true,follow:true}
  };
 }
-export const viewport={width:'device-width',initialScale:1};
+export const viewport={width:'device-width',initialScale:1,viewportFit:'cover'};
 export default function RootLayout({children}){return <html lang="en-NG"><body>{children}<AgentChatWidget/></body></html>}
