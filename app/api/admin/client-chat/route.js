@@ -1,5 +1,5 @@
 import {NextResponse} from 'next/server';
-import {S3Client,PutObjectCommand,HeadObjectCommand} from '@aws-sdk/client-s3';
+import {S3Client,PutObjectCommand,HeadObjectCommand,GetObjectCommand} from '@aws-sdk/client-s3';
 import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
 import {randomUUID} from 'node:crypto';
 import {getDatabasePool} from '../../../../lib/db';
@@ -24,8 +24,11 @@ function attachmentPolicy(type){
  if(/^video\/(mp4|webm)$/.test(type))return {max:50*1024*1024,kind:'video'};
  return null;
 }
-function attachmentPublicUrl(endpoint,bucket,key){
- return (process.env.NEON_STORAGE_PUBLIC_BASE_URL||endpoint.replace(/\/$/,'')+'/'+bucket).replace(/\/$/,'')+'/'+key.split('/').map(encodeURIComponent).join('/');
+async function signMessageAttachments(rows){
+ const list=Array.isArray(rows)?rows:[];
+ if(!list.some(m=>Array.isArray(m.attachments)&&m.attachments.length))return list.map(m=>({...m,attachments:Array.isArray(m.attachments)?m.attachments:[]}));
+ const {s3,bucket}=attachmentStorage();
+ return Promise.all(list.map(async m=>({...m,attachments:await Promise.all((Array.isArray(m.attachments)?m.attachments:[]).map(async a=>({...a,url:await getSignedUrl(s3,new GetObjectCommand({Bucket:bucket,Key:a.objectKey,ResponseContentDisposition:'inline'}),{expiresIn:3600})})))})));
 }
 async function accessibleConversation(pool,id,ctx){
  const q=await pool.query(`SELECT c.id,c.status FROM public.client_chat_conversations c
@@ -67,7 +70,8 @@ export async function GET(req){
     LIMIT 1`,[id,ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
    if(!c.rowCount)return NextResponse.json({error:'Conversation not found.'},{status:404});
    const messages=await pool.query(`SELECT id,sender_type,sender_id,body,attachments,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at DESC,id DESC LIMIT 500`,[id]);
-   return NextResponse.json({conversation:c.rows[0],messages:messages.rows.reverse()},{headers:noStore});
+   const signedMessages=await signMessageAttachments(messages.rows.reverse());
+   return NextResponse.json({conversation:c.rows[0],messages:signedMessages},{headers:noStore});
   }
   const q=await pool.query(`SELECT c.id,c.status,c.handoff_status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.client_id,r.full_name,r.email,r.phone,
    a.full_name AS assigned_staff_name,a.avatar_url AS assigned_staff_avatar_url,CASE WHEN $2::boolean THEN a.phone_number END AS assigned_staff_phone_number,
@@ -117,10 +121,10 @@ export async function POST(req){
    if(conversation.status!=='open')return NextResponse.json({error:'Reopen this conversation before attaching a file.'},{status:409});
    const key=String(d.objectKey||''),prefix='chat/'+ctx.tenantId+'/'+id+'/';
    if(!key.startsWith(prefix)||key.includes('..')||key.length>1024)return NextResponse.json({error:'Invalid attachment object key.'},{status:400});
-   const {s3,bucket,endpoint}=attachmentStorage(),head=await s3.send(new HeadObjectCommand({Bucket:bucket,Key:key}));
+   const {s3,bucket}=attachmentStorage(),head=await s3.send(new HeadObjectCommand({Bucket:bucket,Key:key}));
    const mimeType=String(head.ContentType||'').toLowerCase(),fileSize=Number(head.ContentLength||0),policy=attachmentPolicy(mimeType);
    if(!policy||!Number.isSafeInteger(fileSize)||fileSize<1||fileSize>policy.max)return NextResponse.json({error:'The uploaded attachment is not supported or exceeds its size limit.'},{status:413});
-   return NextResponse.json({attachment:{objectKey:key,url:attachmentPublicUrl(endpoint,bucket,key),fileName:String(d.fileName||key.split('/').pop()).slice(0,160),mimeType,fileSize,kind:policy.kind}},{headers:noStore});
+   return NextResponse.json({attachment:{objectKey:key,fileName:String(d.fileName||key.split('/').pop()).slice(0,160),mimeType,fileSize,kind:policy.kind}},{headers:noStore});
   }
   const inputAttachments=Array.isArray(d?.attachments)?d.attachments:[];
   if(inputAttachments.length>5||(!message&&!inputAttachments.length)||message.length>4000)return NextResponse.json({error:'Enter a message or attach up to five files.'},{status:400});
@@ -129,13 +133,13 @@ export async function POST(req){
   if(conversation.status!=='open')return NextResponse.json({error:'This conversation is closed.'},{status:409});
   const attachments=[];
   if(inputAttachments.length){
-   const {s3,bucket,endpoint}=attachmentStorage(),prefix='chat/'+ctx.tenantId+'/'+id+'/';
+   const {s3,bucket}=attachmentStorage(),prefix='chat/'+ctx.tenantId+'/'+id+'/';
    for(const item of inputAttachments){
     const key=String(item?.objectKey||'');
     if(!key.startsWith(prefix)||key.includes('..')||key.length>1024) return NextResponse.json({error:'An attachment does not belong to this conversation.'},{status:400});
     const head=await s3.send(new HeadObjectCommand({Bucket:bucket,Key:key})),mimeType=String(head.ContentType||'').toLowerCase(),fileSize=Number(head.ContentLength||0),policy=attachmentPolicy(mimeType);
     if(!policy||!Number.isSafeInteger(fileSize)||fileSize<1||fileSize>policy.max)return NextResponse.json({error:'An attachment is unsupported or exceeds its size limit.'},{status:413});
-    attachments.push({objectKey:key,url:attachmentPublicUrl(endpoint,bucket,key),fileName:String(item.fileName||key.split('/').pop()).slice(0,160),mimeType,fileSize,kind:policy.kind});
+    attachments.push({objectKey:key,fileName:String(item.fileName||key.split('/').pop()).slice(0,160),mimeType,fileSize,kind:policy.kind});
    }
   }
   const db=await pool.connect();
