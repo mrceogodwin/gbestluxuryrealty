@@ -78,12 +78,8 @@ ${JSON.stringify(properties)}`;
    else if(wantsHouse&&requestedArea&&filteredRanked.length===0)reply='I understand you want a house in '+requestedArea+'. I do not have a matching published house listing to show right now. Would you like to buy or rent, and what budget range should I use?';
    else if(requestedArea&&filteredRanked.length===0)reply='I checked the live published catalogue for '+requestedArea+'. I do not have a matching published listing in that area to show right now. Are you looking to buy or rent, and what budget should I use? I can also help you send the request to our team for confirmation of upcoming options.';
    else if(filteredRanked.length){
-    const found=filteredRanked.map(p=>p.name+' — '+p.location+' — '+p.type+' — '+p.price+(p.beds?' — '+p.beds+' bedroom(s)':'')+(p.url?' — '+p.url:'')+(p.image?' — Photo: '+p.image:'')).join('
-');
-    reply='Here are the closest matches in G-BEST’s live published catalogue:
-'+found+'
-
-Would you like details about one of these, or should I narrow the search by location, property type or budget? Listing details and prices should be reconfirmed with our team before payment.';
+    const found=filteredRanked.map(p=>p.name+' — '+p.location+' — '+p.type+' — '+p.price+(p.beds?' — '+p.beds+' bedroom(s)':'')+(p.url?' — '+p.url:'')+(p.image?' — Photo: '+p.image:'')).join('\n');
+    reply='Here are the closest matches in G-BEST’s live published catalogue:\n'+found+'\n\nWould you like details about one of these, or should I narrow the search by location, property type or budget? Listing details and prices should be reconfirmed with our team before payment.';
    }else if(budgetLimit&&relevant.length&&filteredRanked.length===0){
     reply='I found listings that may fit the property type, but their recorded prices are missing or above your stated budget. I won’t label them as budget matches without a verifiable price. Would you like to raise the budget or ask our team to confirm current prices?';
    }else if((wantsLand||wantsApartment||wantsRent||wantsBuy)&&relevant.length===0){
