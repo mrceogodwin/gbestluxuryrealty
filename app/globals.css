@@ -3730,3 +3730,150 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
   .pad>.property-booking-cta span{width:18px!important;height:18px!important;flex:0 0 18px!important;font-size:11px!important}
   .pad>.price{grid-column:1/-1!important;margin-top:12px!important;padding-top:10px!important}
 }
+
+
+/* Super Admin client messages — mobile-first hierarchy and spacing */
+@media(max-width:760px){
+  .gb-content .admin-client-chat{
+    padding:14px 12px calc(24px + env(safe-area-inset-bottom))!important;
+    min-height:100dvh!important;
+  }
+  .admin-client-chat>a{
+    padding:8px 12px!important;
+    font-size:10px!important;
+    margin-bottom:0!important;
+  }
+  .admin-client-chat header{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    flex-wrap:nowrap!important;
+    gap:10px!important;
+    margin:15px 0 15px!important;
+  }
+  .admin-client-chat header>div:first-child{min-width:0!important;flex:1 1 auto!important}
+  .admin-client-chat header p:first-child{
+    margin:0 0 7px!important;
+    font-size:8px!important;
+    line-height:1.35!important;
+    letter-spacing:.15em!important;
+  }
+  .admin-client-chat header h1{
+    margin:0!important;
+    font-size:clamp(26px,7vw,32px)!important;
+    line-height:.98!important;
+    letter-spacing:-.035em!important;
+  }
+  .admin-client-chat header>div>p:last-child{
+    margin:6px 0 0!important;
+    font-size:10px!important;
+    line-height:1.4!important;
+    max-width:235px!important;
+  }
+  .admin-client-chat header>div:last-child{
+    flex:0 0 auto!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:6px!important;
+  }
+  .admin-client-chat header button{
+    min-height:39px!important;
+    padding:9px 11px!important;
+    border-radius:10px!important;
+    font-size:9px!important;
+    letter-spacing:.04em!important;
+    white-space:nowrap!important;
+    box-shadow:0 3px 0 #708d4c!important;
+  }
+  .admin-client-chat .chat-layout{
+    display:block!important;
+    min-height:0!important;
+  }
+  .admin-client-chat .chat-inbox,
+  .admin-client-chat .chat-detail{
+    border-radius:15px!important;
+    min-height:0!important;
+  }
+  .admin-client-chat .chat-inbox>div:first-child{
+    padding:13px 15px!important;
+    min-height:50px!important;
+    font-size:12px!important;
+    letter-spacing:.12em!important;
+  }
+  .admin-client-chat .team-availability{
+    padding:12px 14px!important;
+    display:block!important;
+    border-bottom:1px solid #e1e9df!important;
+  }
+  .admin-client-chat .team-availability-head{
+    display:flex!important;
+    flex-direction:row!important;
+    justify-content:space-between!important;
+    align-items:center!important;
+    gap:8px!important;
+    margin:0!important;
+  }
+  .admin-client-chat .team-availability-head>div{
+    min-width:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    gap:3px!important;
+  }
+  .admin-client-chat .team-availability-head b{
+    font-size:9px!important;
+    line-height:1.25!important;
+    letter-spacing:.1em!important;
+  }
+  .admin-client-chat .team-availability-head small{
+    font-size:9px!important;
+    line-height:1.3!important;
+    color:#829087!important;
+  }
+  .admin-client-chat .online-count{
+    flex:0 0 auto!important;
+    min-width:58px!important;
+    padding:7px 9px!important;
+    border-radius:999px!important;
+    font-size:9px!important;
+    line-height:1.1!important;
+    text-align:center!important;
+  }
+  .admin-client-chat .team-empty{
+    margin:8px 0 0!important;
+    font-size:10px!important;
+    line-height:1.45!important;
+    color:#7a887d!important;
+  }
+  .admin-client-chat .team-footnote{display:none!important}
+  .admin-client-chat .team-person{
+    margin-top:9px!important;
+    padding:8px!important;
+    gap:8px!important;
+    border-radius:10px!important;
+  }
+  .admin-client-chat .team-person img,
+  .admin-client-chat .team-avatar{
+    width:32px!important;height:32px!important;flex-basis:32px!important;
+  }
+  .admin-client-chat .team-person-copy b{font-size:10px!important}
+  .admin-client-chat .team-person-copy small{font-size:8px!important}
+  .admin-client-chat .team-person>button{
+    padding:7px 8px!important;
+    font-size:8px!important;
+    border-radius:7px!important;
+  }
+  .admin-client-chat .chat-inbox>button{
+    padding:13px 14px!important;
+    min-height:82px!important;
+  }
+  .admin-client-chat .chat-inbox>button b{font-size:13px!important}
+  .admin-client-chat .chat-inbox>button small{font-size:9px!important}
+  .admin-client-chat .chat-inbox>button p{font-size:10px!important;margin-top:6px!important}
+}
+@media(max-width:380px){
+  .admin-client-chat header h1{font-size:25px!important}
+  .admin-client-chat header>div>p:last-child{max-width:190px!important;font-size:9px!important}
+  .admin-client-chat header button{padding:8px 9px!important;font-size:8px!important}
+  .admin-client-chat .team-availability{padding:10px 11px!important}
+}
