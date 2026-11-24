@@ -82,6 +82,7 @@ export async function POST(req){
     VALUES($1,$2,now()) ON CONFLICT(tenant_id,registration_id) DO UPDATE SET updated_at=now()
     RETURNING id,status`,[client.tenant_id,client.id]);
    if(conv.rows[0].status!=='open'){await db.query('ROLLBACK');return NextResponse.json({error:'This conversation is closed. Please contact G-BEST to reopen it.'},{status:409});}
+   const history=await db.query(`SELECT sender_type,body FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at DESC,id DESC LIMIT 8`,[conv.rows[0].id]);
    const saved=await db.query(`INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body)
     VALUES($1,'client',$2,$3) RETURNING id,sender_type,body,created_at,read_at`,[conv.rows[0].id,String(client.id),message]);
    await db.query('UPDATE public.client_chat_conversations SET last_message_at=now(),last_client_message_at=now(),updated_at=now() WHERE id=$1',[conv.rows[0].id]);
@@ -100,7 +101,7 @@ export async function POST(req){
    await db.query('COMMIT');
    let agentMessage=null,suggestHuman=false;
    try{
-    const agentResponse=await fetch(new URL('/api/agent/chat',req.nextUrl.origin),{method:'POST',headers:{'Content-Type':'application/json','Origin':req.nextUrl.origin},body:JSON.stringify({message}),signal:AbortSignal.timeout(9000)});
+    const agentResponse=await fetch(new URL('/api/agent/chat',req.nextUrl.origin),{method:'POST',headers:{'Content-Type':'application/json','Origin':req.nextUrl.origin},body:JSON.stringify({message,context:[...history.rows.reverse(),{sender_type:'client',body:message}]}),signal:AbortSignal.timeout(9000)});
     const agentData=await agentResponse.json();
     if(agentResponse.ok&&agentData.reply){suggestHuman=Boolean(agentData.suggestHuman);
      const stored=await pool.query("INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body) VALUES($1,'agent','agent',$2) RETURNING id,sender_type,sender_id,body,created_at,read_at",[conv.rows[0].id,String(agentData.reply).slice(0,4000)]);
