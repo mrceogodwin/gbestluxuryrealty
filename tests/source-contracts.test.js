@@ -622,3 +622,19 @@ test('Control Room shows a responsive loading skeleton while authorised data is 
   assert.match(page, /skeleton-departments/);
   assert.match(page, /prefers-reduced-motion:reduce/);
 });
+
+test('mobile admin chat keeps the composer visible and removes dock obstruction inside a conversation', async () => {
+  const page = await source('app/admin/client-chat/page.js');
+  assert.match(page, /className="gb-composer"/);
+  assert.match(page, /gb-dock-chat-open/);
+  assert.match(page, /gb-bottom-dock\.gb-dock-chat-open\{display:none!important\}/);
+  assert.match(page, /messageScrollRef/);
+  assert.match(page, /openRequest\.current\+\+/);
+});
+
+test('Agent follow-up greetings retain the client’s previous request', async () => {
+  const agent = await source('app/api/agent/chat/route.js');
+  assert.match(agent, /previousClientMessage/);
+  assert.match(agent, /I still have your earlier message in mind/);
+  assert.match(agent, /Would you like to continue with that request/);
+});
