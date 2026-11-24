@@ -638,3 +638,11 @@ test('Agent follow-up greetings retain the client’s previous request', async (
   assert.match(agent, /I still have your earlier message in mind/);
   assert.match(agent, /Would you like to continue with that request/);
 });
+
+test('Agent short acknowledgements continue the active property enquiry instead of resetting intake', async () => {
+  const agent = await source('app/api/agent/chat/route.js');
+  assert.match(agent, /previousAgentMessage/);
+  assert.match(agent, /shortAck&&priorPropertyIntent/);
+  assert.match(agent, /Great — is the property for purchase or rent/);
+  assert.match(agent, /include nearby Edo locations such as Ekpoma and Auchi/);
+});
