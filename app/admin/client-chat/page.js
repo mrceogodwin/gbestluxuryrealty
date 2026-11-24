@@ -10,10 +10,11 @@ function DockIcon({name}){const p={width:22,height:22,viewBox:'0 0 24 24',fill:'
 
 export default function AdminClientChatPage(){
  const [items,setItems]=useState([]),[selected,setSelected]=useState(''),[detail,setDetail]=useState(null),[draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[tenants,setTenants]=useState([]),[staff,setStaff]=useState([]),[tenantId,setTenantId]=useState(''),[tab,setTab]=useState('chats'),[search,setSearch]=useState(''),[filter,setFilter]=useState('all'),[showInfo,setShowInfo]=useState(false);
- const openRequest=useRef(0);
+ const openRequest=useRef(0),messageScrollRef=useRef(null);
  const load=useCallback(async()=>{try{const r=await fetch('/api/admin/client-chat'+(tenantId?'?tenantId='+encodeURIComponent(tenantId):''),{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not load conversations');setItems(d.conversations||[]);setTenants(d.tenants||[]);setStaff(d.staff||[]);if(d.activeTenantId&&String(d.activeTenantId)!==tenantId)setTenantId(String(d.activeTenantId));if(selected&&!(d.conversations||[]).some(x=>x.id===selected)){setSelected('');setDetail(null)}}catch(e){setError(e.message)}},[tenantId,selected]);
  const open=useCallback(async(id)=>{const request=++openRequest.current;setSelected(id);setDetail(null);setError('');setNotice('');try{const q=new URLSearchParams({conversationId:id});if(tenantId)q.set('tenantId',tenantId);const r=await fetch('/api/admin/client-chat?'+q.toString(),{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not open conversation');if(request!==openRequest.current)return;setDetail(d);await fetch('/api/admin/client-chat',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:id,tenantId:tenantId||undefined,action:'read'})});if(request===openRequest.current)setItems(old=>old.map(x=>x.id===id?{...x,unread_count:0}:x))}catch(e){if(request===openRequest.current){setSelected('');setDetail(null);setError(e.message)}}},[tenantId]);
  useEffect(()=>{load()},[load]);
+ useEffect(()=>{const node=messageScrollRef.current;if(node)node.scrollTop=node.scrollHeight},[detail?.messages?.length,selected,showInfo]);
  useEffect(()=>{const timer=setInterval(load,30000);return()=>clearInterval(timer)},[load]);
  const visible=useMemo(()=>items.filter(x=>{const q=search.toLowerCase();const match=!q||[x.full_name,x.email,x.client_id,x.last_message].some(v=>String(v||'').toLowerCase().includes(q));const f=filter==='unread'?Number(x.unread_count)>0:filter==='assigned'?!!x.assigned_staff_id:filter==='unassigned'?!x.assigned_staff_id:true;return match&&f}),[items,search,filter]);
  const online=staff.filter(s=>s.presence==='online');
@@ -34,16 +35,16 @@ export default function AdminClientChatPage(){
    </aside>
    <section className={'gb-chat-main '+(selected?'gb-mobile-show':'')}>
     {!detail?<><div className="gb-welcome"><span className="gb-welcome-icon">✉</span><h2>Your messages, in one place.</h2><p>Select a client conversation to read, reply, or manage its assignment.</p><div className="gb-welcome-stats"><span><b>{items.length}</b><small>Conversations</small></span><span><b>{items.filter(x=>Number(x.unread_count)>0).length}</b><small>Unread</small></span><span><b>{online.length}</b><small>Team online</small></span></div></div>{selected&&<div className="gb-chat-loading" role="status"><span className="gb-loading-dot"/>Loading conversation…</div>}</>:<>
-     <div className="gb-conversation-head"><button className="gb-back-btn" onClick={()=>{setSelected('');setDetail(null)}} aria-label="Back to chats">‹</button><span className="gb-avatar">{initials(detail.conversation.full_name)}</span><button className="gb-person-title" onClick={()=>setShowInfo(v=>!v)}><b>{detail.conversation.full_name}</b><small>{detail.conversation.email||detail.conversation.client_id||'G-BEST client'}</small></button><span className="gb-status-chip">{detail.conversation.status==='open'?'Open':'Closed'}</span><button className="gb-icon-btn gb-info-toggle" onClick={()=>setShowInfo(v=>!v)} aria-label="Conversation details">ⓘ</button></div>
+     <div className="gb-conversation-head"><button className="gb-back-btn" onClick={()=>{openRequest.current++;setSelected('');setDetail(null);setShowInfo(false)}} aria-label="Back to chats">‹</button><span className="gb-avatar">{initials(detail.conversation.full_name)}</span><button className="gb-person-title" onClick={()=>setShowInfo(v=>!v)}><b>{detail.conversation.full_name}</b><small>{detail.conversation.email||detail.conversation.client_id||'G-BEST client'}</small></button><span className="gb-status-chip">{detail.conversation.status==='open'?'Open':'Closed'}</span><button className="gb-icon-btn gb-info-toggle" onClick={()=>setShowInfo(v=>!v)} aria-label="Conversation details">ⓘ</button></div>
      {showInfo&&<div className="gb-info-panel"><div><small>CLIENT ID</small><b>{detail.conversation.client_id||'—'}</b></div><div><small>PHONE</small><b>{detail.conversation.phone||'Not provided'}</b></div><div><small>CONVERSATION OWNER</small><b>{detail.conversation.assigned_staff_name||'Agent assistant'}</b></div><div className="gb-assignment-title"><small>HUMAN ASSIGNMENT</small></div><label>ASSIGN TEAM MEMBER<select value={detail.conversation.assigned_staff_id||''} onChange={e=>action('assign',e.target.value)} disabled={busy}><option value="">Agent assistant · No human assigned</option>{detail.conversation.assigned_staff_id&&!online.some(s=>String(s.id)===String(detail.conversation.assigned_staff_id))&&<option value={detail.conversation.assigned_staff_id} disabled>{detail.conversation.assigned_staff_name||'Assigned colleague'} · Offline</option>}{online.map(s=><option key={s.id} value={s.id}>{s.full_name} · Online</option>)}</select></label>{detail.conversation.assigned_staff_phone_number&&<a className="gb-whatsapp-link" href={'https://wa.me/'+String(detail.conversation.assigned_staff_phone_number).replace(/\D/g,'')} target="_blank" rel="noreferrer">WHATSAPP</a>}</div>}
-     <div className="gb-message-scroll">{detail.messages.map((m,i)=><div key={m.id} className={'gb-message-row '+(m.sender_type==='client'?'incoming':'outgoing')}><div className="gb-message-bubble"><small>{m.sender_type==='client'?'CLIENT':m.sender_type==='staff'?'TEAM':'G-BEST'}</small><p>{m.body}</p><time>{clock(m.created_at)}</time></div></div>)}{detail.messages.length===0&&<div className="gb-empty"><b>No messages yet</b><small>Send the first reply to this client.</small></div>}</div>
+     <div className="gb-message-scroll" ref={messageScrollRef}>{detail.messages.map((m,i)=><div key={m.id} className={'gb-message-row '+(m.sender_type==='client'?'incoming':'outgoing')}><div className="gb-message-bubble"><small>{m.sender_type==='client'?'CLIENT':m.sender_type==='staff'?'TEAM':'G-BEST'}</small><p>{m.body}</p><time>{clock(m.created_at)}</time></div></div>)}{detail.messages.length===0&&<div className="gb-empty"><b>No messages yet</b><small>Send the first reply to this client.</small></div>}</div>
      {notice&&<p className="gb-notice">{notice}</p>}
      <div className="gb-conversation-tools"><span>{detail.conversation.assigned_staff_name?'Assigned to '+detail.conversation.assigned_staff_name:'Not assigned to a staff member'}</span><div>{detail.conversation.handoff_status==='requested'&&!detail.conversation.assigned_staff_id&&<button onClick={()=>action('claim')} disabled={busy}>CLAIM WAITING CHAT</button>}<button onClick={()=>action(detail.conversation.status==='open'?'close':'reopen')} disabled={busy}>{detail.conversation.status==='open'?'Close chat':'Reopen chat'}</button></div></div>
      <form className="gb-composer" onSubmit={send}><textarea value={draft} onChange={e=>setDraft(e.target.value)} maxLength={4000} rows={1} placeholder={detail.conversation.status==='open'?'Message…':'Reopen this chat to reply'} disabled={detail.conversation.status!=='open'||busy}/><button type="submit" disabled={busy||!draft.trim()||detail.conversation.status!=='open'} aria-label="Send message">➤</button></form>
     </>}
    </section>
   </div>
-  <nav className="gb-bottom-dock" aria-label="Messaging navigation">{[['chats','Chats'],['team','Team'],['activity','Activity'],['settings','Settings']].map(([id,label])=><button type="button" key={id} className={tab===id?'active':''} aria-current={tab===id?'page':undefined} aria-label={label} onClick={()=>{setTab(id);setSelected('');setDetail(null);setShowInfo(false)}}><span className="gb-dock-icon"><DockIcon name={id}/></span><small>{label}</small></button>)}</nav>
+  <nav className={"gb-bottom-dock"+(selected?" gb-dock-chat-open":"")} aria-label="Messaging navigation" aria-hidden={Boolean(selected)}>{[['chats','Chats'],['team','Team'],['activity','Activity'],['settings','Settings']].map(([id,label])=><button type="button" key={id} className={tab===id?'active':''} aria-current={tab===id?'page':undefined} aria-label={label} onClick={()=>{openRequest.current++;setTab(id);setSelected('');setDetail(null);setShowInfo(false)}}><span className="gb-dock-icon"><DockIcon name={id}/></span><small>{label}</small></button>)}</nav>
   {error&&<div className="gb-toast" role="alert">{error}<button onClick={()=>setError('')}>×</button></div>}
   <style jsx>{`
   .gb-ios-chat{--forest:#174b32;--deep:#0e3826;--lime:#c8e79b;--paper:#f5f7f2;--line:#e4e9e1;height:calc(100dvh - 66px);min-height:calc(100dvh - 66px);max-height:calc(100dvh - 66px);box-sizing:border-box;overflow:hidden;background:#edf1eb;color:#192d21;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;padding:0}
@@ -136,6 +137,35 @@ export default function AdminClientChatPage(){
    .gb-activity-row small,.gb-activity-row time{color:#718075!important;font-size:10px;line-height:1.4;overflow-wrap:anywhere}
    .gb-bottom-dock{backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%)}
   }
-  `}</style>
+  `}
+  /* Final iPhone layout corrections: the conversation gets the full screen; navigation belongs to the inbox. */
+  @media(max-width:760px){
+   .gb-ios-chat{height:calc(100vh - 58px);height:calc(100dvh - 58px);min-height:0;max-height:none;display:flex;flex-direction:column;overflow:hidden;padding:0!important}
+   .gb-chat-app{flex:1 1 auto;height:auto!important;min-height:0!important;padding:0 0 78px!important;overflow:hidden}
+   .gb-chat-app:has(.gb-chat-sidebar.gb-mobile-hide){padding-bottom:0!important}
+   .gb-chat-sidebar,.gb-chat-main{min-height:0!important;max-height:none!important;backface-visibility:hidden;transform:translateZ(0);transition:none!important}
+   .gb-chat-main.gb-mobile-show{height:100%!important;display:flex!important}
+   .gb-bottom-dock.gb-dock-chat-open{display:none!important}
+   .gb-composer{padding-bottom:calc(9px + env(safe-area-inset-bottom,0px))!important}
+   .gb-message-scroll{scrollbar-width:thin;scroll-padding-bottom:12px}
+   .gb-info-panel{max-height:34dvh;overflow-y:auto;overscroll-behavior:contain}
+   .gb-sidebar-title h1{color:#172b20!important;opacity:1!important}
+   .gb-team-list,.gb-activity-list,.gb-settings-list{min-height:0;overscroll-behavior:contain}
+   .gb-presence-summary{display:flex!important;flex-wrap:wrap;justify-content:space-between;line-height:1.4}
+   .gb-presence-summary b,.gb-presence-summary span{display:block;line-height:1.4;white-space:normal}
+   .gb-settings-list>div{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:5px!important;align-content:center}
+   .gb-settings-list b,.gb-settings-list small{display:block!important;min-width:0!important;line-height:1.45!important;overflow-wrap:anywhere}
+   .gb-bottom-dock{height:60px!important;min-height:60px!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important}
+  }
+  @media(max-width:390px){
+   .gb-conversation-head{gap:6px;padding-inline:8px}
+   .gb-person-title small{max-width:38vw}
+   .gb-status-chip{padding:5px 7px}
+   .gb-conversation-tools{align-items:flex-start}
+   .gb-conversation-tools>div{flex-wrap:wrap}
+  }
+  @media(prefers-reduced-motion:reduce){.gb-chat-sidebar,.gb-chat-main,.gb-bottom-dock button{transition:none!important}}
+
+  </style>
  </main>;
 }
