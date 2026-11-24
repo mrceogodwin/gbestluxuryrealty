@@ -665,6 +665,9 @@ test('admin chat attachments use tenant-scoped signed storage and verified objec
   assert.match(api, /attachment-presign/);
   assert.match(api, /attachment-complete/);
   assert.match(api, /HeadObjectCommand/);
+  assert.match(api, /GetObjectCommand/);
+  assert.match(client, /GetObjectCommand/);
+  assert.match(api, /expiresIn:3600/);
   assert.ok(api.includes("prefix='chat/'+ctx.tenantId+'/'+id+'/"));
   assert.match(api, /attachments\) VALUES/);
   assert.match(client, /m\.attachments/);
