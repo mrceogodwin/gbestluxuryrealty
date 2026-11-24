@@ -695,3 +695,10 @@ test('Agent never carries an old property location or matching terms into unrela
   assert.match(agent, /currentArea=accountHelpRequest\?null/);
   assert.match(agent, /areaAnswer&&agentAskedPropertyFollowup/);
 });
+
+
+test('client OTP input strips every non-digit before enforcing six digits', async () => {
+  const login = await source('app/client-login/page.js');
+  assert.ok(login.includes("replace(/\\D/g, '')"), 'OTP input must remove all non-digit characters');
+  assert.match(login, /\.slice\(0,\s*6\)/);
+});
