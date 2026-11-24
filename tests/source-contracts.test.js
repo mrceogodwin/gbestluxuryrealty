@@ -468,14 +468,14 @@ test('inspection approvals create idempotent Google Calendar events and retain N
 
 test('Google Calendar integration never blocks a saved inspection status when the calendar is unavailable', async () => {
   const admin = await source('app/api/admin/inspection-requests/route.js');
-  assert.match(admin, /catch\(calendarError\)/);
+  assert.match(admin, /catch\(notificationError\)/);
   assert.match(admin, /Inspection status saved but email queueing failed/);
   assert.match(admin, /status was saved, but notification emails could not be queued/);
 });
 
 test('client login returns clients to the intended next page', async () => {
   const login = await source('app/client-login/page.js');
-  assert.match(login, /window\\.location\\.href = next && next\\.startsWith/);
+  assert.match(login, /window\.location\.href = next && next\.startsWith/);
   assert.match(login, /api\/client-auth\/verify-code/);
 });
 
