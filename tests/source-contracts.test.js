@@ -646,3 +646,12 @@ test('Agent short acknowledgements continue the active property enquiry instead 
   assert.match(agent, /Great — is the property for purchase or rent/);
   assert.match(agent, /include nearby Edo locations such as Ekpoma and Auchi/);
 });
+
+test('admin login confirms its session cookie before opening the Control Room', async () => {
+  const login = await source('app/admin/login/page.js');
+  const layout = await source('app/admin/layout.js');
+  assert.match(login, /fetch\('\/api\/admin\/session',\{cache:'no-store'\}\)/);
+  assert.match(login, /session\.authenticated/);
+  assert.match(login, /router\.refresh\(\)/);
+  assert.match(layout, /setTimeout\(resolve,180\)/);
+});
