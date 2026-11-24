@@ -596,3 +596,35 @@ test('cancelled inspection calendar events retain their ID until deletion succee
   assert.match(adminInspections, /if\(status==='cancelled'&&prior\.calendar_event_id\)/);
   assert.match(adminInspections, /if\(calendar\.deleted\)await getDatabasePool\(\)\.query/);
 });
+
+test('mobile admin client chat reserves the admin shell and dock lanes while keeping the composer touch-ready', async () => {
+  const page = await source('app/admin/client-chat/page.js');
+  const layout = await source('app/admin/layout.js');
+  assert.match(page, /height:calc\(100dvh - 60px\)/);
+  assert.match(page, /height:calc\(100dvh - 240px\)/);
+  assert.match(page, /gb-console \.gb-content>\.gb-ios-chat/);
+  assert.match(page, /\.gb-composer\{display:flex!important/);
+  assert.match(page, /font:16px\/1\.35/);
+  assert.match(page, /env\(safe-area-inset-bottom\)/);
+  assert.match(layout, /\.gb-topbar\{height:60px!important/);
+});
+
+test('client and public Agent chats preserve recent context and location-specific property follow-ups', async () => {
+  const clientChat = await source('app/api/client-chat/route.js');
+  const publicWidget = await source('components/agent-chat-widget.js');
+  const agent = await source('app/api/agent/chat/route.js');
+  assert.match(clientChat, /context:\[\.\.\.history\.rows\.reverse\(\)/);
+  assert.match(publicWidget, /context:\[\.\.\.messages\.map/);
+  assert.match(agent, /Benin City, Edo State/);
+  assert.match(agent, /requestedArea&&filteredRanked\.length===0/);
+  assert.match(agent, /greetingOnly&&/);
+  assert.match(agent, /priorClientText/);
+});
+
+test('Control Room shows a responsive loading skeleton while authorised data is fetched', async () => {
+  const page = await source('app/admin/super/overview/page.js');
+  assert.match(page, /loading-skeleton/);
+  assert.match(page, /role="status" aria-label="Loading authorised workspace"/);
+  assert.match(page, /skeleton-departments/);
+  assert.match(page, /prefers-reduced-motion:reduce/);
+});
