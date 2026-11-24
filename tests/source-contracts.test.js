@@ -432,7 +432,7 @@ test('staff can only access client conversations assigned to or shared with them
   assert.match(api, /client_chat_participants/);
   assert.match(api, /client_chat_monitor_access/);
   assert.match(api, /staff_notifications/);
-  assert.match(page, /setInterval\(\(\)=>load\(\),30000\)/);
+  assert.match(page, /setInterval\(load,30000\)/);
   assert.match(migration, /ALTER COLUMN assigned_staff_id TYPE uuid/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.staff_notifications/);
 });
@@ -451,19 +451,13 @@ test('Super Admin client intelligence reports registrations, engagement, online 
   assert.match(home, /setInterval\(beat,90000\)/);
 });
 
-test('inspection approvals create idempotent Google Calendar events and retain Neon as source of truth', async () => {
-  const calendar = await source('lib/google-calendar.js');
+test('inspection approvals commit Neon status before queueing notification delivery', async () => {
   const admin = await source('app/api/admin/inspection-requests/route.js');
-  assert.match(calendar, /GOOGLE_CLIENT_ID/);
-  assert.match(calendar, /GOOGLE_CLIENT_SECRET/);
-  assert.match(calendar, /GOOGLE_REFRESH_TOKEN/);
-  assert.match(calendar, /GOOGLE_CALENDAR_ID/);
-  assert.match(calendar, /timeZone:zone/);
-  assert.match(calendar, /id,\s*summary:/);
-  assert.match(admin, /createInspectionCalendarEvent/);
-  assert.match(admin, /deleteInspectionCalendarEvent/);
-  assert.match(admin, /calendar_event_id/);
-  assert.match(admin, /Inspection confirmed, but the calendar event could not be created/);
+  assert.match(admin, /await client\.query\('COMMIT'\)/);
+  assert.match(admin, /queueInspectionEmails\(/);
+  assert.match(admin, /deliverInspectionEmails\(/);
+  assert.match(admin, /catch\(notificationError\)/);
+  assert.match(admin, /status was saved, but notification emails could not be queued/);
 });
 
 test('Google Calendar integration never blocks a saved inspection status when the calendar is unavailable', async () => {
