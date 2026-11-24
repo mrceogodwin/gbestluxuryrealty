@@ -11,17 +11,19 @@ const DEFAULT_SOCIALS=[
 ];
 
 export default function ClientRegistrationPage(){
- const [step,setStep]=useState(1),[busy,setBusy]=useState(false),[error,setError]=useState(''),[result,setResult]=useState(''),[copied,setCopied]=useState(false),[properties,setProperties]=useState([]),[propertyLoadError,setPropertyLoadError]=useState(''),[intent,setIntent]=useState('general'),[paidRegistration,setPaidRegistration]=useState(false),[brand,setBrand]=useState({});
+ const [step,setStep]=useState(1),[busy,setBusy]=useState(false),[error,setError]=useState(''),[result,setResult]=useState(''),[copied,setCopied]=useState(false),[properties,setProperties]=useState([]),[propertyLoadError,setPropertyLoadError]=useState(''),[intent,setIntent]=useState('general'),[paidRegistration,setPaidRegistration]=useState(false),[brand,setBrand]=useState({}),[checkingSession,setCheckingSession]=useState(true);
  const phone=brand.contactPhone||DEFAULT_PHONE;
  const companyName=brand.siteName||'G-BEST Luxury Realty';
  const socials=DEFAULT_SOCIALS.map(item=>({...item,href:(item.label==='TikTok'?brand.tikTokUrl:item.label==='Facebook'?brand.facebookUrl:brand.instagramUrl)||item.href}));
  const callLabel=brand.contactPhoneDisplay||phone;
+ useEffect(()=>{let active=true;fetch('/api/client-auth/session',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(active&&d?.authenticated){window.location.replace('/client-dashboard');return;}if(active)setCheckingSession(false);}).catch(()=>{if(active)setCheckingSession(false);});return()=>{active=false}},[]);
  useEffect(()=>{let active=true;fetch('/api/homepage',{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||'Brand settings unavailable');if(active)setBrand(d.sections?.site_settings||{});}).catch(()=>{});return()=>{active=false}},[]);
  useEffect(()=>{let active=true;fetch('/api/properties',{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not load properties');if(active)setProperties(Array.isArray(d.properties)?d.properties:[])}).catch(()=>{if(active)setPropertyLoadError('Property listings could not be loaded. You can enter a Property ID manually.')});return()=>{active=false}},[]);
  useEffect(()=>{const value=new URLSearchParams(window.location.search).get('intent');if(value==='inspection')setIntent('inspection')},[]);
  async function copyAccount(){try{await navigator.clipboard.writeText('5601035351');setCopied(true);window.setTimeout(()=>setCopied(false),2200)}catch{setError('Please copy the account number manually.')}}
  function continueToPayment(){const form=document.getElementById('client-registration-form');if(!form.reportValidity())return;setError('');if(intent==='general'){form.requestSubmit();return;}setStep(2);window.scrollTo({top:0,behavior:'smooth'})}
  async function submit(e){e.preventDefault();setBusy(true);setError('');try{const form=new FormData(e.currentTarget);const r=await fetch('/api/client-registrations',{method:'POST',body:form});const d=await r.json();if(!r.ok)throw new Error(d.error||'Submission failed');const paid=d.registration?.payment_status!=='not_required';setPaidRegistration(paid);setResult((d.message||'Registration received.')+' Reference: '+d.registration.id+'.');setStep(3);window.scrollTo({top:0,behavior:'smooth'})}catch(err){setError(err.message)}finally{setBusy(false)}}
+ if(checkingSession)return <main className="client-registration-shell"><div className="registration-confirmation"><p className="registration-eyebrow">SECURE CLIENT ACCESS</p><h2>Checking your account…</h2><p>We’re checking whether you already have an active client session.</p></div></main>;
  return <main className="client-registration-shell">
   <div className="registration-topbar"><a href="/" className="registration-back">← {companyName.toUpperCase()}</a><span>PRIVATE CLIENT REGISTRATION</span></div>
   <header className="registration-header">
