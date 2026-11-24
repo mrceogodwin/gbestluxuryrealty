@@ -35,7 +35,12 @@ export default function AdminOverview(){
  return <main className="dash"><div className="inner">
   <header className="head"><div><span className="eyebrow">G-BEST / WORKSPACE</span><h1>{data?.isSuperAdmin?'Control room':'Your workspace'}</h1><p>{data?.isSuperAdmin?'A clear view of company operations.':'Your assigned departments and daily work.'}</p></div><button onClick={load} disabled={busy}>{busy?'Updating…':'Refresh'}</button></header>
   {error&&<div className="error" role="alert">{error}</div>}
-  {busy&&!data?<div className="loading">Loading your authorised workspace…</div>:null}
+  {busy&&!data?<div className="loading-skeleton" role="status" aria-label="Loading authorised workspace">
+   <div className="skeleton-banner"><i/><i/><i/></div>
+   <div className="skeleton-metrics">{[1,2,3,4].map(x=><i key={x}/>)}</div>
+   <div className="skeleton-title"/>
+   <div className="skeleton-departments">{[1,2,3,4,5,6].map(x=><i key={x}/>)}</div>
+  </div>:null}
   {data&&stats.length>0&&<section className="stats" aria-label="Workspace summary">{stats.map(x=><Stat key={x.label} {...x}/>)}</section>}
   {data?.isSuperAdmin&&data.finance&&<section className="finance" style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:12,padding:15,border:'1px solid #ffffff20',borderRadius:13,background:'linear-gradient(145deg,#202821,#171d19)'}}><div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:8,minWidth:0}}><span style={{display:'block',fontSize:9,lineHeight:1.35,letterSpacing:'.1em',fontWeight:850,color:'#aab9ac'}}>PAYMENTS VERIFIED</span><strong style={{display:'block',fontSize:17,lineHeight:1.15,color:'#d7f49b'}}>{Number(data.finance.approved_count||0).toLocaleString('en-NG')}</strong></div><div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:8,minWidth:0}}><span style={{display:'block',fontSize:9,lineHeight:1.35,letterSpacing:'.1em',fontWeight:850,color:'#aab9ac'}}>VERIFIED VALUE</span><strong style={{display:'block',fontSize:17,lineHeight:1.15,color:'#d7f49b',overflowWrap:'anywhere'}}>₦{Number(data.finance.approved_amount||0).toLocaleString('en-NG',{maximumFractionDigits:2})}</strong></div><div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:8,minWidth:0}}><span style={{display:'block',fontSize:9,lineHeight:1.35,letterSpacing:'.1em',fontWeight:850,color:'#aab9ac'}}>AWAITING REVIEW</span><strong style={{display:'block',fontSize:17,lineHeight:1.15,color:'#d7f49b'}}>{Number(data.finance.pending_count||0).toLocaleString('en-NG')}</strong></div></section>}
   {data?.isSuperAdmin&&data.clientActivity&&<section className="client-intel">
@@ -136,5 +141,16 @@ export default function AdminOverview(){
  .dash .empty{display:block!important;margin:0!important;padding:16px!important;background:#1a201c!important;border:1px solid #ffffff20!important;border-radius:11px!important;color:#b8c4ba!important;font-size:12px!important;line-height:1.5!important}
  .dash footer{min-height:88px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:12px!important;padding:20px 12px!important;background:#080a08!important;border:1px solid #ffffff13!important;border-radius:10px!important;color:#b7c1b8!important;text-align:center!important;line-height:1.6!important}
  @media(max-width:720px){.dash{padding:18px 14px 30px!important}.dash .head{align-items:flex-start!important}.dash .head h1{font-size:clamp(27px,8vw,36px)!important}.dash .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}.dash a.stat{min-height:100px!important;padding:12px!important}.dash .finance{gap:8px!important;padding:12px!important}.dash .finance span{font-size:8px!important}.dash .finance strong{font-size:clamp(13px,3.6vw,17px)!important}.dash .section{margin-top:24px!important}.dash .sectionhead h2{font-size:21px!important}.dash .departments{grid-template-columns:1fr!important;gap:9px!important}.dash .department{min-height:82px!important;padding:13px!important}}
+ 
+ .loading-skeleton{display:grid;gap:15px;margin:18px 0 26px;min-width:0}
+ .loading-skeleton i,.skeleton-title{display:block;position:relative;overflow:hidden;border:1px solid #ffffff16;background:linear-gradient(110deg,#1c241e 20%,#2a352d 38%,#1c241e 58%);background-size:220% 100%;animation:workspaceShimmer 1.35s ease-in-out infinite}
+ .skeleton-banner{height:126px;border-radius:14px;background:#1b241e;padding:20px;display:grid;align-content:center;gap:10px}
+ .skeleton-banner i{height:10px;width:42%;border:0;border-radius:99px}.skeleton-banner i:nth-child(2){width:68%;height:17px}.skeleton-banner i:nth-child(3){width:55%}
+ .skeleton-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.skeleton-metrics i{height:90px;border-radius:12px}
+ .skeleton-title{height:18px;width:180px;border:0;border-radius:6px}
+ .skeleton-departments{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.skeleton-departments i{height:76px;border-radius:12px}
+ @keyframes workspaceShimmer{to{background-position-x:-220%}}
+ @media(max-width:680px){.skeleton-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.skeleton-departments{grid-template-columns:repeat(2,minmax(0,1fr))}.skeleton-banner{height:112px}}
+ @media(prefers-reduced-motion:reduce){.loading-skeleton i,.skeleton-title{animation:none}}
  `}</style></main>;
 }
