@@ -4012,3 +4012,43 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
     box-shadow:6px 6px 0 #111!important;
   }
 }
+
+
+/* Signature G-BEST lime/black treatment for the footer inspection CTA */
+.gbest-footer-main .gbest-footer-cta{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:16px!important;
+  min-height:62px!important;
+  padding:16px 26px!important;
+  background:#d8f936!important;
+  color:#101510!important;
+  border:3px solid #111!important;
+  border-radius:0!important;
+  box-shadow:9px 9px 0 #111!important;
+  font:900 12px 'DM Mono',ui-monospace,monospace!important;
+  letter-spacing:.12em!important;
+  text-transform:uppercase!important;
+  white-space:normal!important;
+  text-align:center!important;
+  text-decoration:none!important;
+  transition:transform .18s ease,box-shadow .18s ease!important;
+}
+.gbest-footer-main .gbest-footer-cta:hover{
+  transform:translate(3px,3px)!important;
+  box-shadow:6px 6px 0 #111!important;
+}
+.gbest-footer-main .gbest-footer-cta span{color:#101510!important;font-size:17px!important}
+.gbest-footer-main .gbest-footer-cta:focus-visible{outline:3px solid #d8f936!important;outline-offset:5px!important}
+@media(max-width:600px){
+ .gbest-footer-main .gbest-footer-cta{
+   justify-self:stretch!important;
+   width:100%!important;
+   min-height:58px!important;
+   padding:14px 18px!important;
+   font-size:10px!important;
+   letter-spacing:.1em!important;
+   box-shadow:7px 7px 0 #111!important;
+ }
+}
