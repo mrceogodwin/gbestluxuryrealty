@@ -655,3 +655,21 @@ test('admin login confirms its session cookie before opening the Control Room', 
   assert.match(login, /router\.refresh\(\)/);
   assert.match(layout, /setTimeout\(resolve,180\)/);
 });
+
+test('admin chat attachments use tenant-scoped signed storage and verified object metadata', async () => {
+  const api = await source('app/api/admin/client-chat/route.js');
+  const client = await source('app/api/client-chat/route.js');
+  const page = await source('app/admin/client-chat/page.js');
+  const widget = await source('components/agent-chat-widget.js');
+  const migration = await source('db/migrations/20261124_client_chat_attachments.sql');
+  assert.match(api, /attachment-presign/);
+  assert.match(api, /attachment-complete/);
+  assert.match(api, /HeadObjectCommand/);
+  assert.match(api, /chat\/\+ctx\.tenantId\+\//);
+  assert.match(api, /attachments\) VALUES/);
+  assert.match(client, /m\.attachments/);
+  assert.match(page, /type="file" multiple/);
+  assert.match(page, /gb-message-attachments/);
+  assert.match(widget, /attachments:Array\.isArray\(m\.attachments\)/);
+  assert.match(migration, /ADD COLUMN IF NOT EXISTS attachments jsonb/);
+});
