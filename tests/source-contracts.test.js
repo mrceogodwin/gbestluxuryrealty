@@ -673,3 +673,14 @@ test('admin chat attachments use tenant-scoped signed storage and verified objec
   assert.match(widget, /attachments:Array\.isArray\(m\.attachments\)/);
   assert.match(migration, /ADD COLUMN IF NOT EXISTS attachments jsonb/);
 });
+
+test('admin chat attachments are cleared when switching conversations and can be sent without text', async () => {
+  const page = await source('app/admin/client-chat/page.js');
+  const api = await source('app/api/admin/client-chat/route.js');
+  assert.match(page, /setPendingFiles\(\[\]\)/);
+  assert.match(page, /!draft\.trim\(\)&&!pendingFiles\.length/);
+  assert.match(page, /attachment-presign/);
+  assert.match(page, /attachment-complete/);
+  assert.match(api, /message\|\|'Shared an attachment'/);
+  assert.match(api, /inputAttachments\.length>5/);
+});
