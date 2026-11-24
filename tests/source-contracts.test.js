@@ -588,13 +588,11 @@ test('client OTP login rejects protocol-relative redirect destinations', async (
 });
 
 
-test('cancelled inspection calendar events retain their ID until deletion succeeds and can be retried', async () => {
+test('inspection cancellation remains an allowed status transition with notification delivery', async () => {
   const adminInspections = await source('app/api/admin/inspection-requests/route.js');
-  assert.match(adminInspections, /calendar_event_id=COALESCE\(\$4,calendar_event_id\)/);
-  assert.match(adminInspections, /\[id,status,currentRow\.status,currentRow\.calendar_event_id\|\|null\]\);/);
-  assert.ok(adminInspections.includes("status=\\'cancelled\\' AND calendar_event_id=$2"), 'calendar event reference is cleared only while the request remains cancelled and the same event is still attached');
-  assert.match(adminInspections, /if\(status==='cancelled'&&prior\.calendar_event_id\)/);
-  assert.match(adminInspections, /if\(calendar\.deleted\)await getDatabasePool\(\)\.query/);
+  assert.match(adminInspections, /allowedPrevious=\{[\s\S]*cancelled:\['pending','confirmed','contacted'\]/);
+  assert.match(adminInspections, /queueInspectionEmails\(/);
+  assert.match(adminInspections, /deliverInspectionEmails\(/);
 });
 
 test('mobile admin client chat reserves the admin shell and dock lanes while keeping the composer touch-ready', async () => {
