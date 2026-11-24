@@ -1,4 +1,7 @@
 import {NextResponse} from 'next/server';
+import {S3Client,PutObjectCommand,HeadObjectCommand} from '@aws-sdk/client-s3';
+import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
+import {randomUUID} from 'node:crypto';
 import {getDatabasePool} from '../../../../lib/db';
 import {authorizeAdminRequest} from '../../../../lib/admin-permissions';
 import {isAdminRequest} from '../../../../lib/admin-auth';
@@ -7,6 +10,32 @@ import {ensureSiteTenants} from '../../../../lib/site-tenants';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 const noStore={'Cache-Control':'no-store','Pragma':'no-cache'};
+
+function attachmentStorage(){
+ const endpoint=process.env.NEON_STORAGE_ENDPOINT,region=process.env.NEON_STORAGE_REGION,bucket=process.env.NEON_STORAGE_BUCKET;
+ const accessKeyId=process.env.NEON_STORAGE_ACCESS_KEY_ID,secretAccessKey=process.env.NEON_STORAGE_SECRET_ACCESS_KEY;
+ if(!endpoint||!region||!bucket||!accessKeyId||!secretAccessKey)throw new Error('Chat file storage is not configured.');
+ return {s3:new S3Client({region,endpoint,forcePathStyle:true,credentials:{accessKeyId,secretAccessKey}}),bucket,endpoint};
+}
+function attachmentPolicy(type){
+ if(/^image\/(jpeg|png|webp|gif)$/.test(type))return {max:15*1024*1024,kind:'image'};
+ if(type==='application/pdf')return {max:20*1024*1024,kind:'document'};
+ if(/^audio\/(mpeg|mp4|wav|ogg|webm)$/.test(type))return {max:25*1024*1024,kind:'audio'};
+ if(/^video\/(mp4|webm)$/.test(type))return {max:50*1024*1024,kind:'video'};
+ return null;
+}
+function attachmentPublicUrl(endpoint,bucket,key){
+ return (process.env.NEON_STORAGE_PUBLIC_BASE_URL||endpoint.replace(/\/$/,'')+'/'+bucket).replace(/\/$/,'')+'/'+key.split('/').map(encodeURIComponent).join('/');
+}
+async function accessibleConversation(pool,id,ctx){
+ const q=await pool.query(`SELECT c.id,c.status FROM public.client_chat_conversations c
+  WHERE c.id=$1 AND c.tenant_id=$2 AND ($3::boolean OR c.assigned_staff_id=$4
+   OR EXISTS(SELECT 1 FROM public.client_chat_participants cp WHERE cp.conversation_id=c.id AND cp.tenant_id=c.tenant_id AND cp.staff_id=$4 AND cp.removed_at IS NULL)
+   OR EXISTS(SELECT 1 FROM public.client_chat_monitor_access ma WHERE ma.conversation_id=c.id AND ma.tenant_id=c.tenant_id AND ma.staff_id=$4 AND ma.revoked_at IS NULL)
+   OR (c.assigned_staff_id IS NULL AND c.handoff_status='requested')) LIMIT 1`,[id,ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
+ return q.rows[0]||null;
+}
+
 async function context(req,pool,requested){
  await ensureSiteTenants(pool);
  const admin=await isAdminRequest(req);let staff=null,tenantId=requested;
@@ -37,14 +66,14 @@ export async function GET(req){
         OR (c.assigned_staff_id IS NULL AND c.handoff_status='requested'))
     LIMIT 1`,[id,ctx.tenantId,ctx.admin,ctx.staff?.id||null]);
    if(!c.rowCount)return NextResponse.json({error:'Conversation not found.'},{status:404});
-   const messages=await pool.query(`SELECT id,sender_type,sender_id,body,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at DESC,id DESC LIMIT 500`,[id]);
+   const messages=await pool.query(`SELECT id,sender_type,sender_id,body,attachments,created_at,read_at FROM public.client_chat_messages WHERE conversation_id=$1 ORDER BY created_at DESC,id DESC LIMIT 500`,[id]);
    return NextResponse.json({conversation:c.rows[0],messages:messages.rows.reverse()},{headers:noStore});
   }
   const q=await pool.query(`SELECT c.id,c.status,c.handoff_status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.client_id,r.full_name,r.email,r.phone,
    a.full_name AS assigned_staff_name,a.avatar_url AS assigned_staff_avatar_url,CASE WHEN $2::boolean THEN a.phone_number END AS assigned_staff_phone_number,
    CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS assigned_staff_presence,
    (SELECT count(*)::int FROM public.client_chat_messages m WHERE m.conversation_id=c.id AND m.sender_type='client' AND m.read_at IS NULL) AS unread_count,
-   (SELECT body FROM public.client_chat_messages m WHERE m.conversation_id=c.id ORDER BY m.created_at DESC LIMIT 1) AS last_message
+   (SELECT COALESCE(NULLIF(body,''),'Shared an attachment') FROM public.client_chat_messages m WHERE m.conversation_id=c.id ORDER BY m.created_at DESC LIMIT 1) AS last_message
    FROM public.client_chat_conversations c JOIN public.client_registrations r ON r.id=c.registration_id AND r.tenant_id=c.tenant_id
    LEFT JOIN public.staff_accounts a ON a.id=c.assigned_staff_id AND a.tenant_id=c.tenant_id
    LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id
@@ -68,8 +97,47 @@ export async function POST(req){
  if(!await authorizeAdminRequest(req,'clients.manage'))return NextResponse.json({error:'Unauthorized'},{status:401});
  try{
   const d=await req.json().catch(()=>null),id=String(d?.conversationId||''),message=String(d?.message||'').trim();
-  if(!/^[0-9a-f-]{36}$/i.test(id)||!message||message.length>4000)return NextResponse.json({error:'A conversation and a message of 1–4,000 characters are required.'},{status:400});
+  if(!/^[0-9a-f-]{36}$/i.test(id))return NextResponse.json({error:'A valid conversation is required.'},{status:400});
   const pool=getDatabasePool(),ctx=await context(req,pool,d?.tenantId);
+  if(d?.action==='attachment-presign'){
+   const conversation=await accessibleConversation(pool,id,ctx);
+   if(!conversation)return NextResponse.json({error:'Conversation not found.'},{status:404});
+   if(conversation.status!=='open')return NextResponse.json({error:'Reopen this conversation before attaching a file.'},{status:409});
+   const fileName=String(d.fileName||'attachment').normalize('NFKD').replace(/[^a-zA-Z0-9._-]/g,'-').slice(-100)||'attachment';
+   const mimeType=String(d.mimeType||'').toLowerCase(),fileSize=Number(d.fileSize),policy=attachmentPolicy(mimeType);
+   if(!policy)return NextResponse.json({error:'Choose an image, PDF, audio or MP4/WebM video file.'},{status:400});
+   if(!Number.isSafeInteger(fileSize)||fileSize<1||fileSize>policy.max)return NextResponse.json({error:'This file is larger than the allowed size for its type.'},{status:413});
+   const {s3,bucket}=attachmentStorage(),key='chat/'+ctx.tenantId+'/'+id+'/'+Date.now()+'-'+randomUUID()+'-'+fileName;
+   const uploadUrl=await getSignedUrl(s3,new PutObjectCommand({Bucket:bucket,Key:key,ContentType:mimeType}),{expiresIn:300});
+   return NextResponse.json({upload:{url:uploadUrl,headers:{'Content-Type':mimeType}},objectKey:key},{headers:noStore});
+  }
+  if(d?.action==='attachment-complete'){
+   const conversation=await accessibleConversation(pool,id,ctx);
+   if(!conversation)return NextResponse.json({error:'Conversation not found.'},{status:404});
+   if(conversation.status!=='open')return NextResponse.json({error:'Reopen this conversation before attaching a file.'},{status:409});
+   const key=String(d.objectKey||''),prefix='chat/'+ctx.tenantId+'/'+id+'/';
+   if(!key.startsWith(prefix)||key.includes('..')||key.length>1024)return NextResponse.json({error:'Invalid attachment object key.'},{status:400});
+   const {s3,bucket,endpoint}=attachmentStorage(),head=await s3.send(new HeadObjectCommand({Bucket:bucket,Key:key}));
+   const mimeType=String(head.ContentType||'').toLowerCase(),fileSize=Number(head.ContentLength||0),policy=attachmentPolicy(mimeType);
+   if(!policy||!Number.isSafeInteger(fileSize)||fileSize<1||fileSize>policy.max)return NextResponse.json({error:'The uploaded attachment is not supported or exceeds its size limit.'},{status:413});
+   return NextResponse.json({attachment:{objectKey:key,url:attachmentPublicUrl(endpoint,bucket,key),fileName:String(d.fileName||key.split('/').pop()).slice(0,160),mimeType,fileSize,kind:policy.kind}},{headers:noStore});
+  }
+  const inputAttachments=Array.isArray(d?.attachments)?d.attachments:[];
+  if(inputAttachments.length>5||(!message&&!inputAttachments.length)||message.length>4000)return NextResponse.json({error:'Enter a message or attach up to five files.'},{status:400});
+  const conversation=await accessibleConversation(pool,id,ctx);
+  if(!conversation)return NextResponse.json({error:'Conversation not found.'},{status:404});
+  if(conversation.status!=='open')return NextResponse.json({error:'This conversation is closed.'},{status:409});
+  const attachments=[];
+  if(inputAttachments.length){
+   const {s3,bucket,endpoint}=attachmentStorage(),prefix='chat/'+ctx.tenantId+'/'+id+'/';
+   for(const item of inputAttachments){
+    const key=String(item?.objectKey||'');
+    if(!key.startsWith(prefix)||key.includes('..')||key.length>1024) return NextResponse.json({error:'An attachment does not belong to this conversation.'},{status:400});
+    const head=await s3.send(new HeadObjectCommand({Bucket:bucket,Key:key})),mimeType=String(head.ContentType||'').toLowerCase(),fileSize=Number(head.ContentLength||0),policy=attachmentPolicy(mimeType);
+    if(!policy||!Number.isSafeInteger(fileSize)||fileSize<1||fileSize>policy.max)return NextResponse.json({error:'An attachment is unsupported or exceeds its size limit.'},{status:413});
+    attachments.push({objectKey:key,url:attachmentPublicUrl(endpoint,bucket,key),fileName:String(item.fileName||key.split('/').pop()).slice(0,160),mimeType,fileSize,kind:policy.kind});
+   }
+  }
   const db=await pool.connect();
   try{
    await db.query('BEGIN');
@@ -80,7 +148,7 @@ export async function POST(req){
    if(!c.rowCount){await db.query('ROLLBACK');return NextResponse.json({error:'Conversation not found.'},{status:404});}
    if(c.rows[0].status!=='open'){await db.query('ROLLBACK');return NextResponse.json({error:'This conversation is closed.'},{status:409});}
    const sender=ctx.admin?'admin':'staff',senderId=ctx.admin?'master-admin':ctx.staff.email;
-   const saved=await db.query("INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body) VALUES($1,$2,$3,$4) RETURNING id,sender_type,sender_id,body,created_at,read_at",[id,sender,senderId,message]);
+   const saved=await db.query("INSERT INTO public.client_chat_messages(conversation_id,sender_type,sender_id,body,attachments) VALUES($1,$2,$3,$4,$5::jsonb) RETURNING id,sender_type,sender_id,body,attachments,created_at,read_at",[id,sender,senderId,message||'Shared an attachment',JSON.stringify(attachments)]);
    await db.query('UPDATE public.client_chat_conversations SET last_message_at=now(),updated_at=now() WHERE id=$1',[id]);
    await db.query("UPDATE public.client_chat_messages SET read_at=COALESCE(read_at,now()) WHERE conversation_id=$1 AND sender_type='client' AND read_at IS NULL",[id]);
    await db.query('COMMIT');
