@@ -11,7 +11,7 @@ function DockIcon({name}){const p={width:22,height:22,viewBox:'0 0 24 24',fill:'
 export default function AdminClientChatPage(){
  const [items,setItems]=useState([]),[selected,setSelected]=useState(''),[detail,setDetail]=useState(null),[draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[tenants,setTenants]=useState([]),[staff,setStaff]=useState([]),[tenantId,setTenantId]=useState(''),[tab,setTab]=useState('chats'),[search,setSearch]=useState(''),[filter,setFilter]=useState('all'),[showInfo,setShowInfo]=useState(false);\n const openRequest=useRef(0);
  const load=useCallback(async()=>{try{const r=await fetch('/api/admin/client-chat'+(tenantId?'?tenantId='+encodeURIComponent(tenantId):''),{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not load conversations');setItems(d.conversations||[]);setTenants(d.tenants||[]);setStaff(d.staff||[]);if(d.activeTenantId&&String(d.activeTenantId)!==tenantId)setTenantId(String(d.activeTenantId));if(selected&&!(d.conversations||[]).some(x=>x.id===selected)){setSelected('');setDetail(null)}}catch(e){setError(e.message)}},[tenantId,selected]);
- const open=useCallback(async(id)=>{const request=++openRequest.current;setSelected(id);setDetail(null);setError('');setNotice('');try{const q=new URLSearchParams({conversationId:id});if(tenantId)q.set('tenantId',tenantId);const r=await fetch('/api/admin/client-chat?'+q.toString(),{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not open conversation');if(request!==openRequest.current)return;setDetail(d);await fetch('/api/admin/client-chat',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:id,tenantId:tenantId||undefined,action:'read'})});if(request===openRequest.current)setItems(old=>old.map(x=>x.id===id?{...x,unread_count:0}:x))}catch(e){if(request===openRequest.current)setError(e.message)}},[tenantId]);
+ const open=useCallback(async(id)=>{const request=++openRequest.current;setSelected(id);setDetail(null);setError('');setNotice('');try{const q=new URLSearchParams({conversationId:id});if(tenantId)q.set('tenantId',tenantId);const r=await fetch('/api/admin/client-chat?'+q.toString(),{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not open conversation');if(request!==openRequest.current)return;setDetail(d);await fetch('/api/admin/client-chat',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:id,tenantId:tenantId||undefined,action:'read'})});if(request===openRequest.current)setItems(old=>old.map(x=>x.id===id?{...x,unread_count:0}:x))}catch(e){if(request===openRequest.current){setSelected('');setDetail(null);setError(e.message)}}},[tenantId]);
  useEffect(()=>{load()},[load]);
  useEffect(()=>{const timer=setInterval(load,30000);return()=>clearInterval(timer)},[load]);
  const visible=useMemo(()=>items.filter(x=>{const q=search.toLowerCase();const match=!q||[x.full_name,x.email,x.client_id,x.last_message].some(v=>String(v||'').toLowerCase().includes(q));const f=filter==='unread'?Number(x.unread_count)>0:filter==='assigned'?!!x.assigned_staff_id:filter==='unassigned'?!x.assigned_staff_id:true;return match&&f}),[items,search,filter]);
@@ -32,7 +32,7 @@ export default function AdminClientChatPage(){
     {tab==='settings'&&<div className="gb-settings-list"><div><b>Workspace</b><small>G-BEST Luxury Realty</small></div><div><b>Auto refresh</b><small>Inbox refreshes every 30 seconds</small></div><div><b>Team availability</b><small>{online.length} team members currently online</small></div><a href="/admin/super/overview">Return to Control Room ↗</a></div>}
    </aside>
    <section className={'gb-chat-main '+(selected?'gb-mobile-show':'')}>
-    {!detail?<div className="gb-welcome"><span className="gb-welcome-icon">✉</span><h2>Your messages, in one place.</h2><p>Select a client conversation to read, reply, or manage its assignment.</p><div className="gb-welcome-stats"><span><b>{items.length}</b><small>Conversations</small></span><span><b>{items.filter(x=>Number(x.unread_count)>0).length}</b><small>Unread</small></span><span><b>{online.length}</b><small>Team online</small></span></div></div>:<>
+    {!detail?<><div className="gb-welcome"><span className="gb-welcome-icon">✉</span><h2>Your messages, in one place.</h2><p>Select a client conversation to read, reply, or manage its assignment.</p><div className="gb-welcome-stats"><span><b>{items.length}</b><small>Conversations</small></span><span><b>{items.filter(x=>Number(x.unread_count)>0).length}</b><small>Unread</small></span><span><b>{online.length}</b><small>Team online</small></span></div></div>{selected&&<div className="gb-chat-loading" role="status"><span className="gb-loading-dot"/>Loading conversation…</div>}</>:<>
      <div className="gb-conversation-head"><button className="gb-back-btn" onClick={()=>{setSelected('');setDetail(null)}} aria-label="Back to chats">‹</button><span className="gb-avatar">{initials(detail.conversation.full_name)}</span><button className="gb-person-title" onClick={()=>setShowInfo(v=>!v)}><b>{detail.conversation.full_name}</b><small>{detail.conversation.email||detail.conversation.client_id||'G-BEST client'}</small></button><span className="gb-status-chip">{detail.conversation.status==='open'?'Open':'Closed'}</span><button className="gb-icon-btn gb-info-toggle" onClick={()=>setShowInfo(v=>!v)} aria-label="Conversation details">ⓘ</button></div>
      {showInfo&&<div className="gb-info-panel"><div><small>CLIENT ID</small><b>{detail.conversation.client_id||'—'}</b></div><div><small>PHONE</small><b>{detail.conversation.phone||'Not provided'}</b></div><div><small>CONVERSATION OWNER</small><b>{detail.conversation.assigned_staff_name||'Agent assistant'}</b></div><label>Assign to available team member<select value={detail.conversation.assigned_staff_id||''} onChange={e=>action('assign',e.target.value)} disabled={busy}><option value="">Agent assistant · No human assigned</option>{detail.conversation.assigned_staff_id&&!online.some(s=>String(s.id)===String(detail.conversation.assigned_staff_id))&&<option value={detail.conversation.assigned_staff_id} disabled>{detail.conversation.assigned_staff_name||'Assigned colleague'} · Offline</option>}{online.map(s=><option key={s.id} value={s.id}>{s.full_name} · Online</option>)}</select></label></div>}
      <div className="gb-message-scroll">{detail.messages.map((m,i)=><div key={m.id} className={'gb-message-row '+(m.sender_type==='client'?'incoming':'outgoing')}><div className="gb-message-bubble"><small>{m.sender_type==='client'?'CLIENT':m.sender_type==='staff'?'TEAM':'G-BEST'}</small><p>{m.body}</p><time>{clock(m.created_at)}</time></div></div>)}{detail.messages.length===0&&<div className="gb-empty"><b>No messages yet</b><small>Send the first reply to this client.</small></div>}</div>
@@ -101,6 +101,39 @@ export default function AdminClientChatPage(){
    .gb-toast{bottom:calc(82px + env(safe-area-inset-bottom));max-width:calc(100vw - 28px)}
   }
   @media(min-width:761px){.gb-chat-app{min-height:570px}.gb-composer{flex-shrink:0}.gb-message-scroll{min-height:0}}
+
+  .gb-chat-loading{display:none}
+  .gb-settings-list>div{min-width:0}
+  .gb-settings-list b,.gb-settings-list small{display:block;line-height:1.45}
+  .gb-settings-list b{color:#263b2d}
+  .gb-settings-list small{color:#758378}
+  .gb-chat-loading{align-items:center;justify-content:center;gap:10px;color:#6b7b6f;font-size:12px}
+  .gb-loading-dot{width:8px;height:8px;border-radius:50%;background:#6e9d5b;box-shadow:0 0 0 5px #6e9d5b1e;animation:gbChatPulse 1s ease-in-out infinite}
+  @keyframes gbChatPulse{50%{opacity:.35;transform:scale(.82)}}
+  @media(max-width:760px){
+   .gb-chat-loading{display:flex;height:100%;min-height:180px}
+   .gb-sidebar-title h1{color:#172b20!important}
+   .gb-sidebar-title p{color:#68786d!important}
+   .gb-inbox-meta{color:#718075!important}
+   .gb-team-list,.gb-activity-list{background:#fff}
+   .gb-presence-summary{align-items:center;gap:12px;min-height:54px;padding:14px 17px;color:#657568!important;background:#f8faf7}
+   .gb-presence-summary b{color:#27633d!important;font-size:12px}
+   .gb-presence-summary span{color:#78867b!important;font-size:10px}
+   .gb-team-row{min-height:70px;padding:12px 16px}
+   .gb-team-row b{display:block;color:#263b2d!important;font-size:12px;line-height:1.35}
+   .gb-team-row small{display:block;color:#78867b!important;font-size:10px;line-height:1.4}
+   .gb-empty{display:grid;gap:9px;align-content:center;justify-items:center;text-align:center;min-height:190px;padding:24px;color:#263b2d}
+   .gb-settings-list{padding:12px 15px 30px;display:grid;grid-template-columns:minmax(0,1fr);gap:9px;background:#f5f7f3;overflow:auto}
+   .gb-settings-list>div,.gb-settings-list>a{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding:15px 14px;border:1px solid #e2e9df;border-radius:13px;background:#fff;min-height:70px}
+   .gb-settings-list b{font-size:12px;color:#233a2a!important;line-height:1.35}
+   .gb-settings-list small{font-size:11px;color:#738176!important;line-height:1.45;overflow-wrap:anywhere}
+   .gb-settings-list>a{display:flex;align-items:center;justify-content:space-between;color:#245b37!important;font-size:11px;font-weight:700}
+   .gb-activity-row{gap:10px;padding:14px 16px;background:#fff}
+   .gb-activity-row>span:last-child{min-width:0;display:grid;gap:5px}
+   .gb-activity-row b{color:#24392b!important;font-size:12px;line-height:1.35}
+   .gb-activity-row small,.gb-activity-row time{color:#718075!important;font-size:10px;line-height:1.4;overflow-wrap:anywhere}
+   .gb-bottom-dock{backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%)}
+  }
   `}</style>
  </main>;
 }
