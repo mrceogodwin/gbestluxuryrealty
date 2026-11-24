@@ -54,10 +54,12 @@ export async function GET(req){
   const id=url.searchParams.get('conversationId');
   if(id){
    if(!/^[0-9a-f-]{36}$/i.test(id))return NextResponse.json({error:'Invalid conversation ID.'},{status:400});
-   const c=await pool.query(`SELECT c.id,c.status,c.handoff_status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.id AS registration_id,r.client_id,r.full_name,r.email,r.phone,
+   const c=await pool.query(`SELECT c.id,c.status,c.handoff_status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.id AS registration_id,r.client_id,r.full_name,r.email,r.phone,r.avatar_url AS client_avatar_url,
+    CASE WHEN cp.last_seen_at>now()-interval '90 seconds' AND cp.presence='online' THEN 'online' WHEN cp.last_seen_at>now()-interval '90 seconds' AND cp.presence='away' THEN 'away' ELSE 'offline' END AS client_presence,cp.last_seen_at AS client_last_seen_at,
     a.full_name AS assigned_staff_name,a.avatar_url AS assigned_staff_avatar_url,CASE WHEN $3::boolean THEN a.phone_number END AS assigned_staff_phone_number,CASE WHEN $3::boolean THEN a.email END AS assigned_staff_email,
     CASE WHEN p.last_seen_at>now()-interval '120 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS assigned_staff_presence,p.last_seen_at AS assigned_staff_last_seen_at
     FROM public.client_chat_conversations c JOIN public.client_registrations r ON r.id=c.registration_id AND r.tenant_id=c.tenant_id
+    LEFT JOIN public.client_presence cp ON cp.registration_id=r.id AND cp.tenant_id=r.tenant_id
     LEFT JOIN public.staff_accounts a ON a.id=c.assigned_staff_id AND a.tenant_id=c.tenant_id
     LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id
     WHERE c.id=$1 AND c.tenant_id=$2
@@ -71,12 +73,14 @@ export async function GET(req){
    const signedMessages=await signMessageAttachments(messages.rows.reverse());
    return NextResponse.json({conversation:c.rows[0],messages:signedMessages},{headers:noStore});
   }
-  const q=await pool.query(`SELECT c.id,c.status,c.handoff_status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.client_id,r.full_name,r.email,r.phone,
+  const q=await pool.query(`SELECT c.id,c.status,c.handoff_status,c.assigned_staff_id,c.assigned_by,c.assigned_at,c.created_at,c.last_message_at,r.client_id,r.full_name,r.email,r.phone,r.avatar_url AS client_avatar_url,
+   CASE WHEN cp.last_seen_at>now()-interval '90 seconds' AND cp.presence='online' THEN 'online' WHEN cp.last_seen_at>now()-interval '90 seconds' AND cp.presence='away' THEN 'away' ELSE 'offline' END AS client_presence,cp.last_seen_at AS client_last_seen_at,
    a.full_name AS assigned_staff_name,a.avatar_url AS assigned_staff_avatar_url,CASE WHEN $2::boolean THEN a.phone_number END AS assigned_staff_phone_number,
    CASE WHEN p.last_seen_at>now()-interval '90 seconds' AND p.presence='online' THEN 'online' WHEN p.last_seen_at>now()-interval '90 seconds' THEN p.presence ELSE 'offline' END AS assigned_staff_presence,
    (SELECT count(*)::int FROM public.client_chat_messages m WHERE m.conversation_id=c.id AND m.sender_type='client' AND m.read_at IS NULL) AS unread_count,
    (SELECT COALESCE(NULLIF(body,''),'Shared an attachment') FROM public.client_chat_messages m WHERE m.conversation_id=c.id ORDER BY m.created_at DESC LIMIT 1) AS last_message
    FROM public.client_chat_conversations c JOIN public.client_registrations r ON r.id=c.registration_id AND r.tenant_id=c.tenant_id
+   LEFT JOIN public.client_presence cp ON cp.registration_id=r.id AND cp.tenant_id=r.tenant_id
    LEFT JOIN public.staff_accounts a ON a.id=c.assigned_staff_id AND a.tenant_id=c.tenant_id
    LEFT JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id
    WHERE c.tenant_id=$1 AND ($2::boolean OR c.assigned_staff_id=$3
