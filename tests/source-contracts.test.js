@@ -95,6 +95,15 @@ test('media uploads enforce supported image and audio MIME types and file sizes'
   assert.match(code, /25\*1024\*1024/);
 });
 
+test('tenant fallback rejects arbitrary Vercel and production preview hostnames', async () => {
+  const tenants = await source('lib/site-tenants.js');
+  assert.match(tenants, /VERCEL_PROJECT_PRODUCTION_URL/);
+  assert.match(tenants, /gbestluxuryrealty\.vercel\.app/);
+  assert.doesNotMatch(tenants, /hostname\.endsWith\('\.vercel\.app'\)/);
+  assert.match(tenants, /process\.env\.NODE_ENV!=='production'/);
+  assert.doesNotMatch(tenants, /normalizeHostname\(process\.env\.VERCEL_URL/);
+});
+
 test('white-label company registry resolves published branding by domain', async () => {
   const tenants = await source('lib/site-tenants.js');
   const publicRoute = await source('app/api/homepage/route.js');

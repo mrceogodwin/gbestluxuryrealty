@@ -23,9 +23,9 @@ export async function GET(req){
     if(!tenant)return unauthenticated();
 
     const tokenHash=createHash('sha256').update(token).digest('hex');
-    const result=await pool.query(`SELECT r.id,r.client_id,r.full_name,r.email,r.phone,r.registration_intent,r.payment_status
+    const result=await pool.query(`SELECT r.id,r.client_id,r.full_name,r.email,r.phone,r.registration_intent,r.payment_status,r.avatar_url
       FROM public.client_sessions s
-      JOIN public.client_registrations r ON r.id::text=s.registration_id
+      JOIN public.client_registrations r ON r.id=s.registration_id
       WHERE s.token_hash=$1
         AND s.revoked_at IS NULL
         AND s.expires_at>now()
@@ -56,11 +56,12 @@ export async function GET(req){
         phone:client.phone||'',
         email:client.email,
         registrationIntent:client.registration_intent,
-        paymentStatus:client.payment_status
+        paymentStatus:client.payment_status,
+        avatarUrl:client.avatar_url||null
       }
     },{headers:{'Cache-Control':'no-store','Pragma':'no-cache'}});
   }catch(error){
-    console.error('Client session lookup failed',error.code||error.message);
+    console.error('Client session lookup failed',error.code||'DB_ERROR',error.message);
     return NextResponse.json(
       {error:'We could not verify your client session. Please try again.'},
       {status:503,headers:{'Cache-Control':'no-store','Pragma':'no-cache'}}

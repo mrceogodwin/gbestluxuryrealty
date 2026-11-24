@@ -14,19 +14,7 @@ export async function GET(req){
   if(admin){
    granted=new Set(['dashboard.view','properties.manage','clients.view','payments.review','inspections.view','inspections.manage','media.manage','staff.manage','homepage.manage','audit.view']);
   }else{
-   const permissions=await pool.query(`SELECT rp.permission_key,
-    COALESCE(ap.enabled,rp.enabled,false) AS enabled
-    FROM public.staff_role_permissions rp
-    LEFT JOIN public.staff_account_permissions ap
-      ON ap.staff_id=$1 AND ap.permission_key=rp.permission_key
-    WHERE rp.role=$2
-    UNION
-    SELECT ap.permission_key,ap.enabled
-    FROM public.staff_account_permissions ap
-    WHERE ap.staff_id=$1 AND NOT EXISTS(
-      SELECT 1 FROM public.staff_role_permissions rp
-      WHERE rp.role=$2 AND rp.permission_key=ap.permission_key
-    )`,[staff.id,staff.role]);
+   const permissions=await pool.query('SELECT permission_key,enabled FROM public.staff_account_permissions WHERE staff_id=$1',[staff.id]);
    granted=new Set(permissions.rows.filter(x=>x.enabled===true).map(x=>x.permission_key));
   }
   if(!admin&&!granted.has('dashboard.view'))return NextResponse.json({error:'Your Super Admin has not assigned dashboard access to this account.'},{status:403,headers:{'Cache-Control':'no-store'}});

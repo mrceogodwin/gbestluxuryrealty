@@ -129,8 +129,13 @@ export async function PATCH(req){
    if(!current.rowCount)return NextResponse.json({error:'Conversation not found.'},{status:404});
    let selectedStaff=null;
    if(staffId){
-    const valid=await pool.query("SELECT id,full_name FROM public.staff_accounts WHERE id=$1 AND tenant_id=$2 AND status='active' AND role<>'super_admin'",[staffId,ctx.tenantId]);
-    if(!valid.rowCount)return NextResponse.json({error:'That staff member is not active in this workspace.'},{status:400});
+    const valid=await pool.query(`SELECT a.id,a.full_name
+     FROM public.staff_accounts a
+     JOIN public.staff_presence p ON p.staff_id=a.id AND p.tenant_id=a.tenant_id
+     WHERE a.id=$1 AND a.tenant_id=$2 AND a.status='active' AND a.role<>'super_admin'
+       AND p.presence='online' AND p.last_seen_at>now()-interval '90 seconds'
+     LIMIT 1`,[staffId,ctx.tenantId]);
+    if(!valid.rowCount)return NextResponse.json({error:'That team member is not currently online. Refresh the team list and choose an available colleague.'},{status:409,headers:noStore});
     selectedStaff=valid.rows[0];
    }
    if(String(current.rows[0].assigned_staff_id||'')!==String(staffId||'')){

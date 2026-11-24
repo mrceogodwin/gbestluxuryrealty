@@ -2,35 +2,40 @@
 import {useCallback,useEffect,useState} from 'react';
 function timeAgo(value,now){if(!value)return 'never active';const seconds=Math.max(0,Math.floor((now-new Date(value).getTime())/1000));if(seconds<60)return seconds+' sec ago';const minutes=Math.floor(seconds/60);if(minutes<60)return minutes+' min ago';const hours=Math.floor(minutes/60);if(hours<24)return hours+' hr ago';return Math.floor(hours/24)+' days ago';}
 export default function AdminClientChatPage(){
- const [items,setItems]=useState([]),[selected,setSelected]=useState(''),[detail,setDetail]=useState(null),[draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[tenants,setTenants]=useState([]),[staff,setStaff]=useState([]),[tenantId,setTenantId]=useState(''),[clock,setClock]=useState(Date.now());
+ const [items,setItems]=useState([]),[selected,setSelected]=useState(''),[detail,setDetail]=useState(null),[draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[tenants,setTenants]=useState([]),[staff,setStaff]=useState([]),[tenantId,setTenantId]=useState('');
  const load=useCallback(async()=>{setBusy(true);setError('');try{const r=await fetch('/api/admin/client-chat'+(tenantId?'?tenantId='+encodeURIComponent(tenantId):''),{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not load messages');setItems(d.conversations||[]);setTenants(d.tenants||[]);setStaff(d.staff||[]);if(d.activeTenantId)setTenantId(String(d.activeTenantId));if(selected&&!(d.conversations||[]).some(x=>x.id===selected)){setSelected('');setDetail(null)}}catch(e){setError(e.message)}finally{setBusy(false)}},[tenantId,selected]);
  const open=useCallback(async(id)=>{setSelected(id);setError('');try{const q=new URLSearchParams({conversationId:id});if(tenantId)q.set('tenantId',tenantId);const r=await fetch('/api/admin/client-chat?'+q.toString(),{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not open conversation');setDetail(d);await fetch('/api/admin/client-chat',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:id,tenantId:tenantId||undefined,action:'read'})});setItems(old=>old.map(x=>x.id===id?{...x,unread_count:0}:x))}catch(e){setError(e.message)}},[tenantId]);
  useEffect(()=>{load()},[load]);
- useEffect(()=>{const timer=setInterval(()=>load(),30000);return()=>clearInterval(timer)},[load]);
- useEffect(()=>{const timer=setInterval(()=>setClock(Date.now()),1000);return()=>clearInterval(timer)},[]);
+ const refreshInbox=useCallback(async()=>{try{const r=await fetch('/api/admin/client-chat'+(tenantId?'?tenantId='+encodeURIComponent(tenantId):''),{cache:'no-store'});const d=await r.json();if(!r.ok)return;setItems(old=>JSON.stringify(old)===JSON.stringify(d.conversations||[])?old:(d.conversations||[]));setStaff(old=>JSON.stringify(old)===JSON.stringify(d.staff||[])?old:(d.staff||[]));setTenants(old=>JSON.stringify(old)===JSON.stringify(d.tenants||[])?old:(d.tenants||[]));}catch{/* Keep the current inbox visible during transient refresh failures. */}},[tenantId]);
+ useEffect(()=>{const timer=setInterval(refreshInbox,45000);return()=>clearInterval(timer)},[refreshInbox]);
+
  async function send(e){e.preventDefault();if(!draft.trim()||!selected||busy)return;setBusy(true);try{const r=await fetch('/api/admin/client-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:selected,tenantId:tenantId||undefined,message:draft})});const d=await r.json();if(!r.ok)throw Error(d.error||'Reply failed');setDraft('');await open(selected);await load()}catch(e){setError(e.message)}finally{setBusy(false)}}
  async function action(action){if(!selected)return;try{const r=await fetch('/api/admin/client-chat',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:selected,tenantId:tenantId||undefined,action})});const d=await r.json();if(!r.ok)throw Error(d.error||'Update failed');await open(selected);await load()}catch(e){setError(e.message)}}
  async function claimChat(){if(!selected)return;setBusy(true);setError('');try{const r=await fetch('/api/admin/client-chat',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:selected,tenantId:tenantId||undefined,action:'claim'})});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not claim this conversation');await open(selected);await load()}catch(e){setError(e.message)}finally{setBusy(false)}}
  async function assignStaff(staffId){if(!selected)return;try{const r=await fetch('/api/admin/client-chat',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversationId:selected,tenantId:tenantId||undefined,action:'assign',staffId:staffId||null})});const d=await r.json();if(!r.ok)throw Error(d.error||'Assignment failed');await open(selected);await load()}catch(e){setError(e.message)}}
  const active=items.find(x=>x.id===selected);
- return <main style={{minHeight:'100vh',background:'#f4f3e9',color:'#173b2b',padding:'28px clamp(14px,4vw,54px)',fontFamily:'Inter,Arial,sans-serif'}}>
+ return <main className="admin-client-chat" style={{minHeight:'100vh',background:'#f4f3e9',color:'#173b2b',padding:'28px clamp(14px,4vw,54px)',fontFamily:'Inter,Arial,sans-serif'}}>
   <a href="/admin/super/overview" style={{color:'#173b2b',fontWeight:800,textDecoration:'none',fontSize:12}}>← CONTROL ROOM</a>
   <header style={{display:'flex',justifyContent:'space-between',alignItems:'end',gap:16,flexWrap:'wrap',margin:'24px 0'}}>
    <div><p style={{fontSize:10,letterSpacing:'.2em',fontWeight:800,color:'#a18442'}}>G-BEST / CLIENT OPERATIONS</p><h1 style={{fontFamily:'Georgia,serif',fontSize:'clamp(32px,5vw,54px)',margin:'8px 0'}}>CLIENT <i>MESSAGES.</i></h1><p style={{color:'#647468',fontSize:13}}>Private conversations from Agent and approved clients</p></div>
    <div style={{display:'flex',gap:10,alignItems:'center'}}>{tenants.length>1&&<select aria-label="Company workspace" value={tenantId} onChange={e=>{setTenantId(e.target.value);setSelected('');setDetail(null)}} style={{padding:12,border:'1px solid #cbd6ca',borderRadius:8}}>{tenants.map(t=><option key={t.id} value={t.id}>{t.display_name}</option>)}</select>}<button onClick={load} style={btn} disabled={busy}>REFRESH ↻</button></div>
   </header>
   {error&&<p role="alert" style={{background:'#fff0ed',color:'#9d3026',padding:12,borderRadius:8}}>{error}</p>}
-  <div style={{display:'grid',gridTemplateColumns:'minmax(260px,360px) minmax(0,1fr)',gap:16,minHeight:560}}>
-   <aside style={panel}><div style={panelHead}>INBOX · {items.length}</div>{items.length===0?<p style={{padding:20,color:'#718075',fontSize:13}}>No client conversations yet. New messages will appear here.</p>:items.map(x=><button key={x.id} onClick={()=>open(x.id)} style={{...thread,background:selected===x.id?'#e8eee5':'#fff'}}><div style={{display:'flex',justifyContent:'space-between',gap:8}}><b>{x.full_name}</b>{Number(x.unread_count)>0&&<span style={{background:'#d7b86c',borderRadius:20,padding:'2px 7px',fontSize:10}}>{x.unread_count}</span>}</div><small style={{color:'#758176'}}>{x.client_id||x.email}</small><p style={{fontSize:12,color:'#52665a',margin:'8px 0 0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{x.last_message||'Conversation opened'}</p></button>)}</aside>
-   <section style={{...panel,display:'flex',flexDirection:'column',minHeight:560}}>
-    {!detail?<div style={{margin:'auto',textAlign:'center',padding:24,color:'#748176'}}>Select a conversation to read and reply.</div>:<>
+  <div className="chat-layout" style={{display:'grid',gridTemplateColumns:'minmax(260px,360px) minmax(0,1fr)',gap:16,minHeight:560}}>
+   <aside className={"chat-inbox "+(selected?"is-hidden-mobile":"")} style={panel}><div style={panelHead}>CLIENT INBOX · {items.length}</div>
+    <div className="team-availability"><div className="team-availability-head"><div><b>TEAM AVAILABILITY</b><small>Live staff presence · refreshed automatically</small></div><span className="online-count">{staff.filter(s=>s.presence==='online').length} ONLINE</span></div>
+     {staff.filter(s=>s.presence==='online').length===0?<p className="team-empty">No team members are showing as online right now. Open a conversation to review the full team roster.</p>:staff.filter(s=>s.presence==='online').map(s=><div className="team-person" key={s.id}>{s.avatar_url?<img src={s.avatar_url} alt=""/>:<span className="team-avatar">{s.full_name?.slice(0,1)||'S'}</span>}<div className="team-person-copy"><b>{s.full_name}</b><small><i/> Available now · {s.assigned_count} assigned</small></div><button type="button" disabled={!selected||!detail||detail.conversation.assigned_staff_id===s.id} onClick={()=>assignStaff(s.id)}>{detail?.conversation.assigned_staff_id===s.id?'ASSIGNED':selected?'ASSIGN CHAT':'OPEN CHAT FIRST'}</button></div>)}
+     <p className="team-footnote">Only staff with a current online presence can receive a new assignment.</p>
+    </div>{items.length===0?<p style={{padding:20,color:'#718075',fontSize:13}}>No client conversations yet. New messages will appear here.</p>:items.map(x=><button key={x.id} onClick={()=>open(x.id)} style={{...thread,background:selected===x.id?'#e8eee5':'#fff'}}><div style={{display:'flex',justifyContent:'space-between',gap:8}}><b>{x.full_name}</b>{Number(x.unread_count)>0&&<span style={{background:'#d7b86c',borderRadius:20,padding:'2px 7px',fontSize:10}}>{x.unread_count}</span>}</div><small style={{color:'#758176'}}>{x.client_id||x.email}</small><p style={{fontSize:12,color:'#52665a',margin:'8px 0 0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{x.last_message||'Conversation opened'}</p></button>)}</aside>
+   <section className={"chat-detail "+(selected?"is-active-mobile":"")} style={{...panel,display:'flex',flexDirection:'column',minHeight:560}}>
+    {!detail?<div style={{margin:'auto',textAlign:'center',padding:24,color:'#748176'}}>Select a conversation to read and reply.</div>:<><button className="mobile-inbox-back" type="button" onClick={()=>{setSelected('');setDetail(null)}}>← Back to inbox</button>
      <div style={{...panelHead,display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap'}}><div><b>{detail.conversation.full_name}</b><div style={{fontSize:11,fontWeight:400,marginTop:4}}>{detail.conversation.email} · {detail.conversation.phone}</div></div><div style={{display:'flex',gap:8}}>{detail.conversation.handoff_status==='requested'&&!detail.conversation.assigned_staff_id&&<button style={{...btnSmall,background:'#d8efb4'}} onClick={claimChat} disabled={busy}>CLAIM WAITING CHAT</button>}<button style={btnSmall} onClick={()=>action(detail.conversation.status==='open'?'close':'reopen')}>{detail.conversation.status==='open'?'CLOSE CHAT':'REOPEN CHAT'}</button></div></div>
-     {staff.length>0&&<div style={{padding:14,borderBottom:'1px solid #e4eadf',background:'#f8faf6'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap',marginBottom:10}}><b style={{fontSize:11,letterSpacing:'.12em'}}>HUMAN ASSIGNMENT</b><select aria-label="Assign conversation to staff" value={detail.conversation.assigned_staff_id||''} onChange={e=>assignStaff(e.target.value)} style={{minWidth:210,padding:10,border:'1px solid #d5dfd3',borderRadius:8,background:'#fff',color:'#173b2b'}}><option value="">Agent only · Unassigned</option>{staff.map(s=><option key={s.id} value={s.id}>{s.full_name} · {s.presence}</option>)}</select></div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(230px,1fr))',gap:8}}>{staff.map(s=><div key={s.id} style={{display:'flex',alignItems:'center',gap:9,padding:10,border:'1px solid #e0e8dc',borderRadius:10,background:'#fff',minWidth:0}}>
+     {<div style={{padding:14,borderBottom:'1px solid #e4eadf',background:'#f8faf6'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap',marginBottom:10}}><div><b style={{fontSize:11,letterSpacing:'.12em'}}>ASSIGN CHAT</b><small style={{display:'block',fontSize:10,color:'#728274',marginTop:4}}>Choose an available G-BEST team member</small></div><select aria-label="Assign conversation to staff" value={detail.conversation.assigned_staff_id||''} onChange={e=>assignStaff(e.target.value)} style={{minWidth:210,padding:10,border:'1px solid #d5dfd3',borderRadius:8,background:'#fff',color:'#173b2b'}}><option value="">Agent only · Unassigned</option>{staff.filter(s=>s.presence==='online').map(s=><option key={s.id} value={s.id}>{s.full_name} · ONLINE</option>)}</select></div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(230px,1fr))',gap:8}}>{staff.length===0?<p style={{fontSize:12,color:'#758176',gridColumn:'1/-1',padding:14,background:'#f5f7f3',borderRadius:10}}>No active staff accounts are available to assign yet. Add or activate staff in Staff Management; online colleagues will appear here automatically.</p>:staff.map(s=><div key={s.id} style={{display:'flex',alignItems:'center',gap:9,padding:10,border:'1px solid #e0e8dc',borderRadius:10,background:'#fff',minWidth:0,opacity:s.presence==='online'?1:.62}}>
        {s.avatar_url?<img src={s.avatar_url} alt="" style={{width:42,height:42,borderRadius:'50%',objectFit:'cover',flex:'0 0 42px'}}/>:<span style={{width:42,height:42,borderRadius:'50%',display:'grid',placeItems:'center',background:'#173b2b',color:'#fff',flex:'0 0 42px'}}>{s.full_name?.slice(0,1)||'S'}</span>}
-       <div style={{minWidth:0,flex:1}}><b style={{display:'block',fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.full_name}</b><small style={{display:'block',color:'#718075',fontSize:10}}>{s.role} · {s.presence} · {s.assigned_count} chats</small><small style={{display:'block',color:'#718075',fontSize:10}}>{s.phone_number||'Phone not added yet'}</small><small style={{display:'block',color:'#718075',fontSize:10}}>Last seen · {timeAgo(s.last_seen_at,clock)}</small></div>
-       <div style={{display:'flex',flexDirection:'column',gap:4,flex:'0 0 auto'}}><button type="button" style={btnSmall} onClick={()=>assignStaff(s.id)} disabled={detail.conversation.assigned_staff_id===s.id}>ASSIGN</button>{s.phone_number&&<><a style={{...btnSmall,textDecoration:'none',textAlign:'center'}} href={'tel:'+s.phone_number}>CALL</a><a style={{...btnSmall,textDecoration:'none',textAlign:'center'}} href={'https://wa.me/'+s.phone_number.replace(/\D/g,'').replace(/^0/,'234')} target="_blank" rel="noreferrer">WHATSAPP</a></>}</div>
+       <div style={{minWidth:0,flex:1}}><b style={{display:'block',fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.full_name}</b><small style={{display:'block',color:'#718075',fontSize:10}}>{s.role} · {s.presence==='online'?'AVAILABLE NOW':'OFFLINE'} · {s.assigned_count} chats</small><small style={{display:'block',color:'#718075',fontSize:10}}>{s.phone_number||'Phone not added yet'}</small><small style={{display:'block',color:'#718075',fontSize:10}}>Last seen · {timeAgo(s.last_seen_at,Date.now())}</small></div>
+       <div style={{display:'flex',flexDirection:'column',gap:4,flex:'0 0 auto'}}><button type="button" style={btnSmall} onClick={()=>assignStaff(s.id)} disabled={s.presence!=='online'||detail.conversation.assigned_staff_id===s.id||busy}>{detail.conversation.assigned_staff_id===s.id?'ASSIGNED':s.presence==='online'?'ASSIGN CHAT':'OFFLINE'}</button>{s.phone_number&&<><a style={{...btnSmall,textDecoration:'none',textAlign:'center'}} href={'tel:'+s.phone_number}>CALL</a><a style={{...btnSmall,textDecoration:'none',textAlign:'center'}} href={'https://wa.me/'+s.phone_number.replace(/\D/g,'').replace(/^0/,'234')} target="_blank" rel="noreferrer">WHATSAPP</a></>}</div>
       </div>)}</div>
       {detail.conversation.assigned_staff_name&&<p style={{margin:'10px 0 0',fontSize:11,color:'#52665a'}}>Assigned to <b>{detail.conversation.assigned_staff_name}</b> · {detail.conversation.assigned_staff_presence||'offline'}{detail.conversation.assigned_staff_phone_number?' · '+detail.conversation.assigned_staff_phone_number:''}</p>}
      </div>}
@@ -39,7 +44,95 @@ export default function AdminClientChatPage(){
     </>}
    </section>
   </div>
-  <style jsx>{'@media(max-width:760px){main>div:nth-of-type(2){grid-template-columns:1fr!important} }'}</style>
+  <style jsx>{'@media(max-width:760px){.chat-layout{display:block!important;min-height:0!important}.chat-inbox.is-hidden-mobile{display:none!important}.chat-detail:not(.is-active-mobile){display:none!important}.chat-detail{min-height:calc(100dvh - 210px)!important}.mobile-inbox-back{display:block!important}.chat-detail>div[style*=overflowY]{max-height:48dvh!important;min-height:180px}}.mobile-inbox-back{display:none;margin:12px 14px 0;padding:10px 12px;border:1px solid #d7e2d5;border-radius:9px;background:#f3f7f1;color:#173b2b;font-size:11px;font-weight:800;align-self:flex-start}'}</style>
+<style jsx global>{`
+.gb-content .admin-client-chat{isolation:isolate!important;min-height:calc(100dvh - 68px)!important;background:radial-gradient(ellipse at 95% 0%,#284332 0,transparent 28%),linear-gradient(145deg,#101712,#17221a 58%,#101612)!important;color:#f1f5ed!important;padding:clamp(18px,3vw,38px)!important}
+.admin-client-chat>a{color:#c5dfa0!important;border:1px solid #ffffff22!important;background:#ffffff09!important;border-radius:30px!important;padding:9px 14px!important;font-size:10px!important}
+.admin-client-chat header{align-items:flex-end!important;margin:24px 0 26px!important}
+.admin-client-chat header p:first-child{color:#d2b66d!important;font-size:10px!important;letter-spacing:.22em!important}
+.admin-client-chat header h1{font-family:Georgia,serif!important;font-size:clamp(34px,5vw,54px)!important;color:#f5f2e8!important;line-height:1!important}
+.admin-client-chat header>div>p:last-child{color:#aebcaf!important}
+.admin-client-chat header button{background:linear-gradient(145deg,#d8edaa,#a9c879)!important;color:#183624!important;border:1px solid #e8f5d1!important;border-radius:12px!important;box-shadow:0 5px 0 #708d4c,0 10px 20px #0005!important;padding:13px 17px!important}
+.admin-client-chat .chat-layout{grid-template-columns:minmax(280px,360px) minmax(0,1fr)!important;gap:18px!important;min-height:620px!important}
+.admin-client-chat .chat-inbox,.admin-client-chat .chat-detail{background:linear-gradient(150deg,#fdfefb,#eef3ec)!important;border:1px solid #d8e4d7!important;border-radius:20px!important;overflow:hidden!important;box-shadow:0 18px 40px #0005,0 3px 0 #6d806d,inset 0 1px #fff!important;color:#183a29!important}
+.admin-client-chat .chat-inbox>div:first-child,.admin-client-chat .chat-detail>div[style*="background"]{background:linear-gradient(115deg,#123b28,#24553b)!important;color:#f6f4e9!important;padding:18px 20px!important}
+.admin-client-chat .chat-inbox>button{display:block!important;width:100%!important;text-align:left!important;padding:18px!important;border:0!important;border-bottom:1px solid #e2eae0!important;background:linear-gradient(145deg,#fff,#f5f8f3)!important;color:#183a29!important;cursor:pointer!important}
+.admin-client-chat .chat-inbox>button:hover{background:#e8f0e5!important}
+.admin-client-chat .chat-inbox>button b{font-size:15px!important;color:#173c29!important}
+.admin-client-chat .chat-inbox>button small{display:block!important;margin-top:5px!important;font-size:11px!important}
+.admin-client-chat .chat-inbox>button p{font-size:12px!important;line-height:1.5!important;margin-top:10px!important}
+.admin-client-chat .chat-detail{min-height:620px!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]{background:radial-gradient(ellipse at 50% 0%,#e7f0e4,#f8faf6 70%)!important;min-height:300px!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]>div{box-shadow:0 4px 12px #163b2517!important;border-radius:16px!important;padding:14px 16px!important;max-width:min(82%,560px)!important}
+.admin-client-chat .chat-detail form{background:#fff!important;align-items:flex-end!important;padding:16px!important;gap:12px!important}
+.admin-client-chat .chat-detail form textarea{min-height:54px!important;max-height:140px!important;border-radius:16px!important;background:#f8faf6!important;border:1px solid #d6e3d4!important;color:#173b2b!important;font-size:14px!important}
+.admin-client-chat .chat-detail form button{min-height:48px!important;border-radius:13px!important;background:linear-gradient(145deg,#1d5437,#103b27)!important;box-shadow:0 4px 0 #092819,0 8px 14px #173b2b25!important;color:#fff!important}
+@media(max-width:760px){
+.gb-content .admin-client-chat{padding:17px 12px calc(28px + env(safe-area-inset-bottom))!important;min-height:calc(100dvh - 60px)!important}
+.admin-client-chat header{margin:18px 2px 20px!important;align-items:flex-start!important;flex-direction:column!important}
+.admin-client-chat header h1{font-size:36px!important}
+.admin-client-chat .chat-layout{display:block!important;min-height:0!important}
+.admin-client-chat .chat-inbox.is-hidden-mobile{display:none!important}
+.admin-client-chat .chat-detail:not(.is-active-mobile){display:none!important}
+.admin-client-chat .chat-inbox,.admin-client-chat .chat-detail{border-radius:18px!important;min-height:0!important}
+.admin-client-chat .chat-detail.is-active-mobile{display:flex!important;min-height:calc(100dvh - 245px)!important;height:calc(100dvh - 245px)!important;max-height:780px!important}
+.admin-client-chat .mobile-inbox-back{display:block!important;margin:12px 14px!important;padding:10px 14px!important;border:1px solid #cbdcc9!important;border-radius:12px!important;background:linear-gradient(145deg,#fff,#edf4eb)!important;color:#173b2b!important;font-size:11px!important;font-weight:800!important;box-shadow:0 3px 0 #d6e1d4!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]{flex:1 1 auto!important;min-height:120px!important;max-height:none!important;padding:14px!important;overflow-y:auto!important}
+.admin-client-chat .chat-detail form{padding:12px!important}
+.admin-client-chat .chat-detail form textarea{min-width:0!important}
+.admin-client-chat .chat-detail form button{padding:12px!important;font-size:9px!important;white-space:nowrap!important}
+}
+
+/* 2026 flagship client operations workspace */
+.gb-content .admin-client-chat{min-height:100dvh!important;padding:clamp(16px,3vw,40px)!important;background:radial-gradient(ellipse at 88% 0%,#294b37 0,transparent 32%),linear-gradient(145deg,#0d1711,#15251a 62%,#101a13)!important;color:#f5f5ed!important}
+.admin-client-chat>a{display:inline-flex!important;align-items:center!important;gap:8px!important;border:1px solid #ffffff20!important;background:#ffffff0a!important;color:#d8e8cb!important;border-radius:999px!important;padding:10px 15px!important}
+.admin-client-chat header{max-width:1440px!important;margin:22px auto 24px!important;padding:0 2px!important;align-items:flex-end!important}
+.admin-client-chat header h1{font-family:Georgia,serif!important;font-size:clamp(34px,4.5vw,58px)!important;letter-spacing:-.035em!important}
+.admin-client-chat header>div>p:last-child{font-size:14px!important}
+.admin-client-chat .chat-layout{max-width:1440px!important;margin:0 auto!important;grid-template-columns:minmax(300px,370px) minmax(0,1fr)!important;gap:18px!important;min-height:660px!important;align-items:stretch!important}
+.admin-client-chat .chat-inbox,.admin-client-chat .chat-detail{border-radius:22px!important;border:1px solid #dbe5d9!important;box-shadow:0 22px 55px #0006,0 3px 0 #6e806c,inset 0 1px #fff!important;background:linear-gradient(155deg,#fff,#f2f6f0)!important;color:#173b2b!important}
+.admin-client-chat .chat-inbox{max-height:calc(100dvh - 250px)!important;overflow:auto!important;position:sticky!important;top:18px!important}
+.admin-client-chat .chat-inbox>div:first-child{position:sticky!important;top:0!important;z-index:2!important;padding:18px 20px!important;font-size:12px!important;letter-spacing:.14em!important;background:linear-gradient(120deg,#123b29,#24553b)!important}
+.admin-client-chat .team-availability{padding:16px!important;background:linear-gradient(180deg,#f2f7ef,#fff)!important;border-bottom:1px solid #e4ebe1!important}
+.admin-client-chat .team-availability-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;margin-bottom:12px!important}
+.admin-client-chat .team-availability-head b{font-size:10px!important;letter-spacing:.12em!important}
+.admin-client-chat .online-count{border-radius:99px!important;padding:7px 10px!important;background:#e5f2df!important;color:#245c37!important;font-size:9px!important;font-weight:900!important}
+.admin-client-chat .team-person{display:flex!important;align-items:center!important;gap:9px!important;padding:9px!important;border:1px solid #e4ebe1!important;border-radius:14px!important;background:#fff!important;margin-top:8px!important}
+.admin-client-chat .team-person img,.admin-client-chat .team-avatar{width:38px!important;height:38px!important;flex:0 0 38px!important;border-radius:50%!important;object-fit:cover!important}
+.admin-client-chat .team-person-copy{min-width:0!important;flex:1!important}
+.admin-client-chat .team-person-copy b{display:block!important;font-size:11px!important}
+.admin-client-chat .team-person-copy small{font-size:9px!important}
+.admin-client-chat .team-person button{border-radius:10px!important;padding:9px 10px!important;background:#173f2c!important;color:#fff!important;font-size:9px!important}
+.admin-client-chat .team-footnote,.admin-client-chat .team-empty{font-size:10px!important;line-height:1.5!important;color:#7a897d!important}
+.admin-client-chat .chat-inbox>button{padding:17px 18px!important;border-bottom:1px solid #e8eee6!important;background:#fff!important;transition:background .15s ease!important}
+.admin-client-chat .chat-inbox>button[style*="background: rgb(232"]{background:#edf4e9!important}
+.admin-client-chat .chat-inbox>button b{font-size:14px!important}
+.admin-client-chat .chat-inbox>button p{font-size:11px!important;line-height:1.45!important}
+.admin-client-chat .chat-detail{min-height:660px!important;max-height:calc(100dvh - 190px)!important}
+.admin-client-chat .chat-detail>div[style*="background"]{background:linear-gradient(120deg,#123b29,#24553b)!important;color:#fff!important;padding:18px 20px!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]{flex:1 1 auto!important;min-height:280px!important;background:radial-gradient(ellipse at 50% 0%,#eaf2e7,#f8faf7 68%)!important;padding:22px!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]>div{max-width:min(78%,620px)!important;border-radius:18px!important;padding:14px 16px!important;box-shadow:0 8px 20px #183c2815!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]>div[style*="rgb(23, 59, 43)"]{border-bottom-right-radius:5px!important}
+.admin-client-chat .chat-detail>div[style*="overflowY"]>div[style*="rgb(237, 241, 233)"]{border-bottom-left-radius:5px!important}
+.admin-client-chat .chat-detail form{background:#fff!important;border-top:1px solid #e6ece3!important;padding:16px!important;align-items:flex-end!important}
+.admin-client-chat .chat-detail form textarea{border-radius:16px!important;padding:14px!important;min-height:58px!important;background:#f7faf5!important;font-size:14px!important}
+.admin-client-chat .chat-detail form button{border-radius:13px!important;padding:15px 20px!important;background:linear-gradient(145deg,#24583b,#123b29)!important;box-shadow:0 4px 0 #0b2a1b,0 8px 18px #173b2b30!important;font-size:10px!important}
+.admin-client-chat .chat-detail select{max-width:100%!important}
+@media(max-width:760px){
+ .gb-content .admin-client-chat{padding:16px 12px calc(24px + env(safe-area-inset-bottom))!important}
+ .admin-client-chat header{margin:18px 2px 18px!important;gap:14px!important}
+ .admin-client-chat header h1{font-size:36px!important}
+ .admin-client-chat .chat-layout{display:block!important;min-height:0!important}
+ .admin-client-chat .chat-inbox.is-hidden-mobile{display:none!important}
+ .admin-client-chat .chat-detail:not(.is-active-mobile){display:none!important}
+ .admin-client-chat .chat-inbox{position:static!important;max-height:none!important}
+ .admin-client-chat .chat-detail.is-active-mobile{display:flex!important;min-height:calc(100dvh - 220px)!important;height:calc(100dvh - 220px)!important;max-height:850px!important}
+ .admin-client-chat .chat-detail>div[style*="overflowY"]{min-height:150px!important;max-height:none!important;padding:14px!important}
+ .admin-client-chat .chat-detail>div[style*="overflowY"]>div{max-width:88%!important}
+ .admin-client-chat .team-person button{padding:8px!important}
+}
+@media(prefers-reduced-motion:reduce){.admin-client-chat *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+`}</style>
  </main>
 }
 const panel={background:'#fff',border:'1px solid #e0e7dc',borderRadius:12,overflow:'hidden',boxShadow:'0 8px 28px #173b2b0b'};

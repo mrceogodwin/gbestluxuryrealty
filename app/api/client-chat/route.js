@@ -13,7 +13,7 @@ async function clientContext(req){
  if(!tenant)return null;
  const hash=createHash('sha256').update(token).digest('hex');
  const q=await pool.query(`SELECT r.id,r.tenant_id,r.full_name,r.email,r.client_id
-  FROM public.client_sessions s JOIN public.client_registrations r ON r.id::text=s.registration_id
+  FROM public.client_sessions s JOIN public.client_registrations r ON r.id=s.registration_id
   WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now()
    AND r.tenant_id=$2 AND r.payment_status IN ('approved','not_required','pending','rejected') AND r.client_status='active' LIMIT 1`,[hash,tenant.id]);
  return q.rows[0]||null;
@@ -28,6 +28,7 @@ export async function GET(req){
    m.id AS message_id,m.sender_type,m.sender_id,m.body,m.created_at AS message_created_at,m.read_at,ms.full_name AS sender_name,ms.avatar_url AS sender_avatar_url
    FROM public.client_chat_conversations c
    LEFT JOIN public.client_chat_messages m ON m.conversation_id=c.id
+   LEFT JOIN public.staff_accounts ms ON ms.id::text=m.sender_id AND ms.tenant_id=c.tenant_id
    WHERE c.tenant_id=$1 AND c.registration_id=$2
    ORDER BY m.created_at DESC NULLS LAST,m.id DESC LIMIT 500`,[client.tenant_id,client.id]);
   q.rows.reverse();
@@ -45,7 +46,7 @@ export async function GET(req){
   return NextResponse.json({conversation:first?{id:first.conversation_id,status:first.status,handoffStatus:first.handoff_status,handoffRequestedAt:first.handoff_requested_at,assignedStaffId:first.assigned_staff_id,assignedAt:first.assigned_at,created_at:first.created_at,last_message_at:first.last_message_at}:null,
    humanAvailable:staff.rows.some(s=>s.presence==='online'),staff:staff.rows,events:events.rows,
    messages:q.rows.filter(x=>x.message_id).map(x=>({id:x.message_id,sender_type:x.sender_type,sender_id:x.sender_id,sender_name:x.sender_name,sender_avatar_url:x.sender_avatar_url,body:x.body,created_at:x.message_created_at,read_at:x.read_at}))},{headers:noStore});
- }catch(e){console.error('Client chat load failed',e.code||e.message);return NextResponse.json({error:'Could not load your messages right now.'},{status:503,headers:noStore});}
+ }catch(e){console.error('Client chat load failed',e.code||'DB_ERROR',e.message);return NextResponse.json({error:'Could not load your messages right now.'},{status:503,headers:noStore});}
 }
 export async function POST(req){
  if(req.headers.get('origin')!==req.nextUrl.origin)return NextResponse.json({error:'Invalid request origin.'},{status:403});
@@ -109,5 +110,5 @@ export async function POST(req){
    }catch(agentError){console.warn('Agent fallback unavailable',agentError?.name||'error')}
    return NextResponse.json({ok:true,conversationId:conv.rows[0].id,message:saved.rows[0],agentMessage,suggestHuman},{status:201,headers:noStore});
   }catch(e){await db.query('ROLLBACK').catch(()=>{});throw e;}finally{db.release();}
- }catch(e){console.error('Client chat send failed',e.code||e.message);return NextResponse.json({error:'Your message could not be sent. Please try again.'},{status:503,headers:noStore});}
+ }catch(e){console.error('Client chat send failed',e.code||'DB_ERROR',e.message);return NextResponse.json({error:'Your message could not be sent. Please try again.'},{status:503,headers:noStore});}
 }

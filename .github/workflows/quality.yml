@@ -9,6 +9,7 @@ on:
   push:
     branches:
       - feat/gbest-prelaunch-registration-chat
+      - feat/client-dashboard-portal
 
 permissions:
   contents: read

@@ -21,6 +21,11 @@ Run these migrations against the Production Neon main branch only after taking a
 
 The flagship communications migration must run after `20261119_client_chat_runtime_compat.sql` so the assignee conversion first performs the strict UUID preflight instead of the older compatibility block's legacy fallback. The existing Production schema already contains the foundational client chat, OTP, finance ledger, tenant schedule and inspection-slot tables; verify those objects before considering any older baseline migration.
 
+7. `20261122_tenant_contact_newsletter_finance.sql`
+   - Adds tenant ownership to public contact submissions, finance ledger entries and finance audit history; existing rows are assigned to the G-BEST tenant.
+   - Creates or upgrades newsletter subscriptions with tenant-scoped normalized-email uniqueness while preserving legacy subscriber rows.
+   - Apply only after confirming the G-BEST tenant exists and taking a Neon restore point. Public contact, newsletter and finance APIs now expect this migration to be present; do not deploy those API changes before the migration has been applied and verified.
+
 The migrations are designed to be repeatable where possible. Stop and review any migration error; do not force a partial schema change.
 
 ## Read-only preflight checks
