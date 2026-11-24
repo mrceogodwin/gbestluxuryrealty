@@ -3969,3 +3969,46 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
     box-shadow:6px 6px 0 #111!important;
   }
 }
+
+
+/* Signature G-BEST lime treatment for the mid-page inspection CTA */
+.gbest-midpage-cta .gbest-footer-cta{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:18px!important;
+  min-height:62px!important;
+  padding:16px 25px!important;
+  background:#d8f936!important;
+  color:#101510!important;
+  border:3px solid #111!important;
+  border-radius:0!important;
+  box-shadow:9px 9px 0 #111!important;
+  font:900 12px 'DM Mono',ui-monospace,monospace!important;
+  letter-spacing:.12em!important;
+  text-transform:uppercase!important;
+  text-decoration:none!important;
+  transition:transform .18s ease,box-shadow .18s ease!important;
+}
+.gbest-midpage-cta .gbest-footer-cta span{
+  color:#101510!important;
+  font-size:18px!important;
+}
+.gbest-midpage-cta .gbest-footer-cta:hover{
+  transform:translate(3px,3px)!important;
+  box-shadow:6px 6px 0 #111!important;
+}
+.gbest-midpage-cta .gbest-footer-cta:focus-visible{
+  outline:3px solid #d8f936!important;
+  outline-offset:5px!important;
+}
+@media(max-width:760px){
+  .gbest-midpage-cta .gbest-footer-cta{
+    min-height:54px!important;
+    padding:13px 17px!important;
+    gap:12px!important;
+    font-size:10px!important;
+    letter-spacing:.09em!important;
+    box-shadow:6px 6px 0 #111!important;
+  }
+}
