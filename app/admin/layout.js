@@ -305,6 +305,28 @@ export default function SuperAdminLayout({children}){
  .gb-console .gb-shell.sidebar-collapsed>.gb-sidebar{width:0!important;min-width:0!important}
 }
 
+
+ /* Boxed desktop workspace: keep the Control Room focused instead of stretching edge-to-edge. */
+ @media(min-width:1100px){
+  .gb-console .gb-content{
+   width:calc(100% - 64px)!important;
+   max-width:1440px!important;
+   min-height:calc(100vh - 114px)!important;
+   margin:24px auto 30px!important;
+   border:1px solid #ffffff1c!important;
+   border-radius:18px!important;
+   overflow:hidden!important;
+   box-shadow:0 22px 70px #0008,inset 0 1px #ffffff0a!important;
+   background:radial-gradient(ellipse at 80% 0%,#252d28 0%,transparent 42%),#111312!important;
+  }
+ }
+ @media(min-width:851px) and (max-width:1099px){
+  .gb-console .gb-content{width:calc(100% - 36px)!important;margin:18px auto 24px!important;border:1px solid #ffffff18!important;border-radius:15px!important;overflow:hidden!important}
+ }
+ @media(max-width:850px){
+  .gb-console .gb-content{width:100%!important;max-width:none!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+ }
+
  `}</style>
  <div className={"gb-shell"+(collapsed?" sidebar-collapsed":"")}>
  <aside className={'gb-sidebar'+(open?' open':'')}>
