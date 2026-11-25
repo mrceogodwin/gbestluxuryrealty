@@ -4137,3 +4137,25 @@ body:has(.gbest-site-root){background:#e9ede7}
 @media(max-width:900px){
   .gbest-site-root{width:100%!important;max-width:none!important;margin:0!important}
 }
+
+
+/* Desktop register CTA: solid brand-green button, matching the intended nav treatment. */
+@media(min-width:901px){
+  .gbest-site-root>nav>div>a.nav-register{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    min-height:46px!important;
+    padding:0 20px!important;
+    background:#07532f!important;
+    color:#fff!important;
+    border:1px solid #07532f!important;
+    box-shadow:3px 3px 0 rgba(7,20,11,.22)!important;
+    text-decoration:none!important;
+  }
+  .gbest-site-root>nav>div>a.nav-register:hover{
+    background:#04351f!important;
+    border-color:#04351f!important;
+    color:#fff!important;
+  }
+}
