@@ -306,24 +306,30 @@ export default function SuperAdminLayout({children}){
 }
 
 
- /* Boxed desktop workspace: keep the Control Room focused instead of stretching edge-to-edge. */
+ /* Unified boxed workspace: header and every Super Admin screen share one desktop frame. */
  @media(min-width:1100px){
-  .gb-console .gb-content{
+  .gb-console .gb-main{
    width:calc(100% - 64px)!important;
-   max-width:1440px!important;
-   min-height:calc(100vh - 114px)!important;
-   margin:24px auto 30px!important;
+   max-width:1504px!important;
+   min-width:0!important;
+   min-height:calc(100vh - 48px)!important;
+   margin:24px auto!important;
    border:1px solid #ffffff1c!important;
    border-radius:18px!important;
    overflow:hidden!important;
    box-shadow:0 22px 70px #0008,inset 0 1px #ffffff0a!important;
    background:radial-gradient(ellipse at 80% 0%,#252d28 0%,transparent 42%),#111312!important;
   }
+  .gb-console .gb-topbar{width:100%!important}
+  .gb-console .gb-content{width:100%!important;max-width:none!important;min-height:calc(100vh - 114px)!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow-x:clip!important}
  }
  @media(min-width:851px) and (max-width:1099px){
-  .gb-console .gb-content{width:calc(100% - 36px)!important;margin:18px auto 24px!important;border:1px solid #ffffff18!important;border-radius:15px!important;overflow:hidden!important}
+  .gb-console .gb-main{width:calc(100% - 36px)!important;min-width:0!important;margin:18px auto 24px!important;border:1px solid #ffffff18!important;border-radius:15px!important;overflow:hidden!important;box-shadow:0 16px 48px #0006!important}
+  .gb-console .gb-topbar{width:100%!important}
+  .gb-console .gb-content{width:100%!important;max-width:none!important;margin:0!important;border:0!important;border-radius:0!important;overflow-x:clip!important}
  }
  @media(max-width:850px){
+  .gb-console .gb-main{width:100%!important;min-width:0!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}
   .gb-console .gb-content{width:100%!important;max-width:none!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
  }
 
