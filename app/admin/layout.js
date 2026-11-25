@@ -207,21 +207,6 @@ export default function SuperAdminLayout({children}){
  .gb-console .gb-sidebar .gb-navlink{position:relative!important;display:flex!important;flex:0 0 auto!important;width:100%!important;min-width:0!important;height:auto!important;min-height:46px!important;margin:3px 0!important;box-sizing:border-box!important;line-height:1.35!important;white-space:normal!important;overflow-wrap:anywhere!important;z-index:1}
  .gb-console .gb-sidebar .gb-sidefoot{position:relative!important;display:block!important;flex:0 0 auto!important;width:100%!important;box-sizing:border-box!important;margin:24px 0 0!important;padding:16px 9px calc(18px + env(safe-area-inset-bottom))!important;line-height:1.6!important;white-space:normal!important;z-index:0}
  @media(max-width:850px){.gb-console .gb-sidebar nav{gap:17px!important}.gb-console .gb-sidebar .gb-navgroup{margin:0!important}.gb-console .gb-sidebar .gb-navlink{min-height:46px!important}.gb-console .gb-sidebar .gb-sidefoot{margin-top:24px!important}}
- `}</style>
- <div className={"gb-shell"+(collapsed?" sidebar-collapsed":"")}>
- <aside className={'gb-sidebar'+(open?' open':'')}>
- <Link className="gb-brand" href="/admin/super" onClick={()=>setOpen(false)}><span className="gb-mark">G</span><span><strong>G-BEST</strong><small>REALTY CONTROL ROOM</small></span></Link>
- <div className="gb-env"><i/> COMPANY CONTROL CONSOLE <span style={{marginLeft:'auto',color:'#829d89'}}>01</span></div>
- <nav aria-label="Super admin navigation">{visibleGroups.map(group=><div className="gb-navgroup" key={group.label}><div className="gb-navlabel">{group.label}</div>{group.items.map(([href,label,icon])=><Link key={href} href={href} onClick={()=>setOpen(false)} className={'gb-navlink'+((path===href||((href==='/admin/super/staff#activity')&&path==='/admin/super/staff')||(href!=='/admin'&&href!=='/admin/super'&&href!=='/admin/clients'&&href!=='/admin/super/homepage'&&href!=='/admin/super/media'&&path.startsWith(href+'/')))?' active':'')}><span className="gb-navicon">{icon}</span>{label}</Link>)}</div>)}</nav>
- <div className="gb-sidefoot">G-BEST LUXURY REALTY<br/>Management console · Secure workspace</div>
- </aside>
- {open&&<button type="button" aria-label="Close navigation drawer" onClick={()=>setOpen(false)} style={{position:'fixed',inset:0,zIndex:90,border:0,borderRadius:0,background:'#000a',backdropFilter:'blur(5px)',cursor:'pointer'}}/>}
- <div className="gb-main">
- <header className="gb-topbar"><div style={{display:'flex',alignItems:'center',gap:12}}><button className="gb-mobiletoggle" onClick={()=>{if(window.matchMedia("(min-width:851px)").matches)setCollapsed(v=>!v);else setOpen(v=>!v)}} aria-label="Toggle navigation">{collapsed?"☰":"☰"}</button><div className="gb-crumb">G-BEST <span style={{opacity:.45}}> / </span><b>{path==='/admin/super/website'?'BRAND & WEBSITE STUDIO':path==='/admin/super/homepage'?'PAGE CONTENT EDITOR':path==='/admin/super/media'?'MEDIA LIBRARY':path==='/admin/clients'?'CLIENTS':path.startsWith('/admin/super/contacts')?'BUSINESS CONTACTS':path.startsWith('/admin/super/modification-engine')?'MODIFICATION ENGINE':path.startsWith('/admin/super/finance')?'FINANCE CENTRE':path==='/admin'?'INSPECTIONS':path==='/admin/super'?'PROPERTY OPERATIONS':path==='/admin/super/overview'?'CONTROL ROOM DASHBOARD':path.startsWith('/admin/super/staff')?'STAFF & PERMISSIONS':path==='/admin/super/activity'?'ACTIVITY & AUDIT LOG':path==='/admin/control'?'LEGACY CONTROL ROOM':'SYSTEM SETTINGS'}</b></div></div><div className="gb-topright"><span className="gb-secure">● {staff?'STAFF WORKSPACE':'ADMIN WORKSPACE'}</span><button onClick={signOut} style={{border:"1px solid #d8e5d2",background:"#fff",borderRadius:99,padding:"7px 10px",color:"#426b3d",fontWeight:700,fontSize:11}}>SIGN OUT</button></div></header>
- <main className="gb-content">{children}</main>
- </div></div></div>
-}
-
 
 /* Client chat: keep the admin rail inside its grid track so it cannot cover the inbox. */
 .gb-console .gb-shell{
@@ -304,4 +289,18 @@ export default function SuperAdminLayout({children}){
  .gb-console .gb-shell.sidebar-collapsed{grid-template-columns:minmax(0,1fr)!important}
  .gb-console .gb-sidebar{width:270px!important;max-width:270px!important}
  .gb-console .gb-shell.sidebar-collapsed>.gb-sidebar{transform:translateX(-105%)!important}
+}
+ `}</style>
+ <div className={"gb-shell"+(collapsed?" sidebar-collapsed":"")}>
+ <aside className={'gb-sidebar'+(open?' open':'')}>
+ <Link className="gb-brand" href="/admin/super" onClick={()=>setOpen(false)}><span className="gb-mark">G</span><span><strong>G-BEST</strong><small>REALTY CONTROL ROOM</small></span></Link>
+ <div className="gb-env"><i/> COMPANY CONTROL CONSOLE <span style={{marginLeft:'auto',color:'#829d89'}}>01</span></div>
+ <nav aria-label="Super admin navigation">{visibleGroups.map(group=><div className="gb-navgroup" key={group.label}><div className="gb-navlabel">{group.label}</div>{group.items.map(([href,label,icon])=><Link key={href} href={href} onClick={()=>setOpen(false)} className={'gb-navlink'+((path===href||((href==='/admin/super/staff#activity')&&path==='/admin/super/staff')||(href!=='/admin'&&href!=='/admin/super'&&href!=='/admin/clients'&&href!=='/admin/super/homepage'&&href!=='/admin/super/media'&&path.startsWith(href+'/')))?' active':'')}><span className="gb-navicon">{icon}</span>{label}</Link>)}</div>)}</nav>
+ <div className="gb-sidefoot">G-BEST LUXURY REALTY<br/>Management console · Secure workspace</div>
+ </aside>
+ {open&&<button type="button" aria-label="Close navigation drawer" onClick={()=>setOpen(false)} style={{position:'fixed',inset:0,zIndex:90,border:0,borderRadius:0,background:'#000a',backdropFilter:'blur(5px)',cursor:'pointer'}}/>}
+ <div className="gb-main">
+ <header className="gb-topbar"><div style={{display:'flex',alignItems:'center',gap:12}}><button className="gb-mobiletoggle" onClick={()=>{if(window.matchMedia("(min-width:851px)").matches)setCollapsed(v=>!v);else setOpen(v=>!v)}} aria-label="Toggle navigation">{collapsed?"☰":"☰"}</button><div className="gb-crumb">G-BEST <span style={{opacity:.45}}> / </span><b>{path==='/admin/super/website'?'BRAND & WEBSITE STUDIO':path==='/admin/super/homepage'?'PAGE CONTENT EDITOR':path==='/admin/super/media'?'MEDIA LIBRARY':path==='/admin/clients'?'CLIENTS':path.startsWith('/admin/super/contacts')?'BUSINESS CONTACTS':path.startsWith('/admin/super/modification-engine')?'MODIFICATION ENGINE':path.startsWith('/admin/super/finance')?'FINANCE CENTRE':path==='/admin'?'INSPECTIONS':path==='/admin/super'?'PROPERTY OPERATIONS':path==='/admin/super/overview'?'CONTROL ROOM DASHBOARD':path.startsWith('/admin/super/staff')?'STAFF & PERMISSIONS':path==='/admin/super/activity'?'ACTIVITY & AUDIT LOG':path==='/admin/control'?'LEGACY CONTROL ROOM':'SYSTEM SETTINGS'}</b></div></div><div className="gb-topright"><span className="gb-secure">● {staff?'STAFF WORKSPACE':'ADMIN WORKSPACE'}</span><button onClick={signOut} style={{border:"1px solid #d8e5d2",background:"#fff",borderRadius:99,padding:"7px 10px",color:"#426b3d",fontWeight:700,fontSize:11}}>SIGN OUT</button></div></header>
+ <main className="gb-content">{children}</main>
+ </div></div></div>
 }
