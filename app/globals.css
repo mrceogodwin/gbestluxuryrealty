@@ -4114,3 +4114,26 @@ body:has(.gbest-site-root){background:#e9ede7}
   .gbest-site-root>nav .gbest-lockup-type b{font-size:22px!important}
   .gbest-site-root>nav .gbest-lockup-type small{font-size:7px!important}
 }
+
+
+/* Narrower desktop canvas: keep the public site comfortably framed on wide screens. */
+@media(min-width:901px){
+  .gbest-site-root{
+    width:calc(100% - 96px)!important;
+    max-width:1200px!important;
+    margin:28px auto!important;
+  }
+  .gbest-site-root>.topline{
+    padding-left:clamp(22px,3.5vw,52px)!important;
+    padding-right:clamp(22px,3.5vw,52px)!important;
+  }
+  .gbest-site-root>nav{
+    padding-left:clamp(22px,3.5vw,52px)!important;
+    padding-right:clamp(22px,3.5vw,52px)!important;
+    gap:20px!important;
+  }
+  .gbest-site-root>nav>div{gap:clamp(12px,1.5vw,22px)!important}
+}
+@media(max-width:900px){
+  .gbest-site-root{width:100%!important;max-width:none!important;margin:0!important}
+}
