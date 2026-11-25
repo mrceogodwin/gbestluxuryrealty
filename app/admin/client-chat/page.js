@@ -363,6 +363,110 @@ export default function AdminClientChatPage(){
   .gb-toast{background:#26372b!important;color:#eff7e8!important;border:1px solid #607455!important}
   @media(max-width:760px){.gb-chat-top{background:#18221b!important}.gb-chat-sidebar,.gb-chat-main{border-radius:0!important}}
 
+
+  /* Final dark-theme consistency and desktop chat polish */
+  :global(.gb-content .gb-ios-chat){background:#101612!important;color:#edf4eb!important}
+  :global(.gb-content .gb-ios-chat .gb-chat-app){background:transparent!important}
+  :global(.gb-content .gb-ios-chat .gb-chat-sidebar),
+  :global(.gb-content .gb-ios-chat .gb-chat-main){background:linear-gradient(155deg,#202923 0%,#171f19 55%,#131a15 100%)!important;border:1px solid #3b493e!important;color:#edf4eb!important}
+  :global(.gb-content .gb-ios-chat .gb-message-scroll){background:#17221a!important;background-image:radial-gradient(#405344 0.7px,transparent .7px)!important;background-size:20px 20px!important;color:#edf4eb!important}
+  :global(.gb-content .gb-ios-chat .gb-message-row.incoming .gb-message-bubble){background:#2a392f!important;border:1px solid #46594a!important;color:#f3f7ef!important}
+  :global(.gb-content .gb-ios-chat .gb-message-row.outgoing .gb-message-bubble){background:linear-gradient(145deg,#385b37,#29452d)!important;border:1px solid #58764c!important;color:#f6faef!important}
+  :global(.gb-content .gb-ios-chat .gb-message-bubble p){color:#f0f5ec!important;opacity:1!important}
+  :global(.gb-content .gb-ios-chat .gb-message-bubble>small){color:#c7e7a8!important;opacity:1!important}
+  :global(.gb-content .gb-ios-chat .gb-message-bubble time),
+  :global(.gb-content .gb-ios-chat .gb-message-foot),
+  :global(.gb-content .gb-ios-chat .gb-read-state){color:#c1d0bf!important;opacity:1!important}
+  :global(.gb-content .gb-ios-chat .gb-read-state.is-seen){color:#d6f69a!important}
+  :global(.gb-content .gb-ios-chat .gb-conversation-head){background:#202a23!important;border-bottom:1px solid #3b4b3e!important}
+  :global(.gb-content .gb-ios-chat .gb-person-title b){color:#f5f8f1!important;opacity:1!important}
+  :global(.gb-content .gb-ios-chat .gb-person-title small){color:#b5c5b5!important;opacity:1!important}
+  :global(.gb-content .gb-ios-chat .gb-status-chip){background:#2d412f!important;color:#d9f5ad!important;border:1px solid #536d4d!important}
+  :global(.gb-content .gb-ios-chat .gb-head-avatar .gb-avatar){border:2px solid #c9f36a!important;box-shadow:0 0 0 3px #c9f36a22!important}
+  :global(.gb-content .gb-ios-chat .gb-head-avatar>i),
+  :global(.gb-content .gb-ios-chat .gb-avatar-wrap>i){border:2px solid #1b281e!important}
+  :global(.gb-content .gb-ios-chat .gb-conversation-tools){background:#1d2921!important;border-top:1px solid #3a493d!important;color:#b8c8b8!important}
+  :global(.gb-content .gb-ios-chat .gb-conversation-tools button){background:#2a3b2e!important;border:1px solid #4b614c!important;color:#e0efcf!important}
+  :global(.gb-content .gb-ios-chat .gb-composer){display:flex!important;align-items:center!important;gap:10px!important;background:#18231b!important;border-top:1px solid #3a4b3d!important;padding:12px 16px 14px!important}
+  :global(.gb-content .gb-ios-chat .gb-composer textarea){background:#101914!important;border:1px solid #465849!important;color:#f4f8ef!important;min-height:44px!important;border-radius:22px!important}
+  :global(.gb-content .gb-ios-chat .gb-composer textarea::placeholder){color:#93a493!important}
+  :global(.gb-content .gb-ios-chat .gb-composer .gb-attach){display:grid!important;place-items:center!important;width:42px!important;height:42px!important;flex:0 0 42px!important;border:1px solid #536b4e!important;border-radius:50%!important;background:#2a3d2c!important;color:#d8f59a!important;font-size:23px!important}
+  :global(.gb-content .gb-ios-chat .gb-composer button[type=submit]){background:linear-gradient(145deg,#d8ff82,#9acb40)!important;color:#152319!important;box-shadow:0 5px 14px #0005!important}
+  :global(.gb-content .gb-ios-chat .gb-file-input){display:none!important}
+  :global(.gb-content .gb-ios-chat .gb-pending-files){background:#1b281f!important;border-top:1px solid #354638!important}
+  :global(.gb-content .gb-ios-chat .gb-pending-files>span){background:#2a3b2e!important;border-color:#4b614c!important;color:#e3f2d3!important}
+  :global(.gb-content .gb-ios-chat .gb-pending-files button){background:transparent!important;color:#ffc0a9!important}
+  :global(.gb-content .gb-ios-chat .gb-message-attachments a){background:#24352a!important;border-color:#4a604b!important;color:#e0f0d2!important}
+  :global(.gb-content .gb-ios-chat .gb-message-attachments a>span){background:#3b543b!important;color:#e4f6c7!important}
+  :global(.gb-content .gb-ios-chat .gb-inbox-note){display:flex!important;align-items:flex-start!important;gap:10px!important;margin:12px 14px 14px!important;padding:12px!important;border:1px solid #3e5142!important;border-radius:12px!important;background:#202d24!important;color:#b7c8b8!important;white-space:normal!important}
+  :global(.gb-content .gb-ios-chat .gb-inbox-note>span){flex:0 0 28px!important;width:28px!important;height:28px!important;background:#344a32!important;color:#d8f49b!important}
+  :global(.gb-content .gb-ios-chat .gb-inbox-note>div){display:grid!important;gap:5px!important;min-width:0!important}
+  :global(.gb-content .gb-ios-chat .gb-inbox-note b){display:block!important;color:#eff6e9!important;font-size:11px!important;line-height:1.4!important}
+  :global(.gb-content .gb-ios-chat .gb-inbox-note small){display:block!important;color:#b3c3b3!important;font-size:10px!important;line-height:1.5!important}
+  :global(.gb-content .gb-ios-chat .gb-thread-line b){color:#f1f6ed!important}
+  :global(.gb-content .gb-ios-chat .gb-thread-line time),
+  :global(.gb-content .gb-ios-chat .gb-thread-preview),
+  :global(.gb-content .gb-ios-chat .gb-thread-id){color:#aebfae!important}
+  :global(.gb-content .gb-ios-chat .gb-thread){background:transparent!important;color:#f1f6ed!important}
+  :global(.gb-content .gb-ios-chat .gb-thread.selected),
+  :global(.gb-content .gb-ios-chat .gb-thread:hover){background:#2a3b2e!important}
+  :global(.gb-content .gb-ios-chat .gb-inbox-meta){color:#a9b9a9!important;border-color:#39483d!important}
+  :global(.gb-content .gb-ios-chat .gb-search){background:#111a14!important;border-color:#405244!important}
+  :global(.gb-content .gb-ios-chat .gb-search input){background:transparent!important;color:#f0f6ec!important}
+  :global(.gb-content .gb-ios-chat .gb-search input::placeholder){color:#879989!important}
+  :global(.gb-content .gb-ios-chat .gb-filter-row button){background:#202d24!important;border-color:#435546!important;color:#c4d2c2!important}
+  :global(.gb-content .gb-ios-chat .gb-filter-row button.active){background:#c9f36a!important;color:#17251a!important;border-color:#c9f36a!important}
+  :global(.gb-content .gb-ios-chat .gb-empty){color:#c0d0bf!important}
+  :global(.gb-content .gb-ios-chat .gb-empty b){color:#f0f6eb!important}
+  :global(.gb-content .gb-ios-chat .gb-empty small){color:#afc0af!important}
+  :global(.gb-content .gb-ios-chat .gb-notice){background:#2a3c2c!important;color:#e0f3c7!important;border-color:#526c4a!important}
+  :global(.gb-content .gb-ios-chat .gb-info-panel){background:#1b281f!important;border-color:#3e5042!important}
+  :global(.gb-content .gb-ios-chat .gb-info-panel small),
+  :global(.gb-content .gb-ios-chat .gb-info-panel label){color:#aebfae!important}
+  :global(.gb-content .gb-ios-chat .gb-info-panel b){color:#eff6e9!important}
+  :global(.gb-content .gb-ios-chat .gb-info-panel select){background:#111a14!important;color:#f0f6ec!important;border-color:#46594a!important}
+  :global(.gb-content .gb-ios-chat .gb-activity-screen),
+  :global(.gb-content .gb-ios-chat .gb-settings-list),
+  :global(.gb-content .gb-ios-chat .gb-team-list),
+  :global(.gb-content .gb-ios-chat .gb-activity-list){background:#151e18!important;color:#edf4eb!important}
+  :global(.gb-content .gb-ios-chat .gb-activity-overview>div),
+  :global(.gb-content .gb-ios-chat .gb-activity-row),
+  :global(.gb-content .gb-ios-chat .gb-team-row),
+  :global(.gb-content .gb-ios-chat .gb-settings-card),
+  :global(.gb-content .gb-ios-chat .gb-settings-intro),
+  :global(.gb-content .gb-ios-chat .gb-settings-live),
+  :global(.gb-content .gb-ios-chat .gb-settings-group){background:linear-gradient(145deg,#253129,#1a231d)!important;border-color:#3c4b3f!important;color:#edf4eb!important}
+  :global(.gb-content .gb-ios-chat .gb-activity-overview b),
+  :global(.gb-content .gb-ios-chat .gb-activity-heading h2),
+  :global(.gb-content .gb-ios-chat .gb-activity-copy strong),
+  :global(.gb-content .gb-ios-chat .gb-team-row b),
+  :global(.gb-content .gb-ios-chat .gb-settings-card b),
+  :global(.gb-content .gb-ios-chat .gb-settings-intro h2),
+  :global(.gb-content .gb-ios-chat .gb-settings-group-title h3){color:#f1f6ee!important}
+  :global(.gb-content .gb-ios-chat .gb-activity-overview small),
+  :global(.gb-content .gb-ios-chat .gb-activity-overview span),
+  :global(.gb-content .gb-ios-chat .gb-activity-heading p),
+  :global(.gb-content .gb-ios-chat .gb-activity-copy small),
+  :global(.gb-content .gb-ios-chat .gb-activity-meta),
+  :global(.gb-content .gb-ios-chat .gb-settings-card p),
+  :global(.gb-content .gb-ios-chat .gb-settings-group-title p),
+  :global(.gb-content .gb-ios-chat .gb-settings-footnote){color:#adbdad!important}
+  :global(.gb-content .gb-ios-chat .gb-bottom-dock){background:linear-gradient(155deg,#2b3b31,#17271e 48%,#0b1510)!important}
+  :global(.gb-content .gb-ios-chat .gb-bottom-dock button.active){background:linear-gradient(145deg,#d9ff9b,#a8d95b)!important;color:#14251a!important}
+  @media(min-width:761px){
+    :global(.gb-content .gb-ios-chat .gb-chat-app){height:calc(100dvh - 240px)!important;min-height:520px!important;max-width:1540px!important;grid-template-columns:minmax(300px,370px) minmax(0,1fr)!important}
+    :global(.gb-content .gb-ios-chat .gb-chat-main){min-height:0!important}
+    :global(.gb-content .gb-ios-chat .gb-message-scroll){min-height:0!important;scrollbar-color:#607564 #1a251d!important;scrollbar-width:thin!important}
+    :global(.gb-content .gb-ios-chat .gb-composer){padding-bottom:14px!important}
+    :global(.gb-content .gb-ios-chat .gb-bottom-dock){bottom:12px!important}
+  }
+  @media(max-width:760px){
+    :global(.gb-content .gb-ios-chat .gb-message-scroll){background:#17221a!important;background-image:none!important}
+    :global(.gb-content .gb-ios-chat .gb-composer){padding:9px 11px calc(9px + env(safe-area-inset-bottom))!important}
+    :global(.gb-content .gb-ios-chat .gb-composer .gb-attach){width:38px!important;height:38px!important;flex-basis:38px!important}
+    :global(.gb-content .gb-ios-chat .gb-inbox-note){margin:10px 12px 12px!important}
+  }
+
   `}
 
   
