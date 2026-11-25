@@ -221,3 +221,49 @@ export default function SuperAdminLayout({children}){
  <main className="gb-content">{children}</main>
  </div></div></div>
 }
+
+
+/* Client chat: keep the admin rail inside its grid track so it cannot cover the inbox. */
+.gb-console .gb-shell{
+  width:100%!important;
+  min-width:0!important;
+  grid-template-columns:248px minmax(0,1fr)!important;
+}
+.gb-console .gb-sidebar{
+  width:248px!important;
+  min-width:0!important;
+  max-width:248px!important;
+  box-sizing:border-box!important;
+  overflow-x:hidden!important;
+  z-index:20!important;
+}
+.gb-console .gb-main,
+.gb-console .gb-content{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  overflow-x:hidden!important;
+}
+.gb-console .gb-content:has(.gb-ios-chat){
+  padding:0!important;
+}
+.gb-console .gb-ios-chat{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+}
+.gb-console .gb-ios-chat .gb-chat-app{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  grid-template-columns:minmax(300px,370px) minmax(0,1fr)!important;
+  margin-left:0!important;
+  margin-right:0!important;
+}
+@media(max-width:850px){
+  .gb-console .gb-shell{grid-template-columns:minmax(0,1fr)!important}
+  .gb-console .gb-sidebar{width:270px!important;max-width:270px!important;z-index:100!important}
+}
