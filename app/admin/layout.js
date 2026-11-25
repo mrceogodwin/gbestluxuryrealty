@@ -13,6 +13,7 @@ const groups=[
 ];
 export default function SuperAdminLayout({children}){
  const path=usePathname(),router=useRouter(),[open,setOpen]=useState(false),[collapsed,setCollapsed]=useState(false),[checking,setChecking]=useState(true),[signedIn,setSignedIn]=useState(false),[staff,setStaff]=useState(null);
+ useEffect(()=>{if(window.matchMedia('(min-width:851px)').matches)setCollapsed(true)},[]);
  useEffect(()=>{if(path==='/admin/login'||path==='/staff/login'||path==='/staff/accept'){setChecking(false);return;}let alive=true;(async()=>{try{let a=await fetch('/api/admin/session',{cache:'no-store'}).then(r=>r.json());if(!a.authenticated){await new Promise(resolve=>setTimeout(resolve,180));a=await fetch('/api/admin/session',{cache:'no-store'}).then(r=>r.json());}if(a.authenticated){if(alive){setStaff(null);setSignedIn(true);setChecking(false)}return;}const s=await fetch('/api/staff/session',{cache:'no-store'}).then(r=>r.json());if(!s.authenticated){router.replace('/staff/login');return;}if(alive){setStaff(s.staff);setSignedIn(true);setChecking(false)}}catch{router.replace('/staff/login')}})();return()=>{alive=false}},[path,router]);
  useEffect(()=>{
   if(!staff||checking)return;
@@ -290,10 +291,24 @@ export default function SuperAdminLayout({children}){
  .gb-console .gb-sidebar{width:270px!important;max-width:270px!important}
  .gb-console .gb-shell.sidebar-collapsed>.gb-sidebar{transform:translateX(-105%)!important}
 }
+
+
+/* Keep a visible desktop menu toggle and start the workspace with the rail tucked away. */
+@media(min-width:851px){
+ .gb-console .gb-mobiletoggle{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 36px!important;width:36px!important;height:36px!important;padding:0!important;
+  border:1px solid #d6e1d3!important;border-radius:9px!important;background:#fff!important;
+  color:#21452f!important;cursor:pointer!important;visibility:visible!important;opacity:1!important;
+ }
+ .gb-console .gb-shell.sidebar-collapsed{grid-template-columns:0 minmax(0,1fr)!important}
+ .gb-console .gb-shell.sidebar-collapsed>.gb-sidebar{width:0!important;min-width:0!important}
+}
+
  `}</style>
  <div className={"gb-shell"+(collapsed?" sidebar-collapsed":"")}>
  <aside className={'gb-sidebar'+(open?' open':'')}>
- <Link className="gb-brand" href="/admin/super" onClick={()=>setOpen(false)}><span className="gb-mark">G</span><span><strong>G-BEST</strong><small>REALTY CONTROL ROOM</small></span></Link>
+ <Link className="gb-brand" href="/admin/super" onClick={()=>{setOpen(false);if(window.matchMedia('(min-width:851px)').matches)setCollapsed(true)}}><span className="gb-mark">G</span><span><strong>G-BEST</strong><small>REALTY CONTROL ROOM</small></span></Link>
  <div className="gb-env"><i/> COMPANY CONTROL CONSOLE <span style={{marginLeft:'auto',color:'#829d89'}}>01</span></div>
  <nav aria-label="Super admin navigation">{visibleGroups.map(group=><div className="gb-navgroup" key={group.label}><div className="gb-navlabel">{group.label}</div>{group.items.map(([href,label,icon])=><Link key={href} href={href} onClick={()=>setOpen(false)} className={'gb-navlink'+((path===href||((href==='/admin/super/staff#activity')&&path==='/admin/super/staff')||(href!=='/admin'&&href!=='/admin/super'&&href!=='/admin/clients'&&href!=='/admin/super/homepage'&&href!=='/admin/super/media'&&path.startsWith(href+'/')))?' active':'')}><span className="gb-navicon">{icon}</span>{label}</Link>)}</div>)}</nav>
  <div className="gb-sidefoot">G-BEST LUXURY REALTY<br/>Management console · Secure workspace</div>
