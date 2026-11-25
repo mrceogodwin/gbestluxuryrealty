@@ -12,7 +12,7 @@ const groups=[
  {label:'WEBSITE MANAGEMENT',items:[['/admin/super/website','Brand & website studio','✧'],['/admin/super/homepage','Page content editor','◫'],['/admin/super/agent','Agent knowledge','✦'],['/admin/super/modification-engine','Modification Engine','⚙'],['/admin/super/companies','Company workspaces','▣']] }
 ];
 export default function SuperAdminLayout({children}){
- const path=usePathname(),router=useRouter(),[open,setOpen]=useState(false),[checking,setChecking]=useState(true),[signedIn,setSignedIn]=useState(false),[staff,setStaff]=useState(null);
+ const path=usePathname(),router=useRouter(),[open,setOpen]=useState(false),[collapsed,setCollapsed]=useState(false),[checking,setChecking]=useState(true),[signedIn,setSignedIn]=useState(false),[staff,setStaff]=useState(null);
  useEffect(()=>{if(path==='/admin/login'||path==='/staff/login'||path==='/staff/accept'){setChecking(false);return;}let alive=true;(async()=>{try{let a=await fetch('/api/admin/session',{cache:'no-store'}).then(r=>r.json());if(!a.authenticated){await new Promise(resolve=>setTimeout(resolve,180));a=await fetch('/api/admin/session',{cache:'no-store'}).then(r=>r.json());}if(a.authenticated){if(alive){setStaff(null);setSignedIn(true);setChecking(false)}return;}const s=await fetch('/api/staff/session',{cache:'no-store'}).then(r=>r.json());if(!s.authenticated){router.replace('/staff/login');return;}if(alive){setStaff(s.staff);setSignedIn(true);setChecking(false)}}catch{router.replace('/staff/login')}})();return()=>{alive=false}},[path,router]);
  useEffect(()=>{
   if(!staff||checking)return;
@@ -208,7 +208,7 @@ export default function SuperAdminLayout({children}){
  .gb-console .gb-sidebar .gb-sidefoot{position:relative!important;display:block!important;flex:0 0 auto!important;width:100%!important;box-sizing:border-box!important;margin:24px 0 0!important;padding:16px 9px calc(18px + env(safe-area-inset-bottom))!important;line-height:1.6!important;white-space:normal!important;z-index:0}
  @media(max-width:850px){.gb-console .gb-sidebar nav{gap:17px!important}.gb-console .gb-sidebar .gb-navgroup{margin:0!important}.gb-console .gb-sidebar .gb-navlink{min-height:46px!important}.gb-console .gb-sidebar .gb-sidefoot{margin-top:24px!important}}
  `}</style>
- <div className="gb-shell">
+ <div className={"gb-shell"+(collapsed?" sidebar-collapsed":"")}>
  <aside className={'gb-sidebar'+(open?' open':'')}>
  <Link className="gb-brand" href="/admin/super" onClick={()=>setOpen(false)}><span className="gb-mark">G</span><span><strong>G-BEST</strong><small>REALTY CONTROL ROOM</small></span></Link>
  <div className="gb-env"><i/> COMPANY CONTROL CONSOLE <span style={{marginLeft:'auto',color:'#829d89'}}>01</span></div>
@@ -217,7 +217,7 @@ export default function SuperAdminLayout({children}){
  </aside>
  {open&&<button type="button" aria-label="Close navigation drawer" onClick={()=>setOpen(false)} style={{position:'fixed',inset:0,zIndex:90,border:0,borderRadius:0,background:'#000a',backdropFilter:'blur(5px)',cursor:'pointer'}}/>}
  <div className="gb-main">
- <header className="gb-topbar"><div style={{display:'flex',alignItems:'center',gap:12}}><button className="gb-mobiletoggle" onClick={()=>setOpen(v=>!v)} aria-label="Toggle navigation">☰</button><div className="gb-crumb">G-BEST <span style={{opacity:.45}}> / </span><b>{path==='/admin/super/website'?'BRAND & WEBSITE STUDIO':path==='/admin/super/homepage'?'PAGE CONTENT EDITOR':path==='/admin/super/media'?'MEDIA LIBRARY':path==='/admin/clients'?'CLIENTS':path.startsWith('/admin/super/contacts')?'BUSINESS CONTACTS':path.startsWith('/admin/super/modification-engine')?'MODIFICATION ENGINE':path.startsWith('/admin/super/finance')?'FINANCE CENTRE':path==='/admin'?'INSPECTIONS':path==='/admin/super'?'PROPERTY OPERATIONS':path==='/admin/super/overview'?'CONTROL ROOM DASHBOARD':path.startsWith('/admin/super/staff')?'STAFF & PERMISSIONS':path==='/admin/super/activity'?'ACTIVITY & AUDIT LOG':path==='/admin/control'?'LEGACY CONTROL ROOM':'SYSTEM SETTINGS'}</b></div></div><div className="gb-topright"><span className="gb-secure">● {staff?'STAFF WORKSPACE':'ADMIN WORKSPACE'}</span><button onClick={signOut} style={{border:"1px solid #d8e5d2",background:"#fff",borderRadius:99,padding:"7px 10px",color:"#426b3d",fontWeight:700,fontSize:11}}>SIGN OUT</button></div></header>
+ <header className="gb-topbar"><div style={{display:'flex',alignItems:'center',gap:12}}><button className="gb-mobiletoggle" onClick={()=>{if(window.matchMedia("(min-width:851px)").matches)setCollapsed(v=>!v);else setOpen(v=>!v)}} aria-label="Toggle navigation" aria-expanded={typeof window!=="undefined"&&window.matchMedia("(min-width:851px)").matches?!collapsed:open}>{collapsed?"☰":"☰"}</button><div className="gb-crumb">G-BEST <span style={{opacity:.45}}> / </span><b>{path==='/admin/super/website'?'BRAND & WEBSITE STUDIO':path==='/admin/super/homepage'?'PAGE CONTENT EDITOR':path==='/admin/super/media'?'MEDIA LIBRARY':path==='/admin/clients'?'CLIENTS':path.startsWith('/admin/super/contacts')?'BUSINESS CONTACTS':path.startsWith('/admin/super/modification-engine')?'MODIFICATION ENGINE':path.startsWith('/admin/super/finance')?'FINANCE CENTRE':path==='/admin'?'INSPECTIONS':path==='/admin/super'?'PROPERTY OPERATIONS':path==='/admin/super/overview'?'CONTROL ROOM DASHBOARD':path.startsWith('/admin/super/staff')?'STAFF & PERMISSIONS':path==='/admin/super/activity'?'ACTIVITY & AUDIT LOG':path==='/admin/control'?'LEGACY CONTROL ROOM':'SYSTEM SETTINGS'}</b></div></div><div className="gb-topright"><span className="gb-secure">● {staff?'STAFF WORKSPACE':'ADMIN WORKSPACE'}</span><button onClick={signOut} style={{border:"1px solid #d8e5d2",background:"#fff",borderRadius:99,padding:"7px 10px",color:"#426b3d",fontWeight:700,fontSize:11}}>SIGN OUT</button></div></header>
  <main className="gb-content">{children}</main>
  </div></div></div>
 }
@@ -266,4 +266,42 @@ export default function SuperAdminLayout({children}){
 @media(max-width:850px){
   .gb-console .gb-shell{grid-template-columns:minmax(0,1fr)!important}
   .gb-console .gb-sidebar{width:270px!important;max-width:270px!important;z-index:100!important}
+}
+
+
+/* Desktop super-admin menu is collapsible: slide the rail fully off-canvas. */
+.gb-console .gb-shell{
+  grid-template-columns:248px minmax(0,1fr)!important;
+  transition:grid-template-columns .28s cubic-bezier(.2,.75,.25,1)!important;
+}
+.gb-console .gb-sidebar{
+  width:248px!important;
+  max-width:248px!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  transition:transform .28s cubic-bezier(.2,.75,.25,1),opacity .2s ease!important;
+}
+.gb-console .gb-shell.sidebar-collapsed{
+  grid-template-columns:0 minmax(0,1fr)!important;
+}
+.gb-console .gb-shell.sidebar-collapsed>.gb-sidebar{
+  transform:translateX(-105%)!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  overflow:hidden!important;
+}
+.gb-console .gb-main,.gb-console .gb-content{min-width:0!important;width:100%!important}
+.gb-console .gb-mobiletoggle{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:36px!important;height:36px!important;
+  font-size:18px!important;
+  cursor:pointer!important;
+}
+@media(max-width:850px){
+ .gb-console .gb-shell{grid-template-columns:minmax(0,1fr)!important}
+ .gb-console .gb-shell.sidebar-collapsed{grid-template-columns:minmax(0,1fr)!important}
+ .gb-console .gb-sidebar{width:270px!important;max-width:270px!important}
+ .gb-console .gb-shell.sidebar-collapsed>.gb-sidebar{transform:translateX(-105%)!important}
 }
