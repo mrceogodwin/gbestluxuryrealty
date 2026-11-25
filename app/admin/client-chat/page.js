@@ -467,6 +467,18 @@ export default function AdminClientChatPage(){
     :global(.gb-content .gb-ios-chat .gb-inbox-note){margin:10px 12px 12px!important}
   }
 
+
+  /* Keep the floating tab dock out of the active message composer on desktop and mobile. */
+  :global(.gb-content .gb-ios-chat .gb-bottom-dock.gb-dock-chat-open){display:none!important}
+  @media(min-width:761px){
+    :global(.gb-content .gb-ios-chat .gb-chat-app){height:calc(100dvh - 218px)!important;min-height:500px!important;margin-top:18px!important}
+    :global(.gb-content .gb-ios-chat .gb-chat-main){min-height:0!important;overflow:hidden!important}
+    :global(.gb-content .gb-ios-chat .gb-conversation-head){flex:0 0 74px!important}
+    :global(.gb-content .gb-ios-chat .gb-message-scroll){flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important}
+    :global(.gb-content .gb-ios-chat .gb-conversation-tools){flex:0 0 auto!important}
+    :global(.gb-content .gb-ios-chat .gb-composer){flex:0 0 auto!important;min-height:68px!important}
+  }
+
   `}
 
   
