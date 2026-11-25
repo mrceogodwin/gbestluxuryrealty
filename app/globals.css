@@ -4052,3 +4052,30 @@ nav>div>a.nav-register::before,nav>div>a.nav-register::after{content:none!import
    box-shadow:7px 7px 0 #111!important;
  }
 }
+
+
+/* Public visitor website: centred, premium boxed desktop canvas. */
+body:has(.gbest-site-root){background:#e9ede7}
+.gbest-site-root{
+  width:calc(100% - 64px);
+  max-width:1440px;
+  min-height:100vh;
+  margin:24px auto;
+  overflow:clip;
+  background:var(--site-background,#f4f3e9);
+  box-shadow:0 18px 70px rgba(19,43,27,.10);
+  border:1px solid rgba(23,59,43,.08);
+}
+.gbest-site-root>.topline{padding-left:clamp(24px,4.5vw,72px);padding-right:clamp(24px,4.5vw,72px)}
+.gbest-site-root>nav{padding-left:clamp(24px,4.5vw,72px);padding-right:clamp(24px,4.5vw,72px)}
+@media(min-width:1600px){
+  .gbest-site-root{max-width:1440px;margin-top:30px;margin-bottom:30px}
+}
+@media(max-width:900px){
+  .gbest-site-root{width:100%;max-width:none;margin:0;border:0;box-shadow:none;overflow:clip}
+}
+@media(max-width:680px){
+  body:has(.gbest-site-root){background:var(--site-background,#f4f3e9)}
+  .gbest-site-root>.topline{padding-left:16px;padding-right:16px}
+  .gbest-site-root>nav{padding-left:16px;padding-right:16px}
+}
